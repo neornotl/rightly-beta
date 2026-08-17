@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import re
@@ -27,7 +28,18 @@ _BM25_GATE = 12.2
 _DENSE_GATE = 0.84
 
 
-def _to_chunk(rec, score: float) -> RetrievedChunk:
+@dataclass
+class ScoreBreakdown:
+    """Detailed score components for debugging and analysis."""
+    bm25_score: float = 0.0
+    dense_score: float = 0.0
+    rrf_score: float = 0.0
+    focus_boost: float = 0.0
+    rerank_score: float = 0.0
+    final_score: float = 0.0
+
+
+def _to_chunk(rec, score: float, breakdown: Optional[ScoreBreakdown] = None) -> RetrievedChunk:
     metadata = rec.metadata if hasattr(rec, "metadata") else DocumentLoader.to_metadata(rec)
     return RetrievedChunk(
         chunk_id=rec.chunk_id,
@@ -131,17 +143,37 @@ class DenseIndex:
         return [_to_chunk(self.chunks[i], float(sims[i])) for i in order if sims[i] > 0]
 
 
-def _rrf_fuse(lists: list[list[RetrievedChunk]], k: int = 60) -> list[RetrievedChunk]:
-    scores: dict[str, float] = {}
+def _rrf_fuse(lists: list[list[RetrievedChunk]], k: int = 60) -> tuple[list[RetrievedChunk], dict[str, ScoreBreakdown]]:
+    """Fuse with RRF and return score breakdowns."""
+    bm25_scores: dict[str, float] = {}
+    dense_scores: dict[str, float] = {}
+    rrf_scores: dict[str, float] = {}
     order: dict[str, int] = {}
-    for hits in lists:
+    
+    for i, hits in enumerate(lists):
         for rank, hit in enumerate(hits):
-            scores[hit.chunk_id] = scores.get(hit.chunk_id, 0.0) + 1.0 / (k + rank + 1)
+            rrf_contrib = 1.0 / (k + rank + 1)
+            rrf_scores[hit.chunk_id] = rrf_scores.get(hit.chunk_id, 0.0) + rrf_contrib
             if hit.chunk_id not in order:
                 order[hit.chunk_id] = len(order)
+            # Track individual retriever scores
+            if i == 0:  # BM25
+                bm25_scores[hit.chunk_id] = hit.score
+            elif i == 1:  # Dense
+                dense_scores[hit.chunk_id] = hit.score
+    
     by_chunk = {h.chunk_id: h for hits in lists for h in hits}
-    ranked = sorted(by_chunk, key=lambda cid: (-scores[cid], order[cid], cid))
-    return [_to_chunk(by_chunk[cid], scores[cid]) for cid in ranked]
+    ranked = sorted(by_chunk, key=lambda cid: (-rrf_scores.get(cid, 0.0), order[cid], cid))
+    
+    breakdowns = {}
+    for cid in ranked:
+        breakdowns[cid] = ScoreBreakdown(
+            bm25_score=bm25_scores.get(cid, 0.0),
+            dense_score=dense_scores.get(cid, 0.0),
+            rrf_score=rrf_scores.get(cid, 0.0),
+        )
+    
+    return [_to_chunk(by_chunk[cid], rrf_scores.get(cid, 0.0)) for cid in ranked], breakdowns
 
 
 def _prefer_current_sources(hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
@@ -343,18 +375,36 @@ class HybridRetriever(Retriever):
             max_dense = dense_hits[0].score if dense_hits else 0.0
             if max_bm25 < self.bm25_gate and max_dense < self.dense_gate:
                 return []
-        fused = _prefer_current_sources(_rrf_fuse([bm25_hits, dense_hits]))
+        
+        fused, breakdowns = _rrf_fuse([bm25_hits, dense_hits])
+        fused = _prefer_current_sources(fused)
         fused = _expand_adjacent(fused, self.bm25.chunks, query)
-        fused.sort(key=lambda hit: (_query_focus(query, hit), hit.score), reverse=True)
+        
+        # Apply focus boost and track in breakdowns
+        for hit in fused:
+            boost = _query_focus(query, hit)
+            if boost > 0:
+                hit.score += boost
+                if hit.chunk_id in breakdowns:
+                    breakdowns[hit.chunk_id].focus_boost = boost
+                    breakdowns[hit.chunk_id].final_score = hit.score
+        
+        fused.sort(key=lambda hit: (hit.score, breakdowns.get(hit.chunk_id, ScoreBreakdown()).rrf_score), reverse=True)
+        
         if self.rerank and len(fused) > 1:
             reranker = self._load_reranker()
             pairs = [(query, h.text) for h in fused[:12]]
             scores = reranker.predict(pairs, show_progress_bar=False)
-            # The gate already decides answerability; rerank only re-orders.
             threshold = self.rerank_threshold if self.gate == "none" else -1e9
-            scored = [
-                _to_chunk(h, float(s)) for h, s in zip(fused[:12], scores) if float(s) >= threshold
-            ]
+            scored = []
+            for h, s in zip(fused[:12], scores):
+                if float(s) >= threshold:
+                    new_hit = _to_chunk(h, float(s))
+                    if h.chunk_id in breakdowns:
+                        breakdowns[h.chunk_id].rerank_score = float(s)
+                        breakdowns[h.chunk_id].final_score = float(s)
+                    scored.append(new_hit)
             scored.sort(key=lambda h: h.score, reverse=True)
             fused = scored
+        
         return fused[:top_k]
