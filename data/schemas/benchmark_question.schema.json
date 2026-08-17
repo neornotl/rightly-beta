@@ -1,0 +1,286 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tieng-lang.v4/benchmark_question.schema.json",
+  "title": "Tiếng Làng v4.0 Benchmark Question",
+  "type": "object",
+  "required": [
+    "question_id",
+    "question_text",
+    "normalized_question",
+    "provenance_type",
+    "topic",
+    "subtopic",
+    "jurisdiction",
+    "expected_answerability",
+    "expected_zone",
+    "expected_source_ids",
+    "required_facts",
+    "forbidden_claims",
+    "must_mention_limitations",
+    "difficulty",
+    "linguistic_style",
+    "user_need",
+    "gold_answer_outline",
+    "label_status",
+    "labelled_by",
+    "reviewed_by",
+    "split",
+    "leakage_group_id",
+    "notes"
+  ],
+  "properties": {
+    "question_id": {
+      "type": "string",
+      "pattern": "^TLQ_[0-9]{6}$",
+      "description": "Unique question ID, format TLQ_XXXXXX"
+    },
+    "question_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "Original question text (Vietnamese)"
+    },
+    "normalized_question": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "Normalized: lowercase, no diacritics, stripped punctuation, collapsed whitespace"
+    },
+    "provenance_type": {
+      "type": "string",
+      "enum": [
+        "AUTHENTIC_PUBLIC",
+        "AUTHENTIC_PILOT",
+        "DERIVED_PARAPHRASE",
+        "SYNTHETIC_COVERAGE",
+        "ADVERSARIAL"
+      ],
+      "description": "Origin of the question"
+    },
+    "seed_id": {
+      "type": ["string", "null"],
+      "pattern": "^SEED_[0-9]{6}$",
+      "description": "Seed ID for derived paraphrases; null for authentic/synthetic/adversarial without seed"
+    },
+    "source_record_id": {
+      "type": ["string", "null"],
+      "pattern": "^QSRC_[0-9]{3}$",
+      "description": "Reference to question_source_catalog.md record; null if not from catalog"
+    },
+    "source_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "Original source URL for authentic public questions"
+    },
+    "source_access_date": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Date when source was accessed (YYYY-MM-DD)"
+    },
+    "pii_redaction_applied": {
+      "type": "boolean",
+      "description": "Whether PII redaction was applied (must be true for authentic)"
+    },
+    "synthetic_generator": {
+      "type": ["string", "null"],
+      "description": "Provider/model/version used for generation (e.g., 'openai/gpt-4o/2024-08')"
+    },
+    "generation_prompt_version": {
+      "type": ["string", "null"],
+      "description": "Version of generation prompt template used"
+    },
+    "topic": {
+      "type": "string",
+      "enum": [
+        "HO_TICH",
+        "HON_NHAN_GIA_DINH",
+        "CU_TRU",
+        "CAN_CUOC",
+        "CHUNG_THUC",
+        "QUYEN_LOI_CONG",
+        "THU_TUC_CHUNG",
+        "HIEU_LUC_VAN_BAN",
+        "OUT_OF_SCOPE"
+      ],
+      "description": "Topic category"
+    },
+    "subtopic": {
+      "type": "string",
+      "description": "Specific subtopic (e.g., 'dang_ky_khai_sinh', 'cap_lai_giay_khai_sinh')"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": ["national", "province", "district", "commune", "unknown"],
+      "description": "Legal jurisdiction level"
+    },
+    "effective_date_context": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Effective date context for the question (YYYY-MM-DD); null if not time-sensitive"
+    },
+    "expected_answerability": {
+      "type": "string",
+      "enum": [
+        "ANSWER",
+        "CLARIFY",
+        "GUIDE",
+        "REFUSE",
+        "ESCALATE"
+      ],
+      "description": "Expected answerability classification"
+    },
+    "expected_zone": {
+      "type": "string",
+      "enum": ["YELLOW", "ORANGE", "RED"],
+      "description": "Expected safety zone"
+    },
+    "expected_source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "description": "List of expected source_ids that should be cited (empty for non-ANSWER)"
+    },
+    "required_facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Atomic facts that must appear in a correct answer"
+    },
+    "forbidden_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Claims that must NOT appear (e.g., stale law provisions, wrong fees)"
+    },
+    "must_mention_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Limitations that must be mentioned (e.g., 'chỉ áp dụng tại xã', 'phí có thể thay đổi')"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard", "adversarial"],
+      "description": "Linguistic difficulty level"
+    },
+    "linguistic_style": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "colloquial",
+        "typo",
+        "asr_noise",
+        "narrative",
+        "incomplete",
+        "multi_intent",
+        "accessibility_cmd",
+        "proxy_question"
+      ],
+      "description": "Linguistic style of the question"
+    },
+    "adversarial_class": {
+      "type": ["string", "null"],
+      "enum": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08"],
+      "description": "Adversarial class if applicable"
+    },
+    "user_need": {
+      "type": "string",
+      "description": "Description of user need/accessibility profile (U01-U07)"
+    },
+    "gold_answer_outline": {
+      "type": ["string", "null"],
+      "description": "Outline of expected gold answer (for ANSWER cases); null for REFUSE/CLARIFY/GUIDE/ESCALATE"
+    },
+    "label_status": {
+      "type": "string",
+      "enum": ["AUTO_DRAFT", "HUMAN_REVIEWED", "VERIFIED"],
+      "description": "Label verification status"
+    },
+    "labelled_by": {
+      "type": "string",
+      "description": "Model or role that created the label (e.g., 'generator_model', 'C')"
+    },
+    "reviewed_by": {
+      "type": ["string", "null"],
+      "enum": ["C", "T", "P", null],
+      "description": "Human reviewer role"
+    },
+    "split": {
+      "type": "string",
+      "enum": ["train_dev", "calibration", "test", "audit"],
+      "description": "Dataset split"
+    },
+    "leakage_group_id": {
+      "type": "string",
+      "pattern": "^GROUP_[0-9]{6}$",
+      "description": "Group ID for leakage prevention (all paraphrases of same seed share this)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "provenance_type": { "const": "AUTHENTIC_PUBLIC" }
+    }
+  },
+  "then": {
+    "required": ["source_record_id", "source_url", "source_access_date"],
+    "properties": {
+      "pii_redaction_applied": { "const": true }
+    }
+  },
+  "if": {
+    "properties": {
+      "provenance_type": { "const": "DERIVED_PARAPHRASE" }
+    }
+  },
+  "then": {
+    "required": ["seed_id", "synthetic_generator", "generation_prompt_version"]
+  },
+  "if": {
+    "properties": {
+      "provenance_type": { "const": "SYNTHETIC_COVERAGE" }
+    }
+  },
+  "then": {
+    "required": ["synthetic_generator", "generation_prompt_version"]
+  },
+  "if": {
+    "properties": {
+      "provenance_type": { "const": "ADVERSARIAL" }
+    }
+  },
+  "then": {
+    "required": ["adversarial_class"]
+  },
+  "if": {
+    "properties": {
+      "expected_answerability": { "const": "ANSWER" }
+    }
+  },
+  "then": {
+    "properties": {
+      "expected_source_ids": { "minItems": 1 },
+      "gold_answer_outline": { "type": "string", "minLength": 10 }
+    }
+  },
+  "if": {
+    "properties": {
+      "expected_answerability": { "enum": ["REFUSE", "CLARIFY", "GUIDE", "ESCALATE"] }
+    }
+  },
+  "then": {
+    "properties": {
+      "expected_source_ids": { "maxItems": 0 },
+      "gold_answer_outline": { "type": "null" }
+    }
+  }
+}

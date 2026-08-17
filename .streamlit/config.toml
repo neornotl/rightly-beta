@@ -1,0 +1,10 @@
+# Streamlit Cloud deployment config (T1).
+# Main file path in Streamlit Cloud: app/ui.py
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"

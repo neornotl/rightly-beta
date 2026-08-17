@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RetrievalEvalCase",
+  "description": "One retrieval evaluation example (R2). expected_source_id must be a real source_id existing in data/chunks.",
+  "type": "object",
+  "required": ["query", "expected_source_id"],
+  "properties": {
+    "query": { "type": "string", "minLength": 3 },
+    "expected_source_id": { "type": "string" },
+    "expected_chunk_id": { "type": "string" },
+    "accent_group": { "type": "string", "description": "Optional dialect/accent tag for reporting" }
+  }
+}

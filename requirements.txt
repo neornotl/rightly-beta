@@ -1,0 +1,19 @@
+# Core dependencies - minimal. Mock mode runs without these too (stdlib only).
+python-dotenv>=1.0,<2.0
+
+# Cloud runtime deps (F3: Streamlit Cloud + HF Spaces install this file).
+# Mock/dev environments don't need them, but they are lightweight and make
+# the public deploy a single-click flow (no extra "packages" config).
+streamlit>=1.40
+groq>=0.11
+google-genai>=1.0
+
+# TTS: httpx/requests for Zalo AI + FPT.AI adapters, edge-tts + gTTS fallbacks.
+# NOTE: Streamlit Cloud installs THIS file (requirements.txt), not
+# requirements-streamlit.txt �?" the whole import chain must resolve here.
+requests>=2.31
+edge-tts>=6.1.0
+gTTS>=2.5.0
+
+# Retrieval: numpy is a top-level import of hybrid_retriever (R20 council).
+numpy>=1.26

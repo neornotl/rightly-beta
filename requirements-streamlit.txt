@@ -1,0 +1,6 @@
+# Streamlit Cloud deployment deps (T1) - minimal set for the public demo:
+# UI + Groq cloud LLM + Zalo AI TTS. No ASR weights, no eval tooling.
+python-dotenv>=1.0,<2.0
+streamlit>=1.40
+groq>=0.11
+requests>=2.31

@@ -1,0 +1,17 @@
+[
+{"id": "nguoc-dai-gd",
+ "question": "Người thân bị con cháu ngược đãi, bỏ đói thì phải làm sao?",
+ "keywords": ["ngược đãi", "bỏ đói", "đối xử tồi tệ", "đánh đập ông bà", "bạo hành gia đình", "không cho ăn"],
+ "exclude_keywords": ["trợ cấp", "lương hưu", "khiếu nại"],
+ "search_text": "Điều 185 người nào đối xử tồi tệ hoặc có hành vi bạo lực xâm phạm thân thể ông bà cha mẹ vợ chồng con cháu hoặc người có công nuôi dưỡng mình phạt cảnh cáo phạt cải tạo không giam giữ đến 03 năm hoặc phạt tù từ 06 tháng đến 03 năm thường xuyên làm cho nạn nhân đau đớn từ chối hoặc trốn tránh nghĩa vụ cấp dưỡng làm cho người được cấp dưỡng lâm vào tình trạng nguy hiểm đến tính mạng sức khỏe",
+ "answer_text": "Anh/chị cần đưa ông bà đến nơi an toàn và báo công an hoặc cơ sở y tế gần nhất hỗ trợ ngay ạ. Theo Bộ luật Hình sự, người nào đối xử tồi tệ hoặc có hành vi bạo lực xâm phạm thân thể ông bà, cha mẹ, vợ chồng, con, cháu hoặc người có công nuôi dưỡng mình thì bị phạt cảnh cáo, cải tạo không giam giữ đến 03 năm hoặc phạt tù từ 06 tháng đến 03 năm ạ. Người có nghĩa vụ cấp dưỡng mà từ chối hoặc trốn tránh, làm cho người được cấp dưỡng nguy hiểm đến tính mạng, sức khỏe cũng bị xử lý theo quy định ạ.",
+ "spoken_citation": "Theo Bộ luật Hình sự"}
+,
+{"id": "dieu-kien-bhtn",
+ "question": "Điều kiện hưởng trợ cấp thất nghiệp là gì?",
+ "keywords": ["trợ cấp thất nghiệp", "bảo hiểm thất nghiệp", "thất nghiệp"],
+ "exclude_keywords": ["tạm ứng", "bảo hiểm y tế"],
+ "search_text": "Điều 38 điều kiện hưởng trợ cấp thất nghiệp người lao động đang đóng bảo hiểm thất nghiệp chấm dứt hợp đồng lao động hợp đồng làm việc đã nộp đủ hồ sơ hưởng trợ cấp thất nghiệp trong thời hạn 03 tháng kể từ ngày chấm dứt hợp đồng lao động thời gian 24 tháng trước khi chấm dứt hợp đồng lao động đóng đủ 12 tháng trở lên",
+ "answer_text": "Người lao động đang đóng bảo hiểm thất nghiệp được hưởng trợ cấp thất nghiệp khi đáp ứng đủ các điều kiện sau ạ: chấm dứt hợp đồng lao động hoặc hợp đồng làm việc theo quy định; đã đóng đủ 12 tháng trở lên trong thời gian 24 tháng trước khi chấm dứt hợp đồng; và nộp đủ hồ sơ hưởng trợ cấp thất nghiệp trong thời hạn 03 tháng kể từ ngày chấm dứt hợp đồng lao động ạ. Trường hợp mới ra trường chưa từng đi làm và đóng bảo hiểm thất nghiệp thì chưa đủ điều kiện hưởng ạ.",
+ "spoken_citation": "Theo Luật Việc làm và Nghị định hướng dẫn"}
+]

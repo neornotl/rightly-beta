@@ -1,0 +1,20 @@
+# Optional adapters - install only when needed.
+# ASR: PhoWhisper (faster-whisper). Model weights are downloaded at runtime,
+# NOT by pip. Verify resources first (docs/hardware_benchmark_plan.md).
+faster-whisper>=1.0
+
+# LLM cloud backends
+google-genai>=1.0
+groq>=0.11
+
+# LLM local backend (Ollama / any OpenAI-compatible local server) + pateway
+openai>=1.40
+
+# Offline bootstrap (scripts/bootstrap_offline.py)
+huggingface_hub>=0.23
+
+# TTS
+edge-tts>=7.0
+
+# UI
+streamlit>=1.40

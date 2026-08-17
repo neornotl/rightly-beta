@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SourceDocument",
+  "description": "Metadata of a source document in data/sources. Front matter keys are lowercase; is_demo must be true for any synthetic/demo content.",
+  "type": "object",
+  "required": ["source_id", "title", "source_type", "publisher"],
+  "properties": {
+    "source_id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "title": { "type": "string" },
+    "source_type": { "type": "string", "enum": ["gov_procedure", "gov_faq", "gov_leaflet", "demo"] },
+    "publisher": { "type": "string" },
+    "published_date": { "type": "string", "format": "date" },
+    "language": { "type": "string", "default": "vi" },
+    "license": { "type": "string" },
+    "is_demo": { "type": "boolean", "default": false },
+    "url": { "type": "string" },
+    "notes": { "type": "string" }
+  }
+}

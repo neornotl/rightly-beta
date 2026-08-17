@@ -1,0 +1,122 @@
+QUYẾT ĐỊNH
+PHÊ DUYỆT ĐỀ ÁN “TĂNG CƯỜNG ỨNG DỤNG CÔNG NGHỆ THÔNG TIN VÀ CHUYỂN ĐỔI SỐ TRONG GIÁO DỤC VÀ ĐÀO TẠO GIAI ĐOẠN 2022 - 2025, ĐỊNH HƯỚNG ĐẾN NĂM 2030”
+THỦ TƯỚNG CHÍNH PHỦ
+Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số điều của Luật Tổ chức Chính phủ và Luật Tổ chức chính quyền địa phương ngày 22 tháng 11 năm 2019;
+Căn cứ Luật Giáo dục ngày 14 tháng 6 năm 2019;
+Căn cứ Luật Công nghệ thông tin ngày 29 tháng 6 năm 2006;
+Căn cứ Nghị quyết số 44/NQ-CP ngày 09 tháng 6 năm 2014 của Chính phủ ban hành Chương trình hành động của Chính phủ thực hiện Nghị quyết số 29-NQ/TW ngày 04 tháng 11 năm 2013 Hội nghị lần thứ tám Ban Chấp hành Trung ương khóa XI về đổi mới căn bản, toàn diện giáo dục và đào tạo, đáp ứng yêu cầu công nghiệp hóa, hiện đại hóa trong điều kiện kinh tế thị trường định hướng xã hội chủ nghĩa và hội nhập quốc tế;
+Căn cứ Nghị quyết số 17/NQ-CP ngày 07 tháng 3 năm 2019 của Chính phủ về một số nhiệm vụ, giải pháp trọng tâm phát triển Chính phủ điện tử giai đoạn 2019 - 2020, định hướng đến 2025;
+Căn cứ Nghị quyết số 50/NQ-CP ngày 17 tháng 4 năm 2020 của Chính phủ về Chương trình hành động của Chính phủ thực hiện Nghị quyết số 52-NQ/TW ngày 27 tháng 9 năm 2019 của Bộ Chính trị về một số chủ trương, chính sách chủ động tham gia cuộc Cách mạng công nghiệp lần thứ tư;
+Căn cứ Nghị quyết số 76/NQ-CP ngày 15 tháng 7 năm 2021 của Chính phủ ban hành Chương trình tổng thể cải cách hành chính nhà nước giai đoạn 2021 - 2023;
+Theo đề nghị của Bộ trưởng Bộ Giáo dục và Đào tạo.
+QUYẾT ĐỊNH:
+Điều 1. Phê duyệt Đề án “Tăng cường ứng dụng công nghệ thông tin và chuyển đổi số trong giáo dục và đào tạo giai đoạn 2022 - 2025, định hướng đến năm 2030” (sau đây gọi tắt là Đề án) với những nội dung chủ yếu như sau:
+I. QUAN ĐIỂM
+1. Tăng cường ứng dụng công nghệ thông tin và chuyển đổi số tạo đột phá trong đổi mới hoạt động giáo dục và đào tạo; đổi mới quản lý nhà nước trong lĩnh vực giáo dục và đào tạo; tác động tích cực, toàn diện tới phương thức hoạt động, chất lượng, hiệu quả và công bằng trong giáo dục.
+2. Người học và nhà giáo là trung tâm của quá trình chuyển đổi số; lợi ích mang lại cho người học, đội ngũ nhà giáo và người dân là thước đo chủ yếu đánh giá mức độ thành công của chuyển đổi số.
+3. Chuyển đổi số trong giáo dục và đào tạo cần có sự thay đổi nhận thức mạnh mẽ, sự chỉ đạo quyết liệt của các cấp quản lý, sự chủ động, tích cực của các cơ sở giáo dục và sự ủng hộ, tham gia của mỗi người học, mỗi nhà giáo và toàn xã hội.
+4. Chuyển đổi số trong giáo dục và đào tạo phải được thiết kế đồng bộ, bao quát, có hệ thống trong tổng thể Chương trình chuyển đổi số quốc gia; được triển khai từng bước có trọng tâm, trọng điểm, đạt hiệu quả cao trong từng giai đoạn, nhất là trong giai đoạn thực hiện chủ trương thích ứng an toàn, linh hoạt và kiểm soát hiệu quả dịch COVID-19.
+5. Hoàn thiện thể chế trên cơ sở các mô hình thử nghiệm và phát triển một số nền tảng, tài nguyên giáo dục sử dụng chung là chìa khóa để đẩy nhanh quá trình chuyển đổi số.
+II. MỤC TIÊU
+1. Mục tiêu chung
+Tận dụng tiến bộ công nghệ để thúc đẩy đổi mới sáng tạo trong dạy và học, nâng cao chất lượng và cơ hội tiếp cận giáo dục, hiệu quả quản lý giáo dục; xây dựng nền giáo dục mở thích ứng trên nền tảng số, góp phần phát triển Chính phủ số, kinh tế số và xã hội số.
+2. Mục tiêu đến năm 2025
+a) Đổi mới mạnh mẽ phương thức tổ chức giáo dục, đưa dạy và học trên môi trường số trở thành hoạt động giáo dục thiết yếu, hàng ngày đối với mỗi nhà giáo, mỗi người học
+- Về tiếp cận giáo dục trực tuyến: 50% học sinh, mỗi sinh viên và mỗi nhà giáo có đủ điều kiện (về phương tiện, đường truyền, phần mềm) tham gia có hiệu quả các hoạt động dạy và học trực tuyến.
+- Về môi trường giáo dục trực tuyến
++ Hình thành một số nền tảng dạy và học trực tuyến là sản phẩm trong nước, được trên 50% học sinh, sinh viên sử dụng;
++ Hình thành kho học liệu trực tuyến quốc gia đáp ứng yêu cầu về tài liệu học tập cho 50% nội dung chương trình giáo dục phổ thông;
++ Hơn 50% cơ sở giáo dục đại học cung cấp các chương trình đào tạo (cấp bằng) hình thức từ xa, trực tuyến.
+- Về quy mô hoạt động giáo dục trực tuyến
++ Tỉ trọng nội dung chương trình giáo dục phổ thông được triển khai dưới hình thức trực tuyến đạt trung bình 5% ở bậc tiểu học, 10% ở bậc trung học;
++ Tỉ trọng lớp học trực tuyến trong các cơ sở giáo dục đại học đạt trung bình 20%;
++ Trong số người học lấy văn bằng đại học thứ hai, có ít nhất 50% theo học hình thức trực tuyến (với thời lượng trực tuyến chiếm hơn 50%).
+b) Đổi mới mạnh mẽ phương thức quản lý, điều hành dựa trên công nghệ và dữ liệu, nâng cao hiệu lực, hiệu quả quản lý và chất lượng cung cấp dịch vụ hỗ trợ của Nhà nước và các cơ sở giáo dục
+- Về quản trị nhà trường: 100% cơ sở giáo dục áp dụng hệ thống quản trị nhà trường dựa trên dữ liệu và công nghệ số, trong đó:
++ 100% người học, 100% nhà giáo được quản lý bằng hồ sơ số với định danh thống nhất toàn quốc;
++ 80% cơ sở vật chất, thiết bị và các nguồn lực khác phục vụ giáo dục, đào tạo và nghiên cứu được quản lý bằng hồ sơ số.
+- Về quản lý giáo dục: Hệ thống thông tin quản lý toàn ngành giáo dục được thiết lập và vận hành hiệu quả, trong đó:
++ Cơ sở dữ liệu toàn ngành được hoàn thiện, kết nối thông suốt với tất cả các cơ sở giáo dục đảm bảo cung cấp thông tin quản lý đầy đủ, tin cậy và kịp thời; được kết nối và chia sẻ hiệu quả với các cơ sở dữ liệu quốc gia;
++ Các cơ quan quản lý giáo dục từ trung ương tới các địa phương được vận hành chủ yếu dựa trên dữ liệu và công nghệ số, trong đó 90% hồ sơ công việc tại cấp bộ, cấp sở; 80% hồ sơ công việc tại cấp phòng được giao dịch và giải quyết trên môi trường số (không bao gồm hồ sơ xử lý công việc có nội dung mật).
+- Về dịch vụ hỗ trợ người học, người dân
++100% thủ tục hành chính đủ điều kiện được triển khai dịch vụ công trực tuyến mức độ 4 (hoặc mức độ 3 nếu không phát sinh thanh toán);
++ Tỷ lệ hồ sơ giải quyết trực tuyến mức độ 3 và 4 trên tổng số hồ sơ đạt tối thiểu 50%;
++ Tỷ lệ người học, phụ huynh hài lòng về chất lượng dịch vụ trực tuyến của các cơ sở giáo dục đạt trung bình 80%;
++ Tỷ lệ tổ chức, cá nhân hài lòng về chất lượng dịch vụ công trực tuyến của các cơ quan quản lý giáo dục đạt trung bình 80%.
+3. Mục tiêu đến năm 2030
+Đưa tất cả thành tố của hệ thống giáo dục quốc dân vào môi trường số, trong đó:
+- Hoàn thiện một nền tảng dạy và học trực tuyến quốc gia tích hợp kho học liệu số hỗ trợ 100% người học và nhà giáo tham gia có hiệu quả các hoạt động giáo dục trực tuyến; đáp ứng yêu cầu về tài liệu học tập cho toàn bộ chương trình giáo dục phổ thông;
+- Giáo dục đại học số trở thành một trụ cột của hệ thống giáo dục đại học, chiếm tỉ trọng 30% quy mô; 100% cơ sở giáo dục đại học cung cấp các chương trình đào tạo (cấp bằng) hình thức từ xa, trực tuyến;
+- 100% nguồn lực giáo dục, chương trình giáo dục và đối tượng giáo dục trong hệ thống giáo dục quốc dân được quản lý trên môi trường số, kết nối thông suốt toàn ngành và liên thông với các cơ sở dữ liệu, thông tin quốc gia.
+III. CÁC NHIỆM VỤ, GIẢI PHÁP CHỦ YẾU
+1. Tăng cường các điều kiện đảm bảo triển khai ứng dụng công nghệ thông tin và chuyển đổi số trong giáo dục và đào tạo
+a) Đảm bảo các điều kiện về hạ tầng số, trang thiết bị triển khai ứng dụng công nghệ thông tin và chuyển đổi số trong giáo dục và đào tạo; triển khai các biện pháp đảm bảo an toàn, an ninh thông tin các hệ thống số hóa, đảm bảo an toàn trong các hoạt động dạy - học và làm việc trên môi trường số. Ưu tiên sử dụng các mô hình dịch vụ trên nền tảng đám mây; đảm bảo kết nối Internet cáp quang tới tất cả các cơ sở giáo dục; có chính sách hỗ trợ dịch vụ Internet cho người học và đội ngũ giáo viên; có chính sách máy tính phù hợp cho học sinh và sinh viên;
+b) Hình thành, phát triển hệ thống phòng học tương tác thông minh, phòng thí nghiệm/thực hành (Lab) hiện đại, phòng Lab mô phỏng, ứng dụng công nghệ thực tế ảo (VR) và thực tế tăng cường (AR), công nghệ học máy, công nghệ phân tích dữ liệu lớn và trí tuệ nhân tạo vào các lĩnh vực nghiên cứu, thực hành.
+2. Phát triển hệ sinh thái chuyển đổi số hoạt động dạy, học, kiểm tra, đánh giá và nghiên cứu khoa học
+a) Đổi mới mô hình dạy - học
+-Triển khai, thí điểm triển khai các mô hình dạy - học tiên tiến trên nền tảng số theo hướng dạy học kết hợp (lớp học thông minh, nhóm học tương tác, tự học với trợ lý ảo) phù hợp với điều kiện, đặc thù, nhu cầu thực tế của giáo dục phổ thông và giáo dục thường xuyên;
+- Xây dựng một số trung tâm đào tạo và nghiên cứu xuất sắc về công nghệ theo hình thức hợp tác công - tư cho giáo dục đại học.
+b) Phát triển kho học liệu số chia sẻ dùng chung
+- Phát triển các kho học liệu số, học liệu mở chia sẻ dùng chung toàn ngành giáo dục, gồm bài giảng điện tử, bài giảng dạy trên truyền hình, học liệu số đa phương tiện, sách giáo khoa điện tử, phần mềm mô phỏng và các học liệu khác; phát triển hệ thống ngân hàng câu hỏi trực tuyến cho tất cả các môn học của giáo dục phổ thông và giáo dục thường xuyên;
+- Tiếp tục xây dựng và hoàn thiện thư viện điện tử trong các cơ sở giáo dục phổ thông; cổng thư viện số kết nối liên thông với các kho học liệu số, chia sẻ học liệu với các cơ sở đào tạo đại học; phát triển các phòng thí nghiệm ảo, các phòng thực hành và thực tập ảo nhằm nâng cao năng lực nghiên cứu, đào tạo trong giáo dục đại học.
+c) Phát triển, ứng dụng các nền tảng số phục vụ dạy - học và triển khai thí điểm mô hình giáo dục đại học số
+- Phát triển, ứng dụng nền tảng số dạy và học trực tuyến với các tính năng tiên tiến hỗ trợ học tập cá thể hóa và tăng cường trải nghiệm; tăng cường kiểm tra, thi trên máy tính và thi trực tuyến; kết nối nền tảng dạy học trực tuyến với nền tảng quản trị nhà trường và mạng IoT, thiết lập hệ sinh thái chuyển đổi số trong các cơ sở giáo dục;
+- Phát triển, ứng dụng nền tảng cung cấp các khóa học trực tuyến đại chúng mở (MOOCs), tăng cường công nhận tín chỉ các khóa học trực tuyến giữa các cơ sở giáo dục đại học;
+- Triển khai thí điểm mô hình giáo dục đại học số tại một số cơ sở giáo dục đại học.
+3. Triển khai đồng bộ hệ thống thông tin quản lý giáo dục và đào tạo và cơ sở dữ liệu ngành giáo dục
+a) Đổi mới mô hình, quy trình quản lý, cải cách mạnh mẽ thủ tục hành chính
+- Rà soát, cải cách các mô hình quản trị cơ sở giáo dục đại học (quản lý tuyển sinh, quản lý chương trình đào tạo, quản lý thông tin người học, quản lý thông tin đội ngũ, quản lý cơ sở vật chất, quản lý tài chính, quản lý hoạt động nghiên cứu khoa học, quản trị văn phòng điện tử, quản lý các hoạt động đào tạo và nghiên cứu khác);
+- Rà soát, cắt giảm, đơn giản hóa các thủ tục hành chính, quy trình nghiệp vụ theo hướng giúp ứng dụng hiệu quả công nghệ số;
+- Triển khai cổng dịch vụ công trực tuyến (tích hợp Hệ thống thông tin một cửa điện tử) với các hệ thống nghiệp vụ chuyên ngành để cung cấp dịch vụ số, kết nối với Cổng dịch vụ công Quốc gia; mở rộng các dịch vụ công trực tuyến mức độ 3 và mức độ 4;
+- Ứng dụng mạnh mẽ công nghệ trí tuệ nhân tạo trong cung cấp dịch vụ (như trợ lý ảo, trả lời tự động); thử nghiệm nền tảng dùng chung giải quyết một số thủ tục hành chính không dùng giấy tờ trong ngành giáo dục dựa trên nền tảng cơ sở dữ liệu ngành giáo dục.
+b) Xây dựng cơ sở dữ liệu và hệ thống thông tin quản lý giáo dục và đào tạo
+- Xây dựng, hoàn thiện cơ sở dữ liệu đảm bảo phục vụ tất cả cơ quan quản lý giáo dục; hoàn thiện cơ sở dữ liệu lớn của ngành giáo dục tại Bộ Giáo dục và Đào tạo (bao gồm cơ sở dữ liệu về người học, đội ngũ nhà giáo, cán bộ quản lý giáo dục và nhân viên, cơ sở vật chất, tài chính - đầu tư, kiểm định chất lượng giáo dục, nghiên cứu khoa học và chương trình đào tạo);
+- Triển khai hệ thống thông tin quản lý ngành giáo dục, kết nối đầy đủ, toàn diện dữ liệu từ các cơ sở giáo dục, phòng giáo dục và đào tạo, sở giáo dục và đào tạo đến Bộ Giáo dục và Đào tạo; kết nối dữ liệu giữa ngành giáo dục với các cơ sở dữ liệu quốc gia, cơ sở dữ liệu chuyên ngành, cơ sở dữ liệu của địa phương phục vụ công tác báo cáo, theo dõi, giám sát, cảnh báo, dự báo, kiểm tra và thanh tra của các cơ quan quản lý giáo dục;
+- Phát triển các trung tâm điều hành, giám sát thông tin ở cơ quan quản lý giáo dục và trường học, ứng dụng công nghệ trí tuệ nhân tạo, phân tích dữ liệu lớn hỗ trợ hoạt động quản lý giáo dục.
+c) Phát triển các ứng dụng, nền tảng số phục vụ quản trị các cơ sở giáo dục
+- Triển khai nền tảng quản trị nhà trường tích hợp không gian làm việc số tới 100% cơ sở giáo dục nhằm tạo môi trường làm việc và tương tác trực tuyến cho cán bộ quản lý giáo dục, nhà giáo, nhân viên và người học; đảm bảo kết nối, báo cáo liên thông dữ liệu từ cơ sở giáo dục với hệ thống cơ sở dữ liệu toàn quốc của ngành giáo dục;
+- Trên nền tảng cơ sở dữ liệu, triển khai các ứng dụng hồ sơ điện tử, liên lạc giữa nhà trường với gia đình, thanh toán không dùng tiền mặt, truyền thông và kết nối với các nền tảng ứng dụng trong và ngoài ngành giáo dục; triển khai các mô hình quản trị nhà trường tiên tiến trên nền tảng số đảm bảo thiết thực và hiệu quả.
+d) Xây dựng môi trường số kết nối
+- Triển khai nền tảng kết nối, chia sẻ dữ liệu của ngành giáo dục kết nối với trục tích hợp, liên thông dữ liệu quốc gia; triển khai nền tảng quản lý mã định danh, xác thực người dùng trên môi trường số của ngành giáo dục;
+- Ứng dụng công nghệ Internet vạn vật (IoT) trong số hóa, giám sát, quản lý và khai thác các nguồn lực, đối tượng và hoạt động giáo dục trong nhà trường, đảm bảo kết nối thời gian thực với hệ thống thông tin quản trị nhà trường.
+4. Tuyên truyền, phổ biến nâng cao nhận thức; đào tạo, bồi dưỡng năng lực số cho đội ngũ nhà giáo, cán bộ quản lý giáo dục, nhân viên và người học; nâng cao chỉ số phát triển nguồn nhân lực về Chính phủ điện tử (HCI)
+a) Tuyên truyền, phổ biến, quán triệt sâu rộng nhằm nâng cao nhận thức về chuyển đổi số trong giáo dục và đào tạo đến toàn thể đội ngũ nhà giáo, cán bộ quản lý giáo dục, nhân viên và người học trong ngành giáo dục và xã hội;
+b) Đào tạo, bồi dưỡng nâng cao năng lực số cho đội ngũ nhà giáo, cán bộ quản lý giáo dục, nhân viên và người học bảo đảm quản lý, làm việc hiệu quả trên môi trường số; kiện toàn, nâng cao năng lực đội ngũ cán bộ phụ trách ứng dụng công nghệ thông tin và chuyển đổi số trong ngành giáo dục; thí điểm bồi dưỡng đội ngũ nhà giáo về kỹ năng sử dụng công nghệ thông tin tiếp cận chuẩn quốc tế tại một số cơ sở giáo dục, địa phương có đủ điều kiện và yêu cầu cao về nhân lực chuyển đổi số; triển khai hệ thống bồi dưỡng giáo viên đảm bảo 100% nhà giáo có hồ sơ và tài khoản sử dụng để tự bồi dưỡng một cách chủ động, thường xuyên theo nhu cầu;
+c) Triển khai mô hình giáo dục tích hợp khoa học - công nghệ - kỹ thuật - toán học và nghệ thuật (giáo dục STEM/STEAM), phát triển tư duy lập trình, triển khai các chương trình về khoa học máy tính phù hợp; đưa nội dung phổ cập kỹ năng số và an toàn, an ninh mạng, các nền tảng mở, phần mềm nguồn mở vào chương trình giảng dạy từ cấp tiểu học để hình thành sớm các kỹ năng cần thiết cho công dân số;
+d) Tiếp tục thực hiện các giải pháp để nâng cao chỉ số thành phần nguồn nhân lực của Việt Nam theo phương pháp đánh giá Chính phủ điện tử của Liên hợp quốc, phối hợp chặt chẽ với các tổ chức quốc tế liên quan để cung cấp các số liệu kịp thời cho các tổ chức quốc tế.
+5. Huy động các nguồn lực tham gia ứng dụng công nghệ thông tin và chuyển đổi số trong giáo dục và đào tạo
+a) Đẩy mạnh hợp tác với các doanh nghiệp, tổ chức và hiệp hội về công nghệ thông tin trong và ngoài nước, chuyên gia người Việt Nam ở nước ngoài để giới thiệu các giải pháp công nghệ tiên tiến về công nghệ giáo dục và chuyển đổi số áp dụng trong lĩnh vực giáo dục và đào tạo;
+b) Thu hút nguồn vốn của doanh nghiệp thông qua hình thức đối tác công tư (PPP) để đầu tư xây dựng các nền tảng số và ứng dụng công nghệ thông tin trong giáo dục và đào tạo, ưu tiên cho phát triển hệ thống ngân hàng câu hỏi trực tuyến, hệ thống học tập trực tuyến, kho học liệu số dùng chung, cơ sở dữ liệu ngành giáo dục;
+c) Tăng cường hợp tác với các doanh nghiệp sản xuất, phân phối trang thiết bị số để hỗ trợ, ưu đãi cung cấp sản phẩm công nghệ thông tin cơ bản (máy tính, máy tính xách tay, máy tính bảng) tích hợp các phần mềm ứng dụng và tính năng an toàn, bảo mật cho đội ngũ nhà giáo, cán bộ quản lý giáo dục, nhân viên và người học phục vụ hoạt động dạy - học trong các nhà trường.
+6. Hoàn thiện cơ chế, chính sách thúc đẩy chuyển đổi số và tăng cường giám sát, đánh giá việc thực hiện cơ chế, chính sách
+a) Rà soát và ban hành hệ thống văn bản quy phạm pháp luật quy định về chuyển đổi số trong các hoạt động dạy học, quản trị cơ sở giáo dục, quản lý giáo dục; quy định về cơ sở dữ liệu trong ngành giáo dục; quy định về năng lực số của đội ngũ nhà giáo, cán bộ quản lý giáo dục, nhân viên và người học;
+b) Rà soát và ban hành các quy định kỹ thuật về dữ liệu; hướng dẫn kết nối và chia sẻ dữ liệu giữa các đơn vị, cơ quan trong ngành giáo dục và ngành giáo dục với các cơ sở dữ liệu quốc gia; hướng dẫn kết nối kỹ thuật triển khai thanh toán không dùng tiền mặt trong các cơ sở giáo dục; ban hành tiêu chí kỹ thuật của các nền tảng số dùng trong ngành giáo dục; ban hành các bộ chỉ tiêu đánh giá chuyển đổi số đối với cơ sở giáo dục và cơ quan quản lý giáo dục;
+c) Ban hành chính sách thúc đẩy các hoạt động đổi mới sáng tạo, các mô hình giáo dục và đào tạo mới dựa trên nền tảng và công nghệ số; chính sách huy động sự tham gia và đóng góp nguồn lực của các tổ chức, cá nhân và chuyên gia người Việt Nam ở nước ngoài cho chuyển đổi số trong giáo dục và đào tạo; chính sách thúc đẩy phát triển công nghệ giáo dục (Edtech); chính sách máy tính giáo dục cho học sinh, sinh viên; chính sách Internet giáo dục;
+d) Thường xuyên thanh tra, kiểm tra, giám sát, đánh giá việc triển khai ứng dụng công nghệ thông tin và chuyển đổi số trong giáo dục và đào tạo; tổ chức đánh giá, công bố chỉ số chuyển đổi số đối với cơ sở giáo dục, cơ quan quản lý giáo dục trên các phương tiện thông tin đại chúng.
+IV. KINH PHÍ THỰC HIỆN
+1. Bảo đảm tiết kiệm, minh bạch, đúng pháp luật, chống tiêu cực, lãng phí trong sử dụng ngân sách nhà nước và các nguồn huy động hợp pháp khác.
+2. Kinh phí thực hiện Đề án từ ngân sách nhà nước bao gồm chi thường xuyên theo phân cấp ngân sách và chi đầu tư phát triển được cân đối hàng năm cho các bộ, ngành, địa phương theo quy định để thực hiện các chương trình, dự án nhằm triển khai Đề án; kinh phí tự cân đối và huy động hợp pháp khác của các đơn vị thuộc đối tượng tham gia Đề án.
+3. Khuyến khích nguồn kinh phí huy động từ các doanh nghiệp, tổ chức, cá nhân trong và ngoài nước; tăng cường sử dụng nguồn kinh phí lồng ghép trong các chương trình, đề án liên quan đã được phê duyệt và các nguồn hợp pháp khác để thực hiện nhiệm vụ.
+4. Ưu tiên triển khai các nhiệm vụ của Đề án theo hình thức thuê dịch vụ công nghệ thông tin, đối tác công tư, giao nhiệm vụ, hình thức đặt hàng tùy theo từng nhiệm vụ cụ thể.
+V. TỔ CHỨC THỰC HIỆN
+1. Bộ Giáo dục và Đào tạo
+a) Chủ trì, phối hợp với các bộ, cơ quan liên quan, Ủy ban nhân dân các tỉnh, thành phố trực thuộc trung ương triển khai thực hiện các nhiệm vụ của Đề án;
+b) Chủ trì triển khai các nhiệm vụ, giải pháp quy định tại Mục III.6, Mục III.1.b, Mục III.3.d và các nhiệm vụ, giải pháp liên quan tại mục III của Quyết định này;
+c) Tổ chức sơ kết sau 02 năm triển khai Đề án; đề xuất, kiến nghị Thủ tướng Chính phủ điều chỉnh, bổ sung nội dung Đề án trong trường hợp cần thiết; tổng kết sau khi kết thúc thực hiện Đề án.
+2. Bộ Thông tin và Truyền thông
+a) Chủ trì, chỉ đạo các doanh nghiệp công nghệ thông tin nghiên cứu, phát triển các nền tảng, giải pháp ứng dụng công nghệ thông tin và chuyển đổi số trong lĩnh vực giáo dục và đào tạo;
+b) Chỉ đạo các doanh nghiệp viễn thông, doanh nghiệp công nghệ thông tin nghiên cứu, phát triển hạ tầng số quốc gia, hạ tầng Internet đảm bảo triển khai hiệu quả các hoạt động chuyển đổi số trong ngành giáo dục; đảm bảo kết nối Internet tới tất cả các cơ sở giáo dục; có chính sách ưu đãi về dịch vụ Internet và dịch vụ công nghệ thông tin đối với người học, đội ngũ nhà giáo và các cơ sở giáo dục.
+3. Bộ Tài chính
+Chủ trì, phối hợp với Bộ Giáo dục và Đào tạo và các bộ, ngành có liên quan bố trí kinh phí thường xuyên để thực hiện Đề án theo quy định, phù hợp với khả năng cân đối ngân sách nhà nước trong từng giai đoạn.
+4. Bộ Kế hoạch và Đầu tư
+Chủ trì, phối hợp với Bộ Giáo dục và Đào tạo tổng hợp, trình Chính phủ, Thủ tướng Chính phủ kế hoạch đầu tư công trung hạn và hàng năm để thực hiện các chương trình, dự án được cơ quan thẩm quyền phê duyệt theo quy định để triển khai Đề án.
+5. Các bộ, cơ quan ngang bộ, cơ quan thuộc Chính phủ
+a) Căn cứ mục tiêu, nội dung, giải pháp của Đề án để cụ thể hóa nội dung triển khai trong các chương trình, kế hoạch phát triển chính phủ điện tử, chuyển đổi số trung hạn và hàng năm của cơ quan, đơn vị;
+b) Có các giải pháp tăng cường nguồn lực bảo đảm các điều kiện triển khai chuyển đổi số trong các cơ sở giáo dục trực thuộc;
+c) Hàng năm, tổ chức kiểm tra, đánh giá tình hình thực hiện Đề án; tổ chức đánh giá sơ kết và tổng kết theo hướng dẫn của Bộ Giáo dục và Đào tạo để tổng hợp báo cáo Thủ tướng Chính phủ.
+6. Ủy ban nhân dân các tỉnh, thành phố trực thuộc trung ương
+a) Căn cứ mục tiêu, nội dung, giải pháp của Đề án để cụ thể hóa nội dung trong các chương trình, đề án, kế hoạch phát triển chính phủ điện tử, chuyển đổi số, phát triển kinh tế - xã hội của địa phương; xây dựng Kế hoạch, Đề án hoặc Chương trình chuyển đổi số trong lĩnh vực giáo dục và đào tạo và tổ chức triển khai thực hiện;
+b) Có các giải pháp tăng cường nguồn lực bảo đảm các điều kiện triển khai chuyển đổi số trong các cơ sở giáo dục trên địa bàn;
+c) Hàng năm, tổ chức kiểm tra, đánh giá tình hình thực hiện Đề án; tổ chức đánh giá sơ kết và tổng kết theo hướng dẫn của Bộ Giáo dục và Đào tạo để tổng hợp, báo cáo Thủ tướng Chính phủ.
+Điều 2. Quyết định này có hiệu lực từ ngày ký ban hành.
+Điều 3. Các Bộ trưởng, Thủ trưởng cơ quan ngang bộ, Thủ trưởng cơ quan thuộc Chính phủ, Chủ tịch Ủy ban nhân dân tỉnh, thành phố trực thuộc trung ương và các cơ quan, tổ chức có liên quan chịu trách nhiệm thi hành Quyết định này.

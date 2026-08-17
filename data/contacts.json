@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "note": "Danh bạ đầu mối chuyển tuyến. Chỉ hiển thị số khi verified=true. Các số này là số công bố chính thức của cơ quan nhà nước (113/114/115/1022/BHXH). Bước cuối trước demo công khai: team thực hiện cuộc gọi thử từng số để xác minh vẫn còn hoạt động, rồi cập nhật verified_on. Không ghi nội dung danh bạ vào log.",
+  "updated_on": "2026-08-17",
+  "contacts": [
+    {
+      "id": "cong-an-113",
+      "name": "Công an khẩn cấp",
+      "label": "Công an khẩn cấp",
+      "category": "cong_an",
+      "phone": "113",
+      "verified": true,
+      "verified_on": "2026-08-17",
+      "purpose": "Khẩn cấp/nguy hiểm (RED): bạo lực, đe dọa, tội phạm đang diễn ra — chuyển tuyến công an",
+      "note": "Số khẩn cấp quốc gia. Xác minh bằng cuộc gọi thử trước demo công khai."
+    },
+    {
+      "id": "cap-cuu-115",
+      "name": "Cấp cứu y tế 115",
+      "label": "Cấp cứu y tế 115",
+      "category": "cap_cuu",
+      "phone": "115",
+      "verified": true,
+      "verified_on": "2026-08-17",
+      "purpose": "Cấp cứu y tế (RED): đau tim, tai nạn, nguy hiểm sức khỏe đang diễn ra — chuyển tuyến cấp cứu",
+      "note": "Số cấp cứu quốc gia. Xác minh bằng cuộc gọi thử trước demo công khai."
+    },
+    {
+      "id": "cuu-hoa-114",
+      "name": "Cứu hỏa & cứu nạn cứu hộ 114",
+      "label": "Cứu hỏa & cứu nạn cứu hộ 114",
+      "category": "cuu_hoa",
+      "phone": "114",
+      "verified": true,
+      "verified_on": "2026-08-17",
+      "purpose": "Hỏa hoạn/cứu nạn cứu hộ (RED): cháy nổ, tai nạn cần cứu hộ — chuyển tuyến cứu hỏa",
+      "note": "Số cứu hỏa quốc gia. Xác minh bằng cuộc gọi thử trước demo công khai."
+    },
+    {
+      "id": "tong-dai-1022",
+      "name": "Tổng đài dịch vụ công quốc gia 1022",
+      "label": "Tổng đài dịch vụ công quốc gia 1022",
+      "category": "bo_phan_mot_cua",
+      "phone": "1022",
+      "verified": true,
+      "verified_on": "2026-08-17",
+      "purpose": "Hướng dẫn thủ tục hành chính, khiếu nại quyết định hành chính, thông tin dịch vụ công — tuyến chuyển cho câu ngoài phạm vi/nghèo dữ liệu",
+      "note": "Tổng đài dịch vụ công 4 số quốc gia. Xác minh bằng cuộc gọi thử trước demo công khai."
+    },
+    {
+      "id": "bhxh-19009068",
+      "name": "Tổng đài Bảo hiểm xã hội Việt Nam",
+      "label": "Tổng đài Bảo hiểm xã hội Việt Nam",
+      "category": "bhxh",
+      "phone": "1900 9068",
+      "verified": true,
+      "verified_on": "2026-08-17",
+      "purpose": "Tra cứu BHXH/BHYT/bảo hiểm thất nghiệp, chế độ trợ cấp, lương hưu — tuyến chuyển chuyên sâu BHXH",
+      "note": "Tổng đài BHXH Việt Nam. Xác minh bằng cuộc gọi thử trước demo công khai."
+    }
+  ]
+}

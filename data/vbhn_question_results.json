@@ -1,0 +1,140 @@
+[
+  {
+    "question": "Theo Bộ luật Lao động hiện hành, thời giờ làm việc bình thường tối đa bao nhiêu giờ mỗi ngày và mỗi tuần?",
+    "decision": "YELLOW",
+    "answer": "Có ạ. Thời giờ làm việc bình thường tối đa là 08 giờ mỗi ngày và 48 giờ mỗi tuần. Nếu áp dụng thời giờ làm việc theo tuần, tối đa là 10 giờ mỗi ngày và 48 giờ mỗi tuần. Nhà nước khuyến khích tuần làm việc 40 giờ ạ.",
+    "sources": [
+      "boluat45_2019"
+    ],
+    "retrieved": [
+      "nd145_2020",
+      "boluat45_2019",
+      "nd293_2025",
+      "nd283_2026"
+    ],
+    "limitations": []
+  },
+  {
+    "question": "Theo Luật Bảo hiểm xã hội hiện hành, hồ sơ giải quyết hưởng lương hưu gồm những giấy tờ gì?",
+    "decision": "YELLOW",
+    "answer": "Dạ, hồ sơ hưởng lương hưu gồm các giấy tờ sau ạ. Người đang tham gia bảo hiểm xã hội bắt buộc cần sổ bảo hiểm xã hội và bản chính hoặc bản sao văn bản xác định chấm dứt hợp đồng lao động, chấm dứt làm việc; một số đối tượng dùng văn bản đề nghị theo luật. Người đang bảo lưu thời gian đóng cần sổ bảo hiểm xã hội và văn bản đề nghị hưởng lương hưu. Trường hợp suy giảm khả năng lao động hoặc bị nhiễm HIV do tai nạn rủi ro nghề nghiệp, cần nộp thêm giấy tờ chứng minh tương ứng.",
+    "sources": [
+      "luat19_2026"
+    ],
+    "retrieved": [
+      "luat19_2026",
+      "luat19_2026",
+      "luat19_2026",
+      "luat19_2026",
+      "luat19_2026"
+    ],
+    "limitations": []
+  },
+  {
+    "question": "Theo Luật Cư trú hiện hành, đăng ký tạm trú cần nộp hồ sơ ở đâu và gồm giấy tờ gì?",
+    "decision": "YELLOW",
+    "answer": "Dạ, khi đăng ký tạm trú, người đăng ký nộp Tờ khai thay đổi thông tin cư trú tại cơ quan đăng ký cư trú nơi mình dự kiến tạm trú và chuẩn bị giấy tờ, tài liệu chứng minh chỗ ở hợp pháp ạ. Giấy tờ chứng minh chỗ ở hợp pháp có thể là giấy tờ về quyền sử dụng đất, quyền sở hữu nhà ở hoặc hợp đồng, văn bản cho thuê, cho mượn, cho ở nhờ; văn bản cho thuê, cho mượn, cho ở nhờ này không phải công chứng hoặc chứng thực ạ. Trường hợp không có các giấy tờ đó thì dùng văn bản cam kết về chỗ ở của công dân ạ.",
+    "sources": [
+      "luat06_2026",
+      "nd154_2024",
+      "luat06_2026",
+      "luat06_2026",
+      "luat06_2026"
+    ],
+    "retrieved": [
+      "luat06_2026",
+      "nd154_2024",
+      "luat06_2026",
+      "luat06_2026",
+      "luat06_2026"
+    ],
+    "limitations": [
+      "Đây là câu trả lời ngắn dạng kịch bản FAQ — liên hệ cơ quan có thẩm quyền để được hướng dẫn chi tiết cho trường hợp của bạn."
+    ]
+  },
+  {
+    "question": "Theo Luật Nhà ở hiện hành, điều kiện để được mua nhà ở xã hội là gì?",
+    "decision": "YELLOW",
+    "answer": "Chưa đủ căn cứ để nêu đầy đủ điều kiện mua nhà ở xã hội ạ. Theo đoạn luật hiện có, người mua phải chưa có nhà ở thuộc sở hữu tại tỉnh, thành phố nơi có dự án; chưa mua hoặc thuê mua nhà ở xã hội; chưa hưởng chính sách hỗ trợ nhà ở tại địa phương đó. Nếu đã có nhà, diện tích bình quân đầu người phải thấp hơn mức tối thiểu; một số trường hợp còn phải không đang ở nhà công vụ. Các điều kiện khác chưa có trong dữ liệu được cung cấp ạ.",
+    "sources": [
+      "luat27_2023"
+    ],
+    "retrieved": [
+      "luat27_2023",
+      "luat79_2026",
+      "luat102_2026"
+    ],
+    "limitations": [
+      "Đoạn nguồn chưa đầy đủ Điều 78, nên chưa xác định được toàn bộ điều kiện, gồm các nhóm đối tượng và điều kiện khác nếu có."
+    ]
+  },
+  {
+    "question": "Những ai thuộc diện được trợ giúp pháp lý miễn phí theo quy định hiện hành?",
+    "decision": "YELLOW",
+    "answer": "Dạ, có ạ. Những người được trợ giúp pháp lý miễn phí gồm: người có công với cách mạng và thân nhân liệt sĩ; người thuộc hộ nghèo, hộ cận nghèo; người nhiễm chất độc da cam; người khuyết tật; trẻ em; người dân tộc thiểu số thuộc diện luật quy định; một số người hưởng trợ cấp xã hội hằng tháng; người lao động thu nhập thấp là bị can, bị cáo hoặc bị hại theo quy định; người khó khăn đột xuất do thiên tai, hỏa hoạn; người từ đủ 16 đến dưới 18 tuổi trong các vụ việc luật quy định; nạn nhân hoặc người đang xác định là nạn nhân mua bán người và trẻ dưới 18 tuổi đi cùng; cá nhân bị thiệt hại không thuê người bảo vệ quyền lợi trong vụ việc bồi thường nhà nước; người nước ngoài theo điều ước quốc tế; và các trường hợp khác do pháp luật quy định. Người được trợ giúp không phải trả tiền, lợi ích vật chất hoặc lợi ích khác ạ.",
+    "sources": [
+      "luat106_2026"
+    ],
+    "retrieved": [
+      "luat106_2026",
+      "luat106_2026",
+      "luat106_2026",
+      "luat106_2026",
+      "luat106_2026"
+    ],
+    "limitations": [
+      "Nguồn cung cấp không nêu chi tiết tiêu chí của từng nhóm đối tượng."
+    ]
+  },
+  {
+    "question": "Theo Luật Trẻ em, trẻ em có quyền được bảo vệ khỏi những hành vi nào?",
+    "decision": "YELLOW",
+    "answer": "Có ạ. Trẻ em có quyền được bảo vệ khỏi bạo lực, bỏ rơi, bỏ mặc; mua bán, bắt cóc, đánh tráo, chiếm đoạt; và mọi hình thức sử dụng, sản xuất, vận chuyển, mua, bán, tàng trữ trái phép chất ma túy. Luật cũng nghiêm cấm xâm hại tình dục, lạm dụng và bóc lột trẻ em.",
+    "sources": [
+      "luat108_2025",
+      "luat102_2016"
+    ],
+    "retrieved": [
+      "luat108_2025",
+      "luat102_2016",
+      "luat29_2026"
+    ],
+    "limitations": []
+  },
+  {
+    "question": "Tôi muốn xin hộ chiếu gấp trong ngày, cần làm thủ tục ở đâu?",
+    "decision": "YELLOW",
+    "answer": "Đề nghị cấp hộ chiếu phổ thông lần đầu thực hiện tại Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh nơi thường trú hoặc nơi tạm trú; trường hợp có Thẻ căn cước công dân thì thực hiện tại Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh nơi thuận lợi ạ. Người đề nghị nộp tờ khai theo mẫu đã điền đầy đủ thông tin, 02 ảnh chân dung và giấy tờ liên quan; xuất trình Thẻ căn cước công dân hoặc thẻ căn cước, căn cước điện tử hoặc hộ chiếu còn giá trị sử dụng. Trong thời hạn 08 ngày làm việc kể từ ngày tiếp nhận, Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh trả kết quả cho người đề nghị ạ.",
+    "sources": [
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026"
+    ],
+    "retrieved": [
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026",
+      "luat107_2026"
+    ],
+    "limitations": [
+      "Đây là câu trả lời ngắn dạng kịch bản FAQ — liên hệ cơ quan có thẩm quyền để được hướng dẫn chi tiết cho trường hợp của bạn."
+    ]
+  },
+  {
+    "question": "Luật hiện hành quy định thế nào?",
+    "decision": "ORANGE",
+    "answer": null,
+    "sources": [],
+    "retrieved": [
+      "luat19_2026",
+      "luat06_2026",
+      "luat90_2026",
+      "luat64_2025",
+      "luat34_2026"
+    ],
+    "limitations": []
+  }
+]

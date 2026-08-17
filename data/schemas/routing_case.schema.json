@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoutingEvalCase",
+  "description": "One routing evaluation example (R3). expected_zone in YELLOW|ORANGE|RED; expected_action in ANSWER|CLARIFY|GUIDE|REFUSE|ESCALATE.",
+  "type": "object",
+  "required": ["query", "expected_zone", "expected_action"],
+  "properties": {
+    "query": { "type": "string", "minLength": 3 },
+    "expected_zone": { "type": "string", "enum": ["YELLOW", "ORANGE", "RED"] },
+    "expected_action": { "type": "string", "enum": ["ANSWER", "CLARIFY", "GUIDE", "REFUSE", "ESCALATE"] },
+    "notes": { "type": "string" }
+  }
+}

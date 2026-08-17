@@ -1,0 +1,1079 @@
+{
+ "schema": 1,
+ "note": "Voice FAQ (F5) — kịch bản ngắn cho người cao tuổi, khớp không nhạy dấu. Mọi claim được xác minh với nguồn trong corpus trước khi public.",
+ "updated_on": "2026-08-16",
+ "faqs": [
+  {
+   "id": "khai-sinh",
+   "question": "Thủ tục đăng ký khai sinh cho cháu cần những gì?",
+   "keywords": [
+    "khai sinh",
+    "giấy khai sinh",
+    "đăng ký khai sinh"
+   ],
+   "exclude_keywords": [
+    "cải chính",
+    "đổi tên",
+    "sửa tên",
+    "ghi chú",
+    "bị sai",
+    "sửa ở đâu",
+    "làm lại giấy khai sinh"
+   ],
+   "source_ids": [
+    "luat60_2014",
+    "nd123_2015"
+   ],
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP, việc đăng ký khai sinh được thực hiện như sau:\n- Đăng ký trong 60 ngày kể từ khi trẻ được sinh ra, tại Ủy ban nhân dân cấp xã nơi cư trú của người mẹ hoặc người cha.\n- Cần tờ khai đăng ký khai sinh theo mẫu, giấy chứng sinh và xuất trình giấy tờ tùy thân (căn cước công dân) của cha mẹ.\n- Nếu không có giấy chứng sinh thì nộp giấy tờ thay thế theo quy định của Luật Hộ tịch.\nTóm lại, anh/chị làm khai sinh tại Ủy ban nhân dân cấp xã trong 60 ngày, mang theo tờ khai, giấy chứng sinh và giấy tờ tùy thân của cha mẹ ạ.",
+   "spoken_citation": "Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP"
+  },
+  {
+   "id": "ho-khau-moi",
+   "question": "Tách hộ khẩu cho con đi làm xa cần giấy tờ gì?",
+   "keywords": [
+    "tách hộ khẩu",
+    "tách sổ hộ khẩu",
+    "lập hộ mới",
+    "tách hộ"
+   ],
+   "search_text": "tách hộ thành viên hộ gia đình năng lực hành vi dân sự đầy đủ chủ hộ chủ sở hữu chỗ ở hợp pháp đồng ý tờ khai thay đổi thông tin cư trú",
+   "answer_text": "Dạ thưa anh/chị ạ, con anh/chị có thể tách hộ để lập hộ mới. Theo Luật Cư trú, các điều kiện và hồ sơ như sau:\n- Điều kiện: thành viên hộ gia đình có năng lực hành vi dân sự đầy đủ được tách hộ để đăng ký thường trú tại cùng một chỗ ở hợp pháp, và phải được chủ hộ, chủ sở hữu chỗ ở hợp pháp đồng ý.\n- Nếu nhiều thành viên cùng tách thì cử một người có năng lực hành vi dân sự đầy đủ làm chủ hộ.\n- Hồ sơ gồm tờ khai thay đổi thông tin cư trú, trong đó ghi rõ ý kiến đồng ý của chủ hộ và chủ sở hữu chỗ ở hợp pháp.\nTóm lại, con anh/chị tách hộ được khi có năng lực hành vi dân sự đầy đủ, được chủ hộ và chủ sở hữu chỗ ở đồng ý ạ.",
+   "spoken_citation": "Theo Luật Cư trú năm 2020 theo quy định hiện hành",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat06_2026"
+   ]
+  },
+  {
+   "id": "so-do",
+   "question": "Đất chưa có sổ đỏ, làm sổ đỏ lần đầu cần gì?",
+   "keywords": [
+    "sổ đỏ",
+    "giấy chứng nhận quyền sử dụng đất",
+    "cấp giấy chứng nhận",
+    "làm sổ đỏ"
+   ],
+   "search_text": "đăng ký đất đai lần đầu cấp giấy chứng nhận quyền sử dụng đất lần đầu thời hạn giải quyết",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Đất đai năm 2024 và Nghị định 151/2025/NĐ-CP, làm sổ đỏ lần đầu như sau:\n- Hồ sơ gồm đơn đề nghị cấp giấy chứng nhận, giấy tờ về quyền sử dụng đất nếu có, căn cước công dân, và sơ đồ hoặc bản mô tả thửa đất.\n- Nộp tại văn phòng đăng ký đất đai nơi có đất, hoặc qua cổng dịch vụ công.\n- Việc đăng ký đất đai lần đầu, cấp Giấy chứng nhận lần đầu không phụ thuộc địa bàn cấp xã nơi có đất và được giải quyết không quá 17 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ.\nTóm lại, anh/chị chuẩn bị đơn đề nghị, giấy tờ về đất và căn cước công dân, nộp tại văn phòng đăng ký đất đai hoặc cổng dịch vụ công, thời gian giải quyết không quá 17 ngày làm việc ạ.",
+   "spoken_citation": "Theo Luật Đất đai năm 2024 và Nghị định 151/2025/NĐ-CP",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat133_2025",
+    "nd151_2025"
+   ]
+  },
+  {
+   "id": "ho-ngheo",
+   "question": "Xin xác nhận hộ nghèo để con được miễn giảm học phí cần làm gì?",
+   "keywords": [
+    "hộ nghèo",
+    "xác nhận hộ nghèo",
+    "hộ cận nghèo"
+   ],
+   "search_text": "hộ nghèo hộ cận nghèo chuẩn nghèo học phí giảm",
+   "answer_text": "Dạ thưa anh/chị ạ. Việc xác nhận hộ nghèo để hưởng chính sách miễn giảm học phí như sau:\n- Hộ nghèo, hộ cận nghèo được xác định theo chuẩn nghèo do Chính phủ quy định và kết quả rà soát định kỳ của xã.\n- Giấy xác nhận hộ nghèo do Ủy ban nhân dân xã xác nhận, dùng làm cơ sở hưởng các chính sách hỗ trợ theo quy định.\n- Trẻ em thuộc hộ nghèo, hộ cận nghèo được tiếp cận giáo dục phổ cập, giáo dục hòa nhập và được hưởng chính sách hỗ trợ, trong đó có miễn, giảm học phí.\n- Anh/chị đến Ủy ban nhân dân xã nơi cư trú để kiểm tra danh sách và xin giấy xác nhận.\nTóm lại, anh/chị đến Ủy ban nhân dân xã nơi cư trú xin giấy xác nhận hộ nghèo để con được hưởng chính sách miễn, giảm học phí ạ.",
+   "spoken_citation": "Theo Nghị định quy định chuẩn nghèo đa chiều hiện hành",
+   "exclude_keywords": [],
+   "source_ids": [
+    "nd351_2025"
+   ]
+  },
+  {
+   "id": "cccd",
+   "question": "Bố mẹ trên 60 tuổi cấp căn cước công dân mới ở đâu?",
+   "keywords": [
+    "căn cước công dân",
+    "cấp căn cước",
+    "thẻ căn cước"
+   ],
+   "exclude_keywords": [
+    "cấp lại",
+    "bị mất",
+    "hết hạn",
+    "làm lại thẻ",
+    "làm lại căn cước"
+   ],
+   "source_ids": [
+    "luat09_2026"
+   ],
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Căn cước năm 2023, việc cấp thẻ căn cước như sau:\n- Từ ngày 1 tháng 7 năm 2024, người từ 14 tuổi trở lên được cấp thẻ căn cước, miễn lệ phí khi cấp lần đầu.\n- Làm tại cơ quan quản lý căn cước (công an cấp huyện) hoặc qua cổng dịch vụ công; một số nơi công an cấp xã tiếp nhận hồ sơ.\n- Xuất trình căn cước cũ (nếu đổi) và giấy tờ xác nhận nơi cư trú nếu cần.\nTóm lại, bố mẹ anh/chị làm thẻ căn cước tại công an cấp huyện hoặc qua cổng dịch vụ công, được miễn lệ phí khi cấp lần đầu ạ.",
+   "spoken_citation": "Theo Luật Căn cước năm 2023"
+  },
+  {
+   "id": "bhxh",
+   "question": "Lương hưu của ông chưa được nhận 2 tháng, phải làm sao?",
+   "keywords": [
+    "lương hưu",
+    "nhận lương hưu",
+    "trợ cấp hưu trí",
+    "nhận lương"
+   ],
+   "exclude_keywords": [
+    "hồ sơ",
+    "giấy tờ",
+    "đề nghị hưởng",
+    "thủ tục hưởng",
+    "bao nhiêu tuổi",
+    "bao nhiêu năm đóng",
+    "15 năm",
+    "điều kiện hưởng",
+    "mấy năm đóng",
+    "đóng bao nhiêu năm",
+    "cách tính",
+    "công thức tính",
+    "tính lương hưu",
+    "tính tiền lương",
+    "bao nhiêu tiền lương hưu"
+   ],
+   "source_ids": [
+    "luat19_2026"
+   ],
+   "answer_text": "Dạ vâng ạ. Theo Luật Bảo hiểm xã hội năm 2024, trường hợp chưa nhận được lương hưu như sau:\n- Lương hưu có thể bị tạm dừng hưởng khi người đang hưởng xuất cảnh trái phép, bị Tòa án tuyên bố mất tích, hoặc khi chưa xác minh được thông tin người thụ hưởng.\n- Hết các căn cứ đó thì người đang hưởng được tiếp tục hưởng lương hưu và được nhận lại số tiền của thời gian chưa nhận.\n- Đề nghị tiếp tục hưởng nộp hồ sơ cho cơ quan bảo hiểm xã hội; trong thời hạn 10 ngày làm việc kể từ khi nhận đủ hồ sơ, cơ quan bảo hiểm xã hội có trách nhiệm giải quyết.\nTóm lại, anh/chị liên hệ cơ quan bảo hiểm xã hội nơi đang chi trả để kiểm tra thông tin cụ thể cho trường hợp của bố anh/chị nhé.",
+   "spoken_citation": "Theo Luật Bảo hiểm xã hội năm 2024",
+   "search_text": "tạm dừng hưởng lương hưu trợ cấp bảo hiểm xã hội hằng tháng xuất cảnh trái phép tòa án tuyên bố mất tích không xác minh được thông tin người thụ hưởng tiếp tục hưởng nhận lương hưu trợ cấp của những tháng chưa nhận thay đổi hình thức nhận hoặc thay đổi nơi nhận do chuyển nơi cư trú 05 ngày làm việc cơ quan bảo hiểm xã hội nơi đang chi trả người thụ hưởng "
+  },
+  {
+   "id": "kham-chua-benh",
+   "question": "Khám chữa bệnh bằng bảo hiểm y tế ở tuyến xã cần mang gì?",
+   "keywords": [
+    "bảo hiểm y tế",
+    "khám chữa bệnh",
+    "thẻ bảo hiểm"
+   ],
+   "exclude_keywords": [
+    "mua bảo hiểm",
+    "mua bhyt",
+    "mua bảo hiểm y tế",
+    "đăng ký mua",
+    "nộp tiền bảo hiểm",
+    "người cao tuổi",
+    "người già"
+   ],
+   "source_ids": [
+    "luat40_2026"
+   ],
+   "search_text": "khám chữa bệnh bảo hiểm y tế thẻ bảo hiểm y tế giấy tờ tùy thân cơ sở khám chữa bệnh cấp ban đầu mức hưởng chi phí khám chữa bệnh",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Bảo hiểm y tế, khám chữa bệnh bằng bảo hiểm y tế ở tuyến xã như sau:\n- Người đi khám chữa bệnh mang thẻ bảo hiểm y tế và giấy tờ tùy thân có ảnh.\n- Tại trạm y tế xã (cơ sở khám chữa bệnh cấp ban đầu), người bệnh được quỹ bảo hiểm y tế thanh toán chi phí khám chữa bệnh trong phạm vi được hưởng theo mức hưởng quy định.\nTóm lại, anh/chị chỉ cần mang thẻ bảo hiểm y tế và giấy tờ tùy thân có ảnh khi đi khám ở trạm y tế xã ạ.",
+   "spoken_citation": "Theo Luật Bảo hiểm y tế (sửa đổi, bổ sung)"
+  },
+  {
+   "id": "tro-cap-xa-hoi",
+   "question": "Người già neo đơn có được hưởng trợ cấp xã hội không?",
+   "keywords": [
+    "trợ cấp xã hội",
+    "người cao tuổi neo đơn",
+    "trợ cấp người già",
+    "trợ cấp hưu trí xã hội"
+   ],
+   "exclude_keywords": [
+    "trẻ em",
+    "trẻ mồ côi",
+    "mồ côi",
+    "khuyết tật"
+   ],
+   "source_ids": [
+    "luat19_2026",
+    "nd176_2025"
+   ],
+   "search_text": "trợ cấp hưu trí xã hội người cao tuổi từ đủ 75 tuổi hộ nghèo cận nghèo 70 tuổi mức trợ cấp hằng tháng",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật Bảo hiểm xã hội năm 2024 và Nghị định 176/2025/NĐ-CP, trợ cấp hưu trí xã hội như sau:\n- Người cao tuổi từ đủ 75 tuổi trở lên không hưởng lương hưu, trợ cấp bảo hiểm xã hội hằng tháng được hưởng trợ cấp hưu trí xã hội hằng tháng.\n- Người từ đủ 70 tuổi đến dưới 75 tuổi thuộc hộ nghèo, hộ cận nghèo cũng được hưởng.\n- Mức trợ cấp hằng tháng theo quy định của Chính phủ.\n- Người đề nghị có văn bản đề nghị hưởng theo mẫu gửi Ủy ban nhân dân cấp xã nơi cư trú, kèm giấy tờ theo quy định.\nTóm lại, người cao tuổi từ đủ 75 tuổi không hưởng lương hưu, hoặc từ đủ 70 tuổi thuộc hộ nghèo, hộ cận nghèo, được hưởng trợ cấp hưu trí xã hội hằng tháng; anh/chị gửi văn bản đề nghị tại Ủy ban nhân dân cấp xã ạ.",
+   "spoken_citation": "Theo Luật Bảo hiểm xã hội năm 2024 và Nghị định 176/2025/NĐ-CP"
+  },
+  {
+   "id": "sang-ten-xe",
+   "question": "Sang tên chiếc xe máy cho con cần thủ tục gì?",
+   "keywords": [
+    "sang tên xe",
+    "đăng ký xe máy",
+    "sang tên xe máy",
+    "sang tên chiếc xe",
+    "sang ten xe may cho con"
+   ],
+   "search_text": "thay đổi chủ xe cấp lại chứng nhận đăng ký xe chuyển quyền sở hữu",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo quy định hiện hành về đăng ký xe, sang tên xe như sau:\n- Khi chuyển quyền sở hữu xe (mua bán, tặng cho, thừa kế), chủ xe mới phải làm thủ tục đăng ký, cấp lại chứng nhận đăng ký xe, biển số xe.\n- Xe chuyển quyền sở hữu thuộc trường hợp thu hồi chứng nhận đăng ký xe theo quy định.\n- Trình tự, thủ tục do Bộ trưởng Bộ Công an quy định; anh/chị liên hệ cơ quan công an nơi đăng ký xe để được hướng dẫn bộ hồ sơ cụ thể, gồm hợp đồng mua bán hoặc tặng cho, giấy tờ tùy thân, đăng ký xe cũ.\nTóm lại, khi sang tên xe, anh/chị liên hệ cơ quan công an nơi đăng ký xe để làm thủ tục cấp lại đăng ký xe, biển số xe cho chủ mới ạ.",
+   "spoken_citation": "Theo Thông tư hướng dẫn đăng ký xe hiện hành",
+   "exclude_keywords": [],
+   "source_ids": [
+    "tt79_2024"
+   ]
+  },
+  {
+   "id": "thua-ke",
+   "question": "Đất của bố mẹ để lại chưa làm thủ tục thừa kế, nên làm gì?",
+   "keywords": [
+    "thừa kế",
+    "thừa kế đất",
+    "di sản để lại"
+   ],
+   "search_text": "thừa kế quyền sử dụng đất di sản khai nhận di sản thỏa thuận phân chia di sản đăng ký biến động",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Bộ luật Dân sự năm 2015 và Luật Đất đai năm 2024, việc nhận thừa kế đất như sau:\n- Di sản gồm quyền sử dụng đất và tài sản khác.\n- Người thừa kế làm văn bản khai nhận di sản, và nếu thống nhất được thì thỏa thuận phân chia di sản theo quy định của Bộ luật Dân sự.\n- Sau đó đăng ký quyền sử dụng đất, thực hiện thủ tục biến động tại cơ quan đăng ký đất đai theo quy định của Luật Đất đai.\n- Nếu không thỏa thuận được, việc phân chia thực hiện theo quy định về thừa kế của pháp luật dân sự.\nTóm lại, anh/chị cần làm văn bản khai nhận di sản, thỏa thuận phân chia di sản rồi đăng ký biến động đất đai tại cơ quan đăng ký đất đai ạ.",
+   "spoken_citation": "Theo Bộ luật Dân sự năm 2015 và Luật Đất đai năm 2024",
+   "exclude_keywords": [],
+   "source_ids": [
+    "boluat91_2015",
+    "luat133_2025"
+   ]
+  },
+  {
+   "id": "khieu-nai",
+   "question": "Bị xã từ chối hồ sơ hộ nghèo, ông khiếu nại ở đâu?",
+   "keywords": [
+    "khiếu nại",
+    "khiếu nại xã",
+    "khiếu nại hành chính",
+    "khiếu nại lần hai"
+   ],
+    "search_text": "Luật Khiếu nại khiếu nại quyết định hành chính lần đầu lần hai thời hiệu 90 ngày kể từ ngày nhận được quyết định Chủ tịch Ủy ban nhân dân cấp xã",
+   "answer_text": "Dạ thưa ông ạ. Theo Luật Khiếu nại, việc khiếu nại quyết định hành chính của xã như sau:\n- Ông có quyền khiếu nại trong thời hiệu 90 ngày kể từ ngày nhận được quyết định hoặc biết được quyết định đó.\n- Đơn khiếu nại lần đầu ông gửi đến Chủ tịch Ủy ban nhân dân cấp xã — người đã ra quyết định.\nTóm lại, ông làm đơn khiếu nại gửi Chủ tịch Ủy ban nhân dân cấp xã trong thời hạn 90 ngày kể từ ngày nhận quyết định ạ.",
+   "spoken_citation": "Theo Luật Khiếu nại năm 2011, được sửa đổi, bổ sung năm 2025",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat28_2026"
+   ]
+  },
+  {
+   "id": "xac-nhan-hon-nhan",
+   "question": "Xác nhận tình trạng hôn nhân mất bao lâu?",
+   "keywords": [
+    "xác nhận tình trạng hôn nhân",
+    "giấy xác nhận hôn nhân",
+    "hôn nhân mất bao lâu"
+   ],
+   "search_text": "cấp giấy xác nhận tình trạng hôn nhân Ủy ban nhân dân cấp xã nơi thường trú tạm trú giá trị 6 tháng thủ tục",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 123/2015/NĐ-CP, việc cấp giấy xác nhận tình trạng hôn nhân như sau:\n- Giấy xác nhận tình trạng hôn nhân do Ủy ban nhân dân cấp xã nơi thường trú của công dân cấp; trường hợp không có nơi thường trú thì Ủy ban nhân dân cấp xã nơi đăng ký tạm trú cấp.\n- Giấy có giá trị 06 tháng kể từ ngày cấp.\n- Sau khi nhận đủ hồ sơ hợp lệ, công chức tư pháp - hộ tịch kiểm tra và trình Chủ tịch Ủy ban nhân dân cấp xã ký cấp.\nTóm lại, anh/chị xin giấy xác nhận tình trạng hôn nhân tại Ủy ban nhân dân cấp xã nơi thường trú hoặc tạm trú, giấy có giá trị 6 tháng ạ.",
+   "spoken_citation": "Theo Nghị định 123/2015/NĐ-CP và Luật Hôn nhân và Gia đình",
+   "exclude_keywords": [],
+   "source_ids": [
+    "nd123_2015",
+    "luat121_2025"
+   ]
+  },
+  {
+   "id": "quyen-loi-cao-tuoi-bhyt",
+   "question": "Người cao tuổi được quyền lợi gì khi khám BHYT?",
+   "keywords": [
+    "người cao tuổi bảo hiểm y tế",
+    "quyền lợi người già BHYT",
+    "khám bệnh người cao tuổi",
+    "quyền lợi người cao tuổi bhyt",
+    "bhyt người cao tuổi",
+    "khám bhyt",
+    "quyền lợi khi khám bảo hiểm",
+    "người cao tuổi khám bệnh",
+    "khám chữa bệnh"
+   ],
+   "search_text": "người từ đủ 80 tuổi trở lên được ưu tiên khám trước người bệnh khác trừ bệnh nhân cấp cứu trẻ em dưới 6 tuổi khám bệnh chữa bệnh mức hưởng 100% chi phí cơ sở khám bệnh chữa bệnh thuộc cấp khám chữa bệnh ban đầu trạm y tế xã 100% chi phí đối với đối tượng quy định tại các điểm a b c d đ e h i o r và s khoản 3 Điều 12 người cao tuổi được hưởng bảo hiểm y tế do ngân sách nhà nước đóng trợ cấp hưu trí xã hội hộ nghèo không có người có nghĩa vụ và quyền phụng dưỡng ",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Người cao tuổi và Luật Bảo hiểm y tế, quyền lợi của người cao tuổi khi khám BHYT như sau:\n- Mức hưởng phụ thuộc vào nhóm quyền lợi ghi trên thẻ và cơ sở khám bệnh: tại cơ sở cấp ban đầu như trạm y tế xã, quỹ BHYT chi trả 100% chi phí khám chữa bệnh trong phạm vi được hưởng; ở tuyến khác, mức hưởng xác định theo nhóm đối tượng quy định.\n- Người từ đủ 80 tuổi trở lên khi khám chữa bệnh được ưu tiên khám trước người bệnh khác, trừ bệnh nhân cấp cứu và trẻ em dưới 6 tuổi.\n- Người cao tuổi thuộc diện bảo trợ xã hội (hộ nghèo không người phụng dưỡng, từ đủ 80 tuổi không lương hưu, trợ cấp...) được hưởng BHYT do ngân sách nhà nước đóng.\nTóm lại, anh/chị mang theo thẻ BHYT và căn cước công dân khi đi khám chữa bệnh; người từ đủ 80 tuổi còn được ưu tiên khám trước nhé.",
+   "spoken_citation": "Theo Luật Người cao tuổi và Luật Bảo hiểm y tế",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat23_2026",
+    "luat40_2026"
+   ]
+  },
+  {
+   "id": "ly-hon",
+   "question": "Thủ tục ly hôn cần những giấy tờ gì?",
+   "keywords": [
+    "ly hôn",
+    "thủ tục ly hôn",
+    "giấy tờ ly hôn",
+    "đăng ký ly hôn",
+    "xu ly ly hon"
+   ],
+   "exclude_keywords": [
+    "cấp dưỡng",
+    "nuôi con",
+    "tài sản chung",
+    "chia tài sản"
+   ],
+   "source_ids": [
+    "luat121_2025",
+    "boluat99_2025"
+   ],
+   "search_text": "ly hôn thuận tình ly hôn theo yêu cầu của một bên Tòa án hòa giải công nhận thuận tình ly hôn đơn khởi kiện ly hôn",
+   "answer_text": "Dạ thưa anh/chị ạ. Ly hôn do Tòa án nhân dân giải quyết, gồm hai trường hợp:\n- Ly hôn thuận tình: vợ chồng cùng yêu cầu, tự nguyện và đã thỏa thuận về con, tài sản; Tòa án hòa giải rồi ra quyết định công nhận thuận tình ly hôn. Hồ sơ gồm đơn yêu cầu công nhận thuận tình ly hôn, Giấy chứng nhận kết hôn, thỏa thuận về con, tài sản (nếu có) và giấy tờ tùy thân.\n- Ly hôn theo yêu cầu của một bên: vợ chồng không thỏa thuận được, một bên yêu cầu ly hôn thì nộp đơn khởi kiện tại Tòa án nhân dân có thẩm quyền; nếu hòa giải không thành và có căn cứ theo quy định của Luật Hôn nhân và Gia đình thì Tòa án giải quyết cho ly hôn.\nTóm lại, anh/chị nộp hồ sơ tại Tòa án nhân dân có thẩm quyền; thuận tình thì làm đơn yêu cầu công nhận thuận tình ly hôn, không thỏa thuận được thì nộp đơn khởi kiện ạ.",
+   "spoken_citation": "Theo Luật Hôn nhân và Gia đình và pháp luật về tố tụng dân sự"
+  },
+  {
+   "id": "ket-hon",
+   "question": "Đăng ký kết hôn cần giấy tờ gì?",
+   "keywords": [
+    "kết hôn",
+    "đăng ký kết hôn",
+    "giấy tờ kết hôn",
+    "hồ sơ kết hôn",
+    "ket hon can giay to"
+   ],
+   "exclude_keywords": [
+    "quốc tịch",
+    "nhập quốc tịch",
+    "có vợ",
+    "đang có vợ",
+    "có chồng",
+    "vi phạm",
+    "ngoại tình",
+    "nước ngoài",
+    "người nước ngoài",
+    "với người nước ngoài"
+   ],
+   "source_ids": [
+    "luat121_2025",
+    "nd123_2015"
+   ],
+   "search_text": "đăng ký kết hôn Ủy ban nhân dân cấp xã nơi cư trú của bên nam hoặc bên nữ điều kiện kết hôn nam từ đủ 20 tuổi nữ từ đủ 18 tuổi tờ khai đăng ký kết hôn giấy xác nhận tình trạng hôn nhân",
+   "answer_text": "Dạ, tụi em hiểu ạ. Để cưới mình chuẩn bị giấy tờ trước nhé. Theo Luật Hôn nhân và Gia đình và Nghị định 123/2015/NĐ-CP:\n- Nơi đăng ký: Ủy ban nhân dân cấp xã nơi cư trú của bên nam hoặc bên nữ, hai bên thống nhất chọn một nơi là được.\n- Điều kiện: nam từ đủ 20 tuổi, nữ từ đủ 18, hai bên tự nguyện và không thuộc trường hợp bị cấm kết hôn.\n- Hồ sơ gồm tờ khai đăng ký kết hôn, giấy xác nhận tình trạng hôn nhân của hai bên, và nhớ mang theo giấy tờ tùy thân khi đến.\nTóm lại, hai bên đăng ký tại Ủy ban nhân dân cấp xã nơi cư trú với tờ khai, giấy xác nhận tình trạng hôn nhân và giấy tờ tùy thân ạ. Anh/chị kết hôn với người nước ngoài hay trong nước để em hướng dẫn thêm cho chính xác nhé?",
+   "spoken_citation": "Theo Luật Hôn nhân và Gia đình và Nghị định 123/2015/NĐ-CP"
+  },
+  {
+   "id": "dat-nong-nghiep-chuyen-doi",
+   "question": "Đất nông nghiệp được chuyển đổi mục đích sử dụng không?",
+   "keywords": [
+    "dat nong nghiep chuyen doi",
+    "chuyen doi dat nong nghiep",
+    "muc dich su dung dat",
+    "dat nong nghiep",
+    "chuyen doi dat",
+    "doi muc dich su dung"
+   ],
+   "answer_text": "Dạ thưa anh/chị ạ, được ạ. Theo Luật Đất đai năm 2024, chuyển mục đích sử dụng đất nông nghiệp như sau:\n- Đất nông nghiệp có thể chuyển mục đích sử dụng sang mục đích khác khi được cơ quan nhà nước có thẩm quyền cho phép và phù hợp với quy hoạch, kế hoạch sử dụng đất đã được phê duyệt.\n- Ủy ban nhân dân cấp huyện quyết định cho phép chuyển mục đích sử dụng đất đối với cá nhân.\n- Người sử dụng đất nộp hồ sơ đề nghị tại cơ quan đăng ký đất đai nơi có đất hoặc qua cổng dịch vụ công, kèm giấy chứng nhận quyền sử dụng đất.\n- Trường hợp chuyển sang đất ở phải nộp tiền sử dụng đất theo quy định.\nTóm lại, đất nông nghiệp được chuyển mục đích khi được Ủy ban nhân dân cấp huyện cho phép; anh/chị nộp hồ sơ tại cơ quan đăng ký đất đai nơi có đất ạ.",
+   "spoken_citation": "Theo Luật Đất đai năm 2024 và văn bản hướng dẫn",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat133_2025"
+   ]
+  },
+  {
+   "id": "cai-chinh-hon-tich",
+   "question": "Tên trong giấy khai sinh bị sai thì sửa ở đâu?",
+   "keywords": [
+    "cải chính",
+    "cải chính hộ tịch",
+    "sửa ở đâu",
+    "sửa tên",
+    "bị sai",
+    "tên bị sai",
+    "sửa lại tên",
+    "thay đổi họ tên"
+   ],
+   "exclude_keywords": [
+    "đăng ký khai sinh mới",
+    "khai sinh muộn",
+    "quá hạn"
+   ],
+   "source_ids": [
+    "nd123_2015",
+    "luat60_2014"
+   ],
+   "search_text": "cải chính hộ tịch chỉnh sửa thông tin cá nhân sổ hộ tịch bản chính giấy tờ hộ tịch sai sót công chức hộ tịch",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 123/2015/NĐ-CP và Luật Hộ tịch, sửa tên trong giấy khai sinh như sau:\n- Anh/chị làm thủ tục cải chính hộ tịch — chỉnh sửa thông tin cá nhân trong Sổ hộ tịch hoặc trong bản chính giấy tờ hộ tịch.\n- Việc cải chính chỉ được thực hiện khi có đủ căn cứ xác định có sai sót do lỗi của công chức làm công tác hộ tịch hoặc của người yêu cầu đăng ký hộ tịch.\n- Hồ sơ nộp tại cơ quan đăng ký hộ tịch có thẩm quyền, có thể nộp trực tiếp, trực tuyến hoặc qua dịch vụ bưu chính.\nTóm lại, anh/chị làm thủ tục cải chính hộ tịch tại cơ quan đăng ký hộ tịch có thẩm quyền khi có căn cứ sai sót ạ.",
+   "spoken_citation": "Theo Nghị định 123/2015/NĐ-CP và Luật Hộ tịch năm 2026"
+  },
+  {
+   "id": "tro-giup-phap-ly",
+   "question": "Người nghèo có được trợ giúp pháp lý miễn phí không?",
+   "keywords": [
+    "trợ giúp pháp lý",
+    "trợ giúp pháp luật",
+    "luật sư miễn phí",
+    "miễn phí luật sư",
+    "người nghèo luật sư",
+    "trung tâm trợ giúp pháp lý"
+   ],
+   "exclude_keywords": [
+    "phiếu trợ giúp",
+    "trợ giúp xã hội",
+    "những ai",
+    "ai được",
+    "đối tượng",
+    "diện được",
+    "các nhóm"
+   ],
+   "source_ids": [
+    "luat106_2026"
+   ],
+   "search_text": "trợ giúp pháp lý miễn phí người thuộc hộ nghèo đối tượng được trợ giúp pháp lý Trung tâm trợ giúp pháp lý nhà nước Sở Tư pháp",
+   "answer_text": "Dạ thưa anh/chị ạ, được ạ. Theo Luật Trợ giúp pháp lý năm 2017:\n- Người thuộc hộ nghèo là đối tượng được trợ giúp pháp lý, và trợ giúp pháp lý là việc cung cấp dịch vụ pháp lý miễn phí.\n- Tổ chức thực hiện gồm Trung tâm trợ giúp pháp lý nhà nước và tổ chức tham gia trợ giúp pháp lý.\n- Danh sách, địa chỉ các tổ chức này do Sở Tư pháp công bố, đăng tải trên trang thông tin điện tử của Sở Tư pháp.\nTóm lại, anh/chị liên hệ Trung tâm trợ giúp pháp lý nhà nước hoặc tổ chức tham gia trợ giúp pháp lý nơi cư trú để được hướng dẫn miễn phí ạ.",
+   "spoken_citation": "Theo Luật Trợ giúp pháp lý năm 2017"
+  },
+  {
+   "id": "tro-giup-phap-ly-doi-tuong",
+   "question": "Những ai thuộc diện được trợ giúp pháp lý miễn phí?",
+   "keywords": [
+    "những ai được trợ giúp pháp lý",
+    "những ai thuộc diện được trợ giúp pháp lý",
+    "ai được trợ giúp pháp lý miễn phí",
+    "đối tượng được trợ giúp pháp lý",
+    "diện được trợ giúp pháp lý"
+   ],
+   "exclude_keywords": [],
+   "search_text": "Điều 7 người được trợ giúp pháp lý người có công với cách mạng người thuộc hộ nghèo trẻ em người khuyết tật người dân tộc thiểu số nạn nhân mua bán người",
+   "answer_text": "Dạ, theo Luật Trợ giúp pháp lý năm 2017, những người thuộc diện được trợ giúp pháp lý miễn phí gồm:\n- Người có công với cách mạng và thân nhân liệt sĩ; người thuộc hộ nghèo, hộ cận nghèo.\n- Người nhiễm chất độc da cam; người khuyết tật; trẻ em.\n- Người dân tộc thiểu số thuộc diện luật quy định; một số người hưởng trợ cấp xã hội hằng tháng.\n- Người lao động thu nhập thấp trong các vụ việc luật quy định; người khó khăn đột xuất do thiên tai, hỏa hoạn.\n- Nạn nhân hoặc người đang xác định là nạn nhân mua bán người, và các trường hợp khác theo quy định pháp luật.\nTóm lại, trợ giúp pháp lý miễn phí dành cho các nhóm đối tượng theo quy định, trong đó có người nghèo, người có công, trẻ em, người khuyết tật, người dân tộc thiểu số và nạn nhân mua bán người ạ.",
+   "source_ids": [
+    "luat106_2026"
+   ],
+   "spoken_citation": "Theo Luật Trợ giúp pháp lý năm 2017"
+  },
+  {
+   "id": "vuot-den-do",
+   "question": "Vượt đèn đỏ bị phạt bao nhiêu tiền?",
+   "keywords": [
+    "vượt đèn đỏ",
+    "đèn đỏ",
+    "phạt đèn đỏ",
+     "không chấp hành hiệu lệnh đèn tín hiệu"
+   ],
+    "search_text": "Nghị định 168/2024 không chấp hành hiệu lệnh của đèn tín hiệu giao thông người điều khiển xe ô tô phạt tiền từ 18.000.000 đồng đến 20.000.000 đồng trừ điểm phục hồi điểm giấy phép lái xe",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 168/2024/NĐ-CP, hành vi không chấp hành hiệu lệnh của đèn tín hiệu giao thông (vượt đèn đỏ) bị xử phạt như sau:\n- Người điều khiển xe ô tô: phạt tiền từ 18 triệu đến 20 triệu đồng.\n- Người điều khiển xe mô tô, xe gắn máy: phạt tiền từ 4 triệu đến 6 triệu đồng.\n- Ngoài ra còn bị áp dụng hình thức xử phạt bổ sung, biện pháp khắc phục hậu quả theo quy định của Nghị định này.\nTóm lại, vượt đèn đỏ bị phạt từ 18 đến 20 triệu đồng với ô tô, từ 4 đến 6 triệu đồng với xe máy, kèm hình thức xử phạt bổ sung ạ.",
+   "spoken_citation": "Theo Nghị định 168/2024/NĐ-CP",
+   "exclude_keywords": [],
+   "source_ids": [
+    "nd168_2024"
+   ]
+  },
+  {
+   "id": "to-cao",
+   "question": "Phát hiện cán bộ nhận hối lộ thì tố cáo ở đâu?",
+   "keywords": [
+    "tố cáo",
+    "nhận hối lộ",
+    "hối lộ",
+    "tố cáo cán bộ",
+    "tố cáo công chức"
+   ],
+   "exclude_keywords": [
+    "tố giác tội phạm mất cắp",
+    "tố cáo hàng xóm"
+   ],
+   "source_ids": [
+    "luat29_2026"
+   ],
+    "search_text": "Luật Tố cáo tố cáo hành vi vi phạm pháp luật trong việc thực hiện nhiệm vụ công vụ thẩm quyền giải quyết tố cáo Chủ tịch Ủy ban nhân dân cấp xã cán bộ công chức",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Tố cáo, việc tố cáo cán bộ nhận hối lộ như sau:\n- Hành vi nhận hối lộ của cán bộ là hành vi vi phạm pháp luật trong việc thực hiện nhiệm vụ, công vụ, anh/chị có thể tố cáo theo Luật Tố cáo.\n- Chủ tịch Ủy ban nhân dân cấp xã giải quyết tố cáo đối với cán bộ, công chức do mình quản lý trực tiếp.\n- Thời hạn giải quyết không quá 30 ngày kể từ ngày thụ lý; vụ việc phức tạp có thể gia hạn một lần nhưng không quá 30 ngày.\n- Trường hợp hành vi có dấu hiệu tội phạm thì việc tiếp nhận, giải quyết tố giác, tin báo về tội phạm được thực hiện theo pháp luật về tố tụng hình sự.\nTóm lại, anh/chị gửi đơn tố cáo đến Chủ tịch Ủy ban nhân dân cấp xã, thời hạn giải quyết không quá 30 ngày; nếu có dấu hiệu tội phạm thì chuyển sang tố giác theo tố tụng hình sự ạ.",
+   "spoken_citation": "Theo Luật Tố cáo năm 2018"
+  },
+  {
+   "id": "ho-chieu",
+   "question": "Làm hộ chiếu phổ thông ở đâu, cần giấy tờ gì?",
+   "keywords": [
+    "hộ chiếu",
+    "làm hộ chiếu",
+    "cấp hộ chiếu",
+    "hộ chiếu phổ thông"
+   ],
+   "exclude_keywords": [
+    "mất hộ chiếu",
+    "hết hạn",
+    "gia hạn hộ chiếu"
+   ],
+   "source_ids": [
+    "luat107_2026"
+   ],
+   "search_text": "cấp hộ chiếu phổ thông lần đầu tờ khai ảnh chân dung giấy tờ liên quan Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh nơi thường trú nơi tạm trú 08 ngày làm việc",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Xuất cảnh, nhập cảnh của công dân Việt Nam, cấp hộ chiếu phổ thông lần đầu như sau:\n- Nơi nộp: Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh nơi thường trú hoặc nơi tạm trú; trường hợp có Thẻ căn cước công dân thì thực hiện tại nơi thuận lợi.\n- Hồ sơ gồm tờ khai theo mẫu đã điền đầy đủ thông tin, 02 ảnh chân dung và giấy tờ liên quan; xuất trình Thẻ căn cước công dân hoặc thẻ căn cước, căn cước điện tử hoặc hộ chiếu còn giá trị sử dụng.\n- Trong thời hạn 08 ngày làm việc kể từ ngày tiếp nhận, Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh trả kết quả.\nTóm lại, anh/chị nộp tờ khai, 2 ảnh chân dung và giấy tờ liên quan tại Cơ quan Quản lý xuất nhập cảnh Công an cấp tỉnh, kết quả trả trong 8 ngày làm việc ạ.",
+   "spoken_citation": "Theo Luật Xuất cảnh, nhập cảnh của công dân Việt Nam năm 2019"
+  },
+  {
+   "id": "hop-dong-lao-dong",
+   "question": "Công ty không ký hợp đồng lao động có đúng luật không?",
+   "keywords": [
+    "hợp đồng lao động",
+    "không ký hợp đồng lao động",
+    "không ký hợp đồng",
+    "khong ky hop dong"
+   ],
+   "exclude_keywords": [
+    "chấm dứt hợp đồng",
+    "đơn phương chấm dứt"
+   ],
+   "source_ids": [
+    "boluat18_2026"
+   ],
+   "search_text": "giao kết hợp đồng lao động trước khi nhận vào làm việc bằng văn bản bằng lời nói thời hạn dưới 01 tháng",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Bộ luật Lao động, việc giao kết hợp đồng lao động như sau:\n- Người sử dụng lao động phải giao kết hợp đồng lao động với người lao động trước khi nhận vào làm việc.\n- Hợp đồng lao động phải được giao kết bằng văn bản, trừ trường hợp pháp luật cho phép giao kết bằng hình thức khác.\n- Hai bên có thể giao kết bằng lời nói đối với hợp đồng có thời hạn dưới 01 tháng, trừ các trường hợp quy định.\nTóm lại, ngoài trường hợp ngoại lệ nêu trên, việc công ty không ký hợp đồng lao động là không đúng quy định ạ.",
+   "spoken_citation": "Theo Bộ luật Lao động năm 2019"
+  },
+  {
+   "id": "thanh-lap-bao-chi",
+   "question": "Ai được phép thành lập cơ quan báo chí?",
+   "keywords": [
+    "thành lập cơ quan báo chí",
+    "thành lập báo",
+    "cơ quan báo chí",
+    "mở báo"
+   ],
+   "search_text": "điều kiện cấp giấy phép hoạt động báo chí cơ quan của Đảng nhà nước Mặt trận Tổ quốc tổ chức chính trị xã hội từ cấp tỉnh trở lên cơ sở giáo dục đại học tạp chí",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Báo chí, được đề nghị cấp giấy phép hoạt động báo chí gồm:\n- Cơ quan của Đảng, cơ quan nhà nước, Mặt trận Tổ quốc Việt Nam, tổ chức chính trị - xã hội, tổ chức chính trị xã hội - nghề nghiệp, tổ chức xã hội, tổ chức xã hội - nghề nghiệp, tổ chức tôn giáo từ cấp tỉnh hoặc tương đương trở lên, hoạt động hợp pháp.\n- Cơ sở giáo dục đại học, tổ chức khoa học và công nghệ được tổ chức dưới hình thức viện hàn lâm, viện, bệnh viện được xếp cấp chuyên môn kỹ thuật chuyên sâu trở lên được đề nghị cấp giấy phép để thành lập cơ quan tạp chí.\n- Sau khi được cấp giấy phép hoạt động báo chí, cơ quan chủ quản báo chí ra quyết định thành lập cơ quan báo chí.\nTóm lại, cơ quan nhà nước, tổ chức chính trị - xã hội từ cấp tỉnh trở lên được đề nghị cấp giấy phép hoạt động báo chí; cơ sở giáo dục đại học được đề nghị cấp giấy phép để thành lập tạp chí ạ.",
+   "spoken_citation": "Theo Luật Báo chí",
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat126_2025"
+   ]
+  },
+  {
+   "id": "vsat-tp",
+   "question": "Mở quán ăn nhỏ có cần giấy chứng nhận vệ sinh an toàn thực phẩm không?",
+   "keywords": [
+    "vệ sinh an toàn thực phẩm",
+    "an toàn thực phẩm",
+    "giấy chứng nhận vệ sinh",
+    "quán ăn",
+    "mở quán ăn",
+    "kinh doanh ăn uống"
+   ],
+   "exclude_keywords": [
+    "ngộ độc",
+    "khám sức khỏe thực phẩm đường phố"
+   ],
+   "source_ids": [
+    "luat61_2025"
+   ],
+   "search_text": "giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm điều kiện đăng ký ngành nghề kinh doanh thực phẩm đối tượng không thuộc diện cấp giấy chứng nhận thời hạn 15 ngày hiệu lực 03 năm",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật An toàn thực phẩm, việc cấp Giấy chứng nhận cơ sở đủ điều kiện an toàn thực phẩm như sau:\n- Quán ăn thuộc nhóm cơ sở sản xuất, kinh doanh thực phẩm phải bảo đảm điều kiện an toàn thực phẩm.\n- Cơ sở được cấp Giấy chứng nhận khi: có đủ điều kiện bảo đảm an toàn thực phẩm phù hợp với loại hình kinh doanh, và có đăng ký ngành, nghề kinh doanh thực phẩm trong Giấy chứng nhận đăng ký kinh doanh.\n- Một số đối tượng không thuộc diện cấp Giấy chứng nhận do Chính phủ quy định cụ thể.\n- Trong thời hạn 15 ngày kể từ khi nhận đủ hồ sơ hợp lệ, cơ quan có thẩm quyền kiểm tra thực tế và cấp Giấy chứng nhận nếu đủ điều kiện; Giấy chứng nhận có hiệu lực 03 năm.\nTóm lại, quán ăn cần đáp ứng điều kiện an toàn thực phẩm và được cấp Giấy chứng nhận trong 15 ngày nếu đủ điều kiện, trừ đối tượng Chính phủ quy định không thuộc diện cấp giấy ạ.",
+   "spoken_citation": "Theo Luật An toàn thực phẩm năm 2010"
+  },
+  {
+   "id": "thuyen-vien-tai-nan",
+   "question": "Thuyền viên bị tai nạn lao động khi đi biển có được bồi thường không?",
+   "keywords": [
+    "thuyền viên",
+    "tai nạn lao động hàng hải",
+    "tai nạn khi đi biển",
+    "đi biển"
+   ],
+   "exclude_keywords": [
+    "lương hưu",
+    "bảo hiểm xã hội"
+   ],
+   "source_ids": [
+    "boluat52_2026"
+   ],
+   "search_text": "trách nhiệm của chủ tàu đối với thuyền viên bị tai nạn lao động hàng hải bệnh nghề nghiệp thanh toán chi phí trả đủ tiền lương ghi trong hợp đồng",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Bộ luật Hàng hải Việt Nam, trách nhiệm của chủ tàu đối với thuyền viên bị tai nạn lao động hàng hải, bệnh nghề nghiệp như sau:\n- Thanh toán phần chi phí đồng chi trả và những chi phí không nằm trong danh mục do bảo hiểm y tế chi trả, gồm điều trị y tế, phẫu thuật, nằm viện, các loại thuốc, trang thiết bị điều trị cần thiết, chi phí ăn, ở của thuyền viên từ khi sơ cứu cho đến khi bình phục hoặc đến khi xác định là bệnh mãn tính.\n- Trả đủ tiền lương ghi trong hợp đồng lao động thuyền viên trong thời gian điều trị.\n- Ngoài ra còn các trách nhiệm khác theo quy định của Bộ luật Hàng hải.\nTóm lại, thuyền viên bị tai nạn lao động khi đi biển được chủ tàu thanh toán chi phí điều trị và trả đủ tiền lương trong thời gian điều trị ạ.",
+   "spoken_citation": "Theo Bộ luật Hàng hải Việt Nam"
+  },
+  {
+   "id": "kinh-doanh-ca-the",
+   "question": "Mở cửa hàng tạp hóa nhỏ có cần đăng ký kinh doanh không?",
+   "keywords": [
+    "đăng ký kinh doanh",
+    "mở cửa hàng",
+    "cửa hàng tạp hóa",
+    "hộ kinh doanh",
+    "kinh doanh cá thể"
+   ],
+   "exclude_keywords": [
+    "doanh nghiệp",
+    "công ty cổ phần",
+    "công ty tnhh"
+   ],
+   "source_ids": [
+    "luat47_2026"
+   ],
+   "search_text": "cá nhân hoạt động thương mại độc lập thường xuyên không phải đăng ký kinh doanh bảo vệ quyền lợi người tiêu dùng",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Bảo vệ quyền lợi người tiêu dùng năm 2023:\n- Cá nhân hoạt động thương mại độc lập, thường xuyên thì không phải đăng ký kinh doanh.\n- Cửa hàng tạp hóa nhỏ do cá nhân tự bán độc lập, thường xuyên thuộc trường hợp này.\n- Nếu cửa hàng thuộc trường hợp phải đăng ký kinh doanh thì thực hiện đăng ký theo quy định của pháp luật về đăng ký kinh doanh.\nTóm lại, cửa hàng tạp hóa nhỏ do cá nhân bán độc lập, thường xuyên không cần đăng ký kinh doanh ạ.",
+   "spoken_citation": "Theo Luật Bảo vệ quyền lợi người tiêu dùng năm 2023"
+  },
+  {
+   "id": "tro-cap-khuyet-tat",
+   "question": "Người khuyết tật nặng được hưởng trợ cấp hàng tháng không?",
+   "keywords": [
+    "khuyết tật nặng",
+    "trợ cấp khuyết tật",
+    "người khuyết tật",
+    "trợ cấp người khuyết tật"
+   ],
+   "exclude_keywords": [
+    "chế độ bảo hiểm xã hội",
+    "hưu trí",
+    "mồ côi",
+    "trẻ em mồ côi",
+    "trẻ mồ côi"
+   ],
+   "source_ids": [
+    "nd20_2021"
+   ],
+   "search_text": "trợ cấp xã hội hằng tháng người khuyết tật nặng hệ số mức chuẩn trợ giúp xã hội Nghị định 20 hỗ trợ kinh phí chăm sóc mang thai nuôi con dưới 36 tháng tuổi",
+   "answer_text": "Dạ thưa anh/chị ạ, được ạ. Theo Nghị định 20/2021/NĐ-CP, trợ cấp xã hội hằng tháng cho người khuyết tật như sau:\n- Người khuyết tật nặng, người khuyết tật đặc biệt nặng là đối tượng bảo trợ xã hội được hưởng trợ cấp xã hội hằng tháng.\n- Mức trợ cấp tính bằng mức chuẩn trợ giúp xã hội nhân với hệ số: hệ số 1,5 đối với người khuyết tật nặng, hệ số 2,0 đối với người khuyết tật đặc biệt nặng.\n- Trẻ em khuyết tật nặng hoặc người cao tuổi là người khuyết tật nặng có hệ số 2,0.\n- Người khuyết tật nặng đang mang thai hoặc nuôi con dưới 36 tháng tuổi còn được hỗ trợ kinh phí chăm sóc hằng tháng.\nTóm lại, người khuyết tật nặng được hưởng trợ cấp xã hội hằng tháng theo hệ số 1,5; khuyết tật đặc biệt nặng hệ số 2,0 ạ.",
+   "spoken_citation": "Theo Nghị định 20/2021/NĐ-CP"
+  },
+  {
+   "id": "tro-cap-thoi-viec",
+   "question": "Bị chấm dứt hợp đồng lao động có được trợ cấp thôi việc không?",
+   "keywords": [
+    "trợ cấp thôi việc",
+    "chấm dứt hợp đồng",
+    "thôi việc"
+   ],
+   "exclude_keywords": [
+    "mất việc",
+    "trợ cấp thất nghiệp",
+    "bảo hiểm thất nghiệp"
+   ],
+   "source_ids": [
+    "boluat18_2026"
+   ],
+   "search_text": "trợ cấp thôi việc hợp đồng lao động chấm dứt làm việc thường xuyên từ đủ 12 tháng mỗi năm làm việc nửa tháng tiền lương Điều 46 Bộ luật Lao động",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Bộ luật Lao động năm 2019, trợ cấp thôi việc như sau:\n- Điều kiện: thuộc trường hợp chấm dứt hợp đồng lao động theo quy định và người lao động đã làm việc thường xuyên từ đủ 12 tháng trở lên.\n- Mức trợ cấp: mỗi năm làm việc được trợ cấp một nửa tháng tiền lương.\n- Trừ trường hợp đủ điều kiện hưởng lương hưu theo quy định của pháp luật về bảo hiểm xã hội và trường hợp người lao động đơn phương chấm dứt hợp đồng trái pháp luật.\nTóm lại, anh/chị được trợ cấp thôi việc nửa tháng lương cho mỗi năm làm việc khi chấm dứt hợp đồng đúng quy định và đã làm việc từ đủ 12 tháng ạ.",
+   "spoken_citation": "Theo Bộ luật Lao động năm 2019"
+  },
+  {
+   "id": "ma-tuy-xu-phat",
+   "question": "Sử dụng trái phép chất ma túy bị xử lý thế nào?",
+   "keywords": [
+    "ma túy",
+    "chất ma túy",
+    "sử dụng trái phép",
+    "nghiện ma túy"
+   ],
+   "exclude_keywords": [
+    "vận chuyển",
+    "mua bán ma túy",
+    "tàng trữ"
+   ],
+   "source_ids": [
+    "luat117_2025"
+   ],
+   "search_text": "sử dụng trái phép chất ma túy hành vi bị nghiêm cấm quản lý người sử dụng trái phép chất ma túy tệ nạn ma túy",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Phòng, chống ma túy:\n- Hành vi sử dụng trái phép chất ma túy bị pháp luật nghiêm cấm; người sử dụng trái phép chất ma túy được quản lý theo quy định của Luật Phòng, chống ma túy.\n- Về mức xử phạt vi phạm hành chính cụ thể, các đoạn nguồn em đang có chưa nêu con số cụ thể.\nTóm lại, anh/chị liên hệ cơ quan công an nơi cư trú để được hướng dẫn chính xác cho trường hợp của mình ạ.",
+   "spoken_citation": "Theo Luật Phòng, chống ma túy"
+  },
+  {
+   "id": "ntd-mua-hang-online",
+   "question": "Mua hàng qua mạng bị lừa thì phản ánh ở đâu?",
+   "keywords": [
+    "mua hàng online",
+    "mua hàng qua mạng",
+    "mua qua mạng",
+    "người tiêu dùng",
+    "bị lừa"
+   ],
+   "exclude_keywords": [
+    "hàng giả",
+    "bảo hành",
+    "đổi trả"
+   ],
+   "source_ids": [
+    "luat47_2026"
+   ],
+   "search_text": "trách nhiệm tiếp nhận và giải quyết phản ánh yêu cầu khiếu nại của người tiêu dùng thông báo 03 ngày làm việc tổ chức cá nhân kinh doanh",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Bảo vệ quyền lợi người tiêu dùng năm 2023:\n- Tổ chức, cá nhân kinh doanh có trách nhiệm tổ chức tiếp nhận và giải quyết phản ánh, yêu cầu, khiếu nại của người tiêu dùng, và phải thông báo cho người tiêu dùng về việc tiếp nhận trong thời hạn 03 ngày làm việc kể từ ngày nhận được.\n- Trước hết anh/chị phản ánh, khiếu nại với tổ chức, cá nhân kinh doanh đã bán hàng cho mình.\n- Nếu không được giải quyết thỏa đáng, anh/chị liên hệ cơ quan quản lý nhà nước về bảo vệ quyền lợi người tiêu dùng.\nTóm lại, anh/chị phản ánh trước với người bán; không được giải quyết thỏa đáng thì liên hệ cơ quan quản lý nhà nước về bảo vệ quyền lợi người tiêu dùng ạ.",
+   "spoken_citation": "Theo Luật Bảo vệ quyền lợi người tiêu dùng năm 2023"
+  },
+  {
+   "id": "ket-hon-nuoc-ngoai",
+   "question": "Kết hôn với người nước ngoài thì đăng ký ở đâu?",
+   "keywords": [
+    "kết hôn với người nước ngoài",
+    "kết hôn nước ngoài",
+    "người nước ngoài kết hôn",
+    "người nước ngoài"
+   ],
+   "exclude_keywords": [
+    "ly hôn",
+    "quốc tịch",
+    "mất tích",
+    "có vợ",
+    "vi phạm"
+   ],
+   "source_ids": [
+    "luat60_2014",
+    "nd123_2015"
+   ],
+   "search_text": "đăng ký kết hôn có yếu tố nước ngoài Ủy ban nhân dân cấp huyện nơi cư trú công dân Việt Nam tờ khai giấy xác nhận tình trạng hôn nhân giấy xác nhận tổ chức y tế",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP, kết hôn với người nước ngoài như sau:\n- Nơi đăng ký: Ủy ban nhân dân cấp huyện nơi cư trú của công dân Việt Nam; trường hợp người nước ngoài cư trú tại Việt Nam thì tại Ủy ban nhân dân cấp huyện nơi cư trú của một trong hai bên.\n- Hồ sơ gồm tờ khai đăng ký kết hôn theo mẫu của mỗi bên; giấy xác nhận tình trạng hôn nhân, với người nước ngoài do cơ quan có thẩm quyền của nước đó cấp chưa quá 06 tháng.\n- Kèm giấy xác nhận của tổ chức y tế có thẩm quyền về việc không mắc bệnh tâm thần hoặc bệnh khác mà không có khả năng nhận thức, làm chủ được hành vi.\n- Người nước ngoài xuất trình hộ chiếu hoặc giấy tờ tùy thân theo quy định.\nTóm lại, anh/chị đăng ký kết hôn với người nước ngoài tại Ủy ban nhân dân cấp huyện, với tờ khai, giấy xác nhận tình trạng hôn nhân và giấy xác nhận của tổ chức y tế ạ.",
+   "spoken_citation": "Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP"
+  },
+  {
+   "id": "tro-cap-tre-mo-coi",
+   "question": "Trẻ em mồ côi có được hưởng trợ cấp xã hội không?",
+   "keywords": [
+    "trẻ em mồ côi",
+    "trẻ mồ côi",
+    "mồ côi",
+    "mồ côi cha",
+    "mồ côi mẹ",
+    "bị bỏ rơi"
+   ],
+   "exclude_keywords": [
+    "khuyết tật",
+    "người cao tuổi",
+    "hưu trí"
+   ],
+   "source_ids": [
+    "nd20_2021"
+   ],
+   "search_text": "đối tượng bảo trợ xã hội trẻ em dưới 16 tuổi không có nguồn nuôi dưỡng mồ côi cả cha và mẹ mồ côi cha hoặc mẹ mất tích trợ cấp xã hội hàng tháng mức chuẩn trợ giúp xã hội hệ số 2,5 dưới 4 tuổi hệ số 1,5",
+   "answer_text": "Dạ thưa anh/chị ạ, được ạ. Theo Nghị định 20/2021/NĐ-CP, trợ cấp xã hội cho trẻ mồ côi như sau:\n- Trẻ em dưới 16 tuổi không có nguồn nuôi dưỡng, như mồ côi cả cha và mẹ; mồ côi cha hoặc mẹ mà người còn lại bị tuyên bố mất tích hoặc đang chấp hành án phạt tù; bị bỏ rơi chưa có người nhận làm con nuôi, là đối tượng bảo trợ xã hội được hưởng trợ cấp xã hội hằng tháng.\n- Mức trợ cấp bằng mức chuẩn trợ giúp xã hội nhân với hệ số: hệ số 2,5 nếu trẻ dưới 4 tuổi, hệ số 1,5 nếu từ đủ 4 tuổi trở lên.\n- Gia đình, cá nhân nhận chăm sóc, nuôi dưỡng trẻ còn được hỗ trợ kinh phí hằng tháng theo quy định.\nTóm lại, trẻ mồ côi dưới 16 tuổi được hưởng trợ cấp xã hội hằng tháng với hệ số 2,5 nếu dưới 4 tuổi, hệ số 1,5 nếu từ đủ 4 tuổi ạ.",
+   "spoken_citation": "Theo Nghị định 20/2021/NĐ-CP"
+  },
+  {
+   "id": "tre-em-duoi-6-tuoi",
+   "question": "Trẻ em dưới 6 tuổi khám bệnh có được miễn phí không?",
+   "keywords": [
+    "trẻ em dưới 6 tuổi",
+    "dưới 6 tuổi",
+    "khám bệnh miễn phí",
+    "khám chữa bệnh miễn phí",
+    "trẻ em miễn phí"
+   ],
+   "exclude_keywords": [
+    "học sinh",
+    "sinh viên",
+    "khám sức khỏe định kỳ"
+   ],
+   "source_ids": [
+    "nd188_2025"
+   ],
+   "search_text": "trẻ em dưới 6 tuổi thanh toán chi phí khám chữa bệnh trong phạm vi được hưởng và mức hưởng xuất trình thẻ bảo hiểm y tế bản giấy hoặc điện tử mã số bảo hiểm y tế giấy chứng sinh bản gốc",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 188/2025/NĐ-CP, khám chữa bệnh cho trẻ em dưới 6 tuổi như sau:\n- Trẻ em dưới 6 tuổi được quỹ bảo hiểm y tế thanh toán chi phí khám, chữa bệnh trong phạm vi được hưởng và mức hưởng theo quy định; phần chi phí ngoài phạm vi, vượt mức hưởng thì người bệnh tự thanh toán.\n- Khi đi khám, xuất trình thẻ bảo hiểm y tế bản giấy hoặc bản điện tử hoặc mã số bảo hiểm y tế.\n- Trường hợp chưa được cấp thẻ thì xuất trình giấy chứng sinh bản gốc hoặc bản chụp.\nTóm lại, trẻ em dưới 6 tuổi được quỹ bảo hiểm y tế thanh toán chi phí khám chữa bệnh trong phạm vi được hưởng, không phải miễn phí tuyệt đối mọi khoản chi ạ.",
+   "spoken_citation": "Theo Nghị định 188/2025/NĐ-CP"
+  },
+  {
+   "id": "cong-chung-tu-choi",
+   "question": "Công chứng viên có quyền từ chối công chứng giao dịch không?",
+   "keywords": [
+    "từ chối công chứng",
+    "công chứng viên từ chối",
+    "từ chối công chứng giao dịch",
+    "từ chối việc công chứng"
+   ],
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat109_2026"
+   ],
+   "search_text": "công chứng viên từ chối công chứng giao dịch vi phạm pháp luật trái đạo đức xã hội bị đe dọa cưỡng ép nghi ngờ năng lực hành vi dân sự xác minh giám định không làm rõ được dự thảo sửa chữa giải thích rõ lý do",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật Công chứng năm 2024, quyền từ chối công chứng như sau:\n- Công chứng viên có quyền từ chối công chứng khi giao dịch vi phạm pháp luật, trái đạo đức xã hội hoặc thuộc trường hợp khác theo quy định.\n- Khi người yêu cầu có vấn đề chưa rõ, có dấu hiệu bị đe dọa, bị cưỡng ép hoặc có nghi ngờ về năng lực hành vi dân sự, đối tượng giao dịch chưa được mô tả cụ thể thì công chứng viên đề nghị làm rõ hoặc tiến hành xác minh, yêu cầu giám định; nếu người yêu cầu không làm rõ được và từ chối việc xác minh, yêu cầu giám định thì công chứng viên từ chối công chứng.\n- Trường hợp dự thảo giao dịch có điều khoản vi phạm pháp luật, trái đạo đức xã hội mà người yêu cầu không sửa chữa thì công chứng viên cũng từ chối.\n- Khi từ chối, công chứng viên phải giải thích rõ lý do.\nTóm lại, công chứng viên được từ chối công chứng khi giao dịch vi phạm pháp luật, trái đạo đức xã hội hoặc người yêu cầu không làm rõ được vấn đề, và phải giải thích rõ lý do ạ.",
+   "spoken_citation": "Theo Luật Công chứng năm 2024"
+  },
+  {
+   "id": "bhxh-dieu-kien-luong-huu",
+   "question": "Đóng bảo hiểm xã hội 15 năm thì có được hưởng lương hưu không?",
+   "keywords": [
+    "đóng bảo hiểm xã hội 15 năm",
+    "bảo hiểm xã hội 15 năm",
+    "15 năm đóng bảo hiểm xã hội",
+    "mấy năm đóng để hưởng lương hưu",
+    "bao nhiêu năm đóng để hưởng lương hưu",
+    "điều kiện hưởng lương hưu",
+    "hưởng lương hưu cần đóng bao nhiêu năm"
+   ],
+   "exclude_keywords": [
+    "trợ cấp thôi việc",
+    "nghỉ hưu trước tuổi",
+    "suy giảm khả năng lao động"
+   ],
+   "source_ids": [
+    "luat19_2026"
+   ],
+   "search_text": "điều kiện hưởng lương hưu thời gian đóng bảo hiểm xã hội từ đủ 15 năm trở lên đủ tuổi nghỉ hưu Bộ luật Lao động Điều 169 bảo hiểm xã hội bắt buộc tự nguyện",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Bảo hiểm xã hội năm 2024, điều kiện hưởng lương hưu như sau:\n- Đóng bảo hiểm xã hội từ đủ 15 năm trở lên là đủ điều kiện về thời gian đóng để hưởng lương hưu.\n- Anh/chị vẫn cần đáp ứng thêm điều kiện về tuổi nghỉ hưu theo quy định của Bộ luật Lao động, tùy loại hình bảo hiểm xã hội bắt buộc hay tự nguyện và từng trường hợp cụ thể.\nTóm lại, đóng đủ 15 năm là đủ điều kiện về thời gian đóng, nhưng cần thêm điều kiện về tuổi nghỉ hưu nữa ạ. Anh/chị cho em biết loại hình bảo hiểm xã hội đang đóng và độ tuổi hiện tại để em kiểm tra chính xác hơn ạ.",
+   "spoken_citation": "Theo Luật Bảo hiểm xã hội năm 2024"
+  },
+  {
+   "id": "tam-tru",
+   "question": "Đăng ký tạm trú cho cả gia đình cần những giấy tờ gì?",
+   "keywords": [
+    "đăng ký tạm trú",
+    "tạm trú cho cả gia đình",
+    "tạm trú cho gia đình",
+    "hồ sơ tạm trú",
+    "giấy tờ tạm trú",
+    "tạm trú cả gia đình"
+   ],
+   "exclude_keywords": [
+    "gia hạn",
+    "xóa đăng ký",
+    "thường trú"
+   ],
+   "source_ids": [
+    "luat06_2026",
+    "nd154_2024"
+   ],
+   "search_text": "đăng ký tạm trú tờ khai thay đổi thông tin cư trú giấy tờ tài liệu chứng minh chỗ ở hợp pháp văn bản cho thuê cho mượn cho ở nhờ không phải công chứng chứng thực văn bản cam kết",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Cư trú và Nghị định 154/2024/NĐ-CP, đăng ký tạm trú như sau:\n- Người đăng ký nộp Tờ khai thay đổi thông tin cư trú tại cơ quan đăng ký cư trú nơi dự kiến tạm trú, kèm giấy tờ, tài liệu chứng minh chỗ ở hợp pháp.\n- Giấy tờ chứng minh chỗ ở hợp pháp có thể là giấy tờ về quyền sử dụng đất, quyền sở hữu nhà ở hoặc hợp đồng, văn bản cho thuê, cho mượn, cho ở nhờ; văn bản này không phải công chứng hoặc chứng thực.\n- Trường hợp không có các giấy tờ đó thì dùng văn bản cam kết về chỗ ở của công dân.\nTóm lại, anh/chị nộp tờ khai thay đổi thông tin cư trú tại cơ quan đăng ký cư trú nơi tạm trú, kèm giấy tờ chứng minh chỗ ở hợp pháp ạ.",
+   "spoken_citation": "Theo Luật Cư trú và Nghị định 154/2024/NĐ-CP"
+  },
+  {
+   "id": "lua-bia-xe-may",
+   "question": "Uống rượu bia xong lái xe máy bị phạt bao nhiêu?",
+   "keywords": [
+    "uống rượu bia xong lái xe máy",
+    "lái xe máy sau khi uống rượu bia",
+    "rượu bia lái xe máy",
+    "nồng độ cồn xe máy",
+    "uống rượu bia rồi lái xe máy"
+   ],
+   "exclude_keywords": [
+    "ô tô",
+    "đi xe ô tô",
+    "xe hơi"
+   ],
+   "source_ids": [
+    "nd168_2024"
+   ],
+   "search_text": "điều khiển xe mô tô xe gắn máy nồng độ cồn phạt tiền 2.000.000 đồng đến 3.000.000 đồng chưa vượt quá 50 miligam 6.000.000 đến 8.000.000 vượt quá 50 miligam đến 80 miligam 8.000.000 đến 10.000.000 vượt quá 80 miligam",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 168/2024/NĐ-CP, điều khiển xe máy có nồng độ cồn bị xử phạt như sau:\n- Nồng độ cồn chưa vượt quá 50 miligam/100 mililít máu (hoặc chưa vượt quá 0,25 miligam/1 lít khí thở): phạt từ 2.000.000 đến 3.000.000 đồng.\n- Nồng độ cồn vượt quá 50 đến 80 miligam/100 mililít máu (hoặc 0,25 đến 0,4 miligam/1 lít khí thở): phạt từ 6.000.000 đến 8.000.000 đồng.\n- Nồng độ cồn vượt quá 80 miligam/100 mililít máu (hoặc vượt quá 0,4 miligam/1 lít khí thở) hoặc không chấp hành yêu cầu kiểm tra nồng độ cồn: phạt từ 8.000.000 đến 10.000.000 đồng.\n- Ngoài phạt tiền, người vi phạm còn bị áp dụng hình thức xử phạt bổ sung theo quy định.\nTóm lại, lái xe máy có nồng độ cồn bị phạt từ 2 đến 10 triệu đồng tùy mức nồng độ, kèm hình thức xử phạt bổ sung ạ.",
+   "spoken_citation": "Theo Nghị định 168/2024/NĐ-CP"
+  },
+  {
+   "id": "xac-dinh-gioi-tinh",
+   "question": "Xin xác định lại giới tính thì làm ở đâu?",
+   "keywords": [
+    "xác định lại giới tính",
+    "xin xác định lại giới tính",
+    "đăng ký xác định lại giới tính"
+   ],
+   "exclude_keywords": [
+    "chuyển đổi giới tính"
+   ],
+   "source_ids": [
+    "boluat91_2015"
+   ],
+   "search_text": "xác định lại giới tính khuyết tật bẩm sinh chưa định hình chính xác can thiệp của y học đăng ký thay đổi hộ tịch",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Bộ luật Dân sự năm 2015, việc xác định lại giới tính như sau:\n- Cá nhân được xác định lại giới tính khi giới tính của người đó bị khuyết tật bẩm sinh hoặc chưa định hình chính xác mà cần có sự can thiệp của y học nhằm xác định rõ giới tính.\n- Sau khi xác định lại giới tính, cá nhân có quyền, nghĩa vụ đăng ký thay đổi hộ tịch theo quy định của pháp luật về hộ tịch, đồng thời có quyền nhân thân phù hợp với giới tính đã được xác định lại.\n- Các văn bản hiện có chưa quy định cụ thể cơ quan tiếp nhận thủ tục này.\nTóm lại, cá nhân được xác định lại giới tính khi có khuyết tật bẩm sinh hoặc chưa định hình chính xác cần can thiệp y học; anh/chị liên hệ cơ quan có thẩm quyền để được hướng dẫn cụ thể ạ.",
+   "spoken_citation": "Theo Bộ luật Dân sự năm 2015"
+  },
+  {
+   "id": "xa-nuoc-thai",
+   "question": "Xả nước thải chưa xử lý ra môi trường bị phạt thế nào?",
+   "keywords": [
+    "xả nước thải",
+    "nước thải chưa xử lý",
+    "xả nước thải ra môi trường",
+    "đổ nước thải",
+    "nước thải chưa qua xử lý"
+   ],
+   "exclude_keywords": [
+    "khí thải",
+    "chất thải rắn"
+   ],
+   "source_ids": [
+    "luat98_2026"
+   ],
+   "search_text": "nước thải phải được thu gom và xử lý đạt quy chuẩn kỹ thuật môi trường trước khi xả ra nguồn tiếp nhận vi phạm bảo vệ môi trường xử phạt vi phạm hành chính truy cứu trách nhiệm hình sự",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Bảo vệ môi trường, xả nước thải như sau:\n- Nước thải phải được thu gom và xử lý đạt quy chuẩn kỹ thuật môi trường trước khi xả ra môi trường; việc xả nước thải chưa qua xử lý đạt quy chuẩn là không đúng quy định.\n- Tùy theo mức độ vi phạm, tổ chức, cá nhân có thể bị xử phạt vi phạm hành chính hoặc bị truy cứu trách nhiệm hình sự theo quy định.\n- Các văn bản hiện có chưa nêu mức phạt tiền cụ thể cho hành vi này.\nTóm lại, xả nước thải chưa xử lý đạt quy chuẩn là vi phạm pháp luật; anh/chị liên hệ cơ quan quản lý môi trường địa phương để biết mức xử phạt áp dụng cho trường hợp cụ thể ạ.",
+   "spoken_citation": "Theo Luật Bảo vệ môi trường"
+  },
+  {
+   "id": "hop-dong-dien-tu",
+   "question": "Hợp đồng điện tử ký qua email có giá trị pháp lý không?",
+   "keywords": [
+    "hợp đồng điện tử",
+    "hợp đồng ký qua email",
+    "hợp đồng qua email",
+    "ký hợp đồng qua email",
+    "giá trị pháp lý hợp đồng điện tử",
+    "chữ ký điện tử",
+    "chữ ký số",
+    "email có giá trị pháp lý"
+   ],
+   "exclude_keywords": [
+    "công chứng hợp đồng",
+    "đất đai",
+    "nhà đất"
+   ],
+   "source_ids": [
+    "luat36_2026"
+   ],
+   "search_text": "thông điệp dữ liệu không bị phủ nhận giá trị pháp lý chỉ vì được thể hiện dưới dạng thông điệp dữ liệu thông điệp dữ liệu có giá trị như văn bản truy cập và sử dụng được giao kết hợp đồng điện tử thỏa thuận sử dụng thông điệp dữ liệu phương tiện điện tử chữ ký điện tử chuyên dùng bảo đảm an toàn chữ ký số giá trị pháp lý tương đương chữ ký trong văn bản giấy",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật Giao dịch điện tử năm 2023, hợp đồng điện tử như sau:\n- Thông tin trong thông điệp dữ liệu như email không bị phủ nhận giá trị pháp lý chỉ vì được thể hiện dưới dạng thông điệp dữ liệu; trường hợp pháp luật yêu cầu thông tin phải được thể hiện bằng văn bản thì thông điệp dữ liệu được xem là đáp ứng yêu cầu nếu thông tin đó có thể truy cập và sử dụng được.\n- Khi giao kết và thực hiện hợp đồng điện tử, các bên có quyền thỏa thuận sử dụng thông điệp dữ liệu, phương tiện điện tử một phần hoặc toàn bộ.\n- Chữ ký điện tử không bị phủ nhận giá trị pháp lý chỉ vì được thể hiện dưới dạng chữ ký điện tử; chữ ký điện tử chuyên dùng bảo đảm an toàn hoặc chữ ký số có giá trị pháp lý tương đương chữ ký của cá nhân trong văn bản giấy.\nTóm lại, hợp đồng ký qua email và chữ ký điện tử có giá trị pháp lý theo quy định của Luật Giao dịch điện tử ạ.",
+   "spoken_citation": "Theo Luật Giao dịch điện tử năm 2023"
+  },
+  {
+   "id": "bhyt-muc-huong",
+   "question": "Ông 85 tuổi đi khám bệnh thì được bảo hiểm thanh toán bao nhiêu phần trăm?",
+   "keywords": [
+    "bảo hiểm thanh toán bao nhiêu",
+    "được bảo hiểm thanh toán",
+    "thanh toán bao nhiêu phần trăm",
+    "bảo hiểm chi trả bao nhiêu",
+    "mấy phần trăm bảo hiểm"
+   ],
+   "exclude_keywords": [
+    "bảo hiểm xã hội",
+    "hưu trí",
+    "thân nhân",
+    "tử tuất"
+   ],
+   "source_ids": [
+    "luat40_2026"
+   ],
+   "search_text": "mức hưởng bảo hiểm y tế xác định theo nhóm đối tượng ghi trên thẻ cơ sở khám chữa bệnh cấp ban đầu trạm y tế xã 100% chi phí trong phạm vi được hưởng người cao tuổi",
+   "answer_text": "Dạ thưa ông ạ. Theo Luật Bảo hiểm y tế, mức bảo hiểm thanh toán như sau:\n- Tỷ lệ bảo hiểm y tế thanh toán phụ thuộc vào nhóm quyền lợi ghi trên thẻ bảo hiểm y tế, cơ sở khám chữa bệnh (cấp ban đầu, đúng tuyến hay trái tuyến) và hình thức khám, chứ không xác định theo tuổi.\n- Ví dụ, khám tại cơ sở cấp ban đầu như trạm y tế xã thì quỹ bảo hiểm y tế chi trả 100% chi phí khám chữa bệnh trong phạm vi được hưởng.\nTóm lại, mức thanh toán phụ thuộc nhóm quyền lợi trên thẻ và nơi khám ạ. Ông cho em biết nhóm quyền lợi trên thẻ bảo hiểm y tế và nơi dự kiến khám để em kiểm tra chính xác mức hưởng nhé.",
+   "spoken_citation": "Theo Luật Bảo hiểm y tế sửa đổi, bổ sung năm 2024"
+  },
+  {
+   "id": "hop-tac-xa",
+   "question": "Hợp tác xã hoạt động theo luật nào?",
+   "keywords": [
+    "hợp tác xã",
+    "liên hiệp hợp tác xã",
+    "tổ hợp tác"
+   ],
+   "exclude_keywords": [],
+   "source_ids": [
+    "luat101_2026"
+   ],
+    "search_text": "Luật Hợp tác xã phạm vi điều chỉnh tổ hợp tác hợp tác xã liên hiệp hợp tác xã đối tượng áp dụng thành viên tổ chức quản lý tổ chức lại giải thể phá sản",
+   "answer_text": "Dạ thưa anh/chị ạ. Hợp tác xã hoạt động theo Luật Hợp tác xã, cụ thể như sau:\n- Hiện hành là Luật Hợp tác xã số 17/2023/QH15 ngày 20 tháng 6 năm 2023, có hiệu lực từ ngày 01 tháng 7 năm 2024.\n- Luật quy định về tổ hợp tác, hợp tác xã, liên hiệp hợp tác xã; thành viên của tổ chức này.\n- Luật cũng quy định về các cơ quan, tổ chức, cá nhân liên quan đến thành lập, tổ chức quản lý, tổ chức lại, giải thể, phá sản và hoạt động của hợp tác xã.\nTóm lại, hợp tác xã hoạt động theo Luật Hợp tác xã năm 2023, có hiệu lực từ ngày 01 tháng 7 năm 2024 ạ.",
+   "spoken_citation": "Theo Luật Hợp tác xã năm 2023"
+  },
+  {
+   "id": "mua-ban-nguoi",
+   "question": "Mua bán người bị xử lý thế nào theo pháp luật?",
+   "keywords": [
+    "mua bán người",
+    "bán người",
+    "buôn bán người"
+   ],
+   "exclude_keywords": [
+    "bán nhà",
+    "đất"
+   ],
+   "source_ids": [
+    "boluat135_2025"
+   ],
+   "search_text": "tội mua bán người chuyển giao hoặc tiếp nhận người để giao nhận tiền tài sản hoặc lợi ích vật chất khác bóc lột tình dục cưỡng bức lao động lấy bộ phận cơ thể của nạn nhân phạt tù từ 05 năm đến 10 năm có tổ chức phạt tù từ 08 năm đến 15 năm phạt tù từ 12 năm đến 20 năm hoặc tù chung thân tái phạm nguy hiểm làm nạn nhân tự sát",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Bộ luật Hình sự, tội mua bán người bị xử lý như sau:\n- Người thực hiện hành vi chuyển giao hoặc tiếp nhận người để giao, nhận tiền, tài sản hoặc lợi ích vật chất khác để bóc lột tình dục, cưỡng bức lao động, lấy bộ phận cơ thể của nạn nhân hoặc vì mục đích vô nhân đạo khác thì bị phạt tù từ 05 năm đến 10 năm.\n- Phạm tội có tổ chức hoặc thuộc các trường hợp tăng nặng khác theo quy định thì bị phạt tù từ 08 năm đến 15 năm, từ 12 năm đến 20 năm hoặc tù chung thân.\nTóm lại, mua bán người là tội phạm bị phạt tù từ 5 năm đến 10 năm, có thể lên đến tù chung thân khi phạm tội có tổ chức hoặc có tình tiết tăng nặng ạ.",
+   "spoken_citation": "Theo Bộ luật Hình sự"
+  },
+  {
+   "id": "ngay-nghi-phep",
+   "question": "Người lao động được nghỉ bao nhiêu ngày phép một năm?",
+   "keywords": [
+    "nghỉ bao nhiêu ngày phép",
+    "bao nhiêu ngày phép",
+    "nghỉ phép năm",
+    "số ngày nghỉ hằng năm",
+    "bao nhiêu ngày nghỉ hằng năm",
+    "ngày phép một năm",
+    "nghỉ phép bao nhiêu ngày",
+    "nghỉ hằng năm"
+   ],
+   "exclude_keywords": [
+    "nghỉ lễ",
+    "tết",
+    "thai sản",
+    "ốm đau"
+   ],
+   "source_ids": [
+    "boluat18_2026"
+   ],
+    "search_text": "nghỉ hằng năm 12 ngày làm việc 14 ngày chưa thành niên người khuyết tật 16 ngày nặng nhọc độc hại nguy hiểm cứ đủ 05 năm tăng thêm 01 ngày",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Bộ luật Lao động, ngày nghỉ hằng năm như sau:\n- Người lao động làm đủ 12 tháng cho một người sử dụng lao động được nghỉ hằng năm, hưởng nguyên lương: 12 ngày làm việc đối với người làm công việc trong điều kiện bình thường.\n- 14 ngày làm việc đối với người lao động chưa thành niên, người khuyết tật, người làm nghề, công việc nặng nhọc, độc hại, nguy hiểm.\n- 16 ngày làm việc đối với người làm nghề, công việc đặc biệt nặng nhọc, độc hại, nguy hiểm.\n- Làm việc chưa đủ 12 tháng thì số ngày nghỉ hằng năm được tính theo tỷ lệ tương ứng với số tháng làm việc; cứ đủ 05 năm làm việc thì được tăng thêm tương ứng 01 ngày nghỉ hằng năm.\nTóm lại, người lao động làm đủ 12 tháng được nghỉ 12 ngày phép, 14 hoặc 16 ngày nếu làm công việc nặng nhọc, độc hại, nguy hiểm, và cứ đủ 5 năm được tăng thêm 1 ngày ạ.",
+   "spoken_citation": "Theo Bộ luật Lao động"
+  },
+  {
+   "id": "khai-tu",
+   "question": "Người thân mất ở bệnh viện, gia đình cần làm khai tử thế nào?",
+   "keywords": [
+    "khai tử",
+    "đăng ký khai tử",
+    "làm khai tử",
+    "giấy chứng tử",
+    "giấy báo tử"
+   ],
+   "exclude_keywords": [
+    "đăng ký lại khai tử",
+    "bản sao giấy chứng tử"
+   ],
+   "source_ids": [
+    "luat60_2014"
+   ],
+   "search_text": "Điều 32 thẩm quyền đăng ký khai tử Ủy ban nhân dân cấp xã nơi cư trú cuối cùng của người chết thực hiện việc đăng ký khai tử không xác định được nơi cư trú cuối cùng Ủy ban nhân dân cấp xã nơi người đó chết hoặc nơi phát hiện thi thể Điều 33 trong thời hạn 15 ngày kể từ ngày có người chết vợ chồng con cha mẹ người thân thích khác có trách nhiệm đi đăng ký khai tử nộp tờ khai giấy báo tử chủ động thực hiện đăng ký khai tử khi dữ liệu của cơ sở khám bệnh chữa bệnh được kết nối",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật Hộ tịch hiện hành, đăng ký khai tử như sau:\n- Trong thời hạn 15 ngày kể từ ngày có người chết, vợ hoặc chồng, con, cha mẹ hoặc người thân thích khác có trách nhiệm đi đăng ký khai tử.\n- Nơi đăng ký là Ủy ban nhân dân cấp xã nơi cư trú cuối cùng của người chết; trường hợp không xác định được nơi cư trú cuối cùng thì đăng ký tại Ủy ban nhân dân cấp xã nơi người chết mất hoặc nơi phát hiện thi thể.\n- Người đi khai tử nộp tờ khai theo mẫu quy định và Giấy báo tử hoặc giấy tờ thay thế do cơ sở khám bệnh, chữa bệnh cấp.\n- Từ ngày 01/3/2027, Ủy ban nhân dân cấp xã nơi cư trú cuối cùng có trách nhiệm chủ động đăng ký khai tử khi dữ liệu của cơ sở khám bệnh, chữa bệnh được kết nối.\nTóm lại, trong 15 ngày kể từ khi người thân mất, gia đình nộp tờ khai và Giấy báo tử tại Ủy ban nhân dân cấp xã nơi cư trú cuối cùng của người chết ạ.",
+   "spoken_citation": "Theo Luật Hộ tịch"
+  },
+  {
+   "id": "thoi-quoc-tich",
+   "question": "Xin thôi quốc tịch Việt Nam cần làm những gì?",
+   "keywords": [
+    "thôi quốc tịch",
+    "xin thôi quốc tịch",
+    "chấm dứt quốc tịch",
+    "bỏ quốc tịch việt nam"
+   ],
+   "exclude_keywords": [
+    "nhập quốc tịch",
+    "trở lại quốc tịch",
+    "tạm trú",
+    "thường trú"
+   ],
+   "source_ids": [
+    "luat53_2025"
+   ],
+   "search_text": "Điều 27 căn cứ thôi quốc tịch Việt Nam đơn xin thôi quốc tịch Việt Nam để nhập quốc tịch nước ngoài chưa được thôi quốc tịch nếu đang nợ thuế đối với Nhà nước đang có nghĩa vụ tài sản đang bị truy cứu trách nhiệm hình sự chưa chấp hành bản án phương hại đến lợi ích quốc gia cán bộ công chức người đang phục vụ trong lực lượng vũ trang nhân dân không được thôi quốc tịch Điều 28 hồ sơ xin thôi quốc tịch đơn xin thôi quốc tịch bản khai lý lịch bản sao Hộ chiếu giấy của cơ quan quản lý thuế nơi người xin thôi quốc tịch cư trú cấp Điều 29 Sở Tư pháp nơi cư trú cơ quan đại diện Việt Nam ở nước sở tại",
+   "answer_text": "Dạ thưa anh/chị ạ, có ạ. Theo Luật Quốc tịch Việt Nam, xin thôi quốc tịch như sau:\n- Công dân Việt Nam có đơn xin thôi quốc tịch để nhập quốc tịch nước ngoài thì có thể được thôi quốc tịch, trừ các trường hợp không được thôi theo quy định như đang nợ thuế, đang có nghĩa vụ tài sản, chưa chấp hành bản án, hoặc người đang phục vụ trong lực lượng vũ trang nhân dân.\n- Hồ sơ gồm: đơn xin thôi quốc tịch Việt Nam, bản khai lý lịch, bản sao Hộ chiếu và các giấy tờ khác theo quy định, trong đó có giấy của cơ quan quản lý thuế nơi mình cư trú cấp.\n- Nơi nộp: Sở Tư pháp nơi cư trú nếu ở trong nước, hoặc cơ quan đại diện Việt Nam ở nước sở tại nếu ở nước ngoài.\nTóm lại, anh/chị nộp đơn xin thôi quốc tịch kèm bản khai lý lịch, bản sao Hộ chiếu tại Sở Tư pháp nơi cư trú hoặc cơ quan đại diện Việt Nam ở nước ngoài ạ.",
+   "spoken_citation": "Theo Luật Quốc tịch Việt Nam"
+  },
+  {
+   "id": "cach-tinh-luong-huu",
+   "question": "Công thức tính tiền lương hưu hằng tháng như thế nào?",
+   "keywords": [
+    "cách tính tiền lương hưu",
+    "cách tính lương hưu",
+    "tính lương hưu",
+    "công thức tính lương hưu",
+    "tính tiền lương hưu",
+    "lương hưu được tính",
+    "mức lương hưu hằng tháng"
+   ],
+   "exclude_keywords": [
+    "tạm dừng",
+    "chưa nhận",
+    "nhận lương hưu",
+    "không nhận được"
+   ],
+    "search_text": "Luật Bảo hiểm xã hội mức lương hưu hằng tháng được tính bằng tỷ lệ hưởng nhân với mức bình quân tiền lương làm căn cứ đóng bảo hiểm xã hội lao động nữ 45% tương ứng 15 năm đóng lao động nam 20 năm đóng cứ thêm mỗi năm 2% mức tối đa 75%",
+   "answer_text": "Dạ vâng ạ. Theo Luật Bảo hiểm xã hội năm 2024, mức lương hưu hằng tháng được tính như sau:\n- Công thức: mức lương hưu hằng tháng bằng tỷ lệ hưởng nhân với mức bình quân tiền lương làm căn cứ đóng bảo hiểm xã hội.\n- Với lao động nữ: tỷ lệ 45% tương ứng 15 năm đóng, sau đó cứ thêm mỗi năm đóng tính thêm 2%, mức tối đa bằng 75%.\n- Với lao động nam: tỷ lệ 45% tương ứng 20 năm đóng, sau đó cứ thêm mỗi năm đóng tính thêm 2%, mức tối đa bằng 75%.\nTóm lại, lương hưu hằng tháng = tỷ lệ hưởng × bình quân tiền lương đóng bảo hiểm xã hội, tỷ lệ tối đa 75% ạ.",
+   "source_ids": [
+    "luat19_2026"
+   ],
+   "spoken_citation": "Theo Luật Bảo hiểm xã hội năm 2024"
+  },
+  {
+   "id": "nguoc-dai-gd",
+   "question": "Người thân bị con cháu ngược đãi, bỏ đói thì phải làm sao?",
+   "keywords": [
+    "ngược đãi",
+    "bỏ đói",
+    "đối xử tồi tệ",
+    "đánh đập ông bà",
+    "bạo hành gia đình",
+    "không cho ăn"
+   ],
+   "exclude_keywords": [
+    "trợ cấp",
+    "lương hưu",
+    "khiếu nại"
+   ],
+   "source_ids": [
+    "boluat135_2025"
+   ],
+   "search_text": "Điều 185 người nào đối xử tồi tệ hoặc có hành vi bạo lực xâm phạm thân thể ông bà cha mẹ vợ chồng con cháu hoặc người có công nuôi dưỡng mình phạt cảnh cáo phạt cải tạo không giam giữ đến 03 năm hoặc phạt tù từ 06 tháng đến 03 năm thường xuyên làm cho nạn nhân đau đớn từ chối hoặc trốn tránh nghĩa vụ cấp dưỡng làm cho người được cấp dưỡng lâm vào tình trạng nguy hiểm đến tính mạng sức khỏe",
+   "answer_text": "Dạ thưa anh/chị ạ. Trước hết, anh/chị cần đưa ông bà đến nơi an toàn và báo công an hoặc cơ sở y tế gần nhất hỗ trợ ngay. Theo Bộ luật Hình sự:\n- Người đối xử tồi tệ hoặc có hành vi bạo lực xâm phạm thân thể ông bà, cha mẹ, vợ chồng, con, cháu hoặc người có công nuôi dưỡng mình thì bị phạt cảnh cáo, cải tạo không giam giữ đến 03 năm hoặc phạt tù từ 06 tháng đến 03 năm.\n- Người có nghĩa vụ cấp dưỡng mà từ chối hoặc trốn tránh, làm cho người được cấp dưỡng nguy hiểm đến tính mạng, sức khỏe cũng bị xử lý theo quy định.\nTóm lại, anh/chị đưa ông bà đến nơi an toàn, báo công an hoặc cơ sở y tế gần nhất để được hỗ trợ ngay ạ.",
+   "spoken_citation": "Theo Bộ luật Hình sự"
+  },
+  {
+   "id": "dieu-kien-bhtn",
+   "question": "Điều kiện hưởng trợ cấp thất nghiệp là gì?",
+   "keywords": [
+    "trợ cấp thất nghiệp",
+    "bảo hiểm thất nghiệp",
+    "thất nghiệp"
+   ],
+   "exclude_keywords": [
+    "tạm ứng",
+    "bảo hiểm y tế"
+   ],
+   "source_ids": [
+    "luat74_2025",
+    "nd374_2025"
+   ],
+   "search_text": "Điều 38 điều kiện hưởng trợ cấp thất nghiệp người lao động đang đóng bảo hiểm thất nghiệp chấm dứt hợp đồng lao động hợp đồng làm việc đã nộp đủ hồ sơ hưởng trợ cấp thất nghiệp trong thời hạn 03 tháng kể từ ngày chấm dứt hợp đồng lao động thời gian 24 tháng trước khi chấm dứt hợp đồng lao động đóng đủ 12 tháng trở lên",
+   "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Việc làm, điều kiện hưởng trợ cấp thất nghiệp như sau:\n- Người lao động đang đóng bảo hiểm thất nghiệp được hưởng trợ cấp thất nghiệp khi đáp ứng đủ các điều kiện: chấm dứt hợp đồng lao động hoặc hợp đồng làm việc theo quy định.\n- Đã đóng đủ 12 tháng trở lên trong thời gian 24 tháng trước khi chấm dứt hợp đồng.\n- Nộp đủ hồ sơ hưởng trợ cấp thất nghiệp trong thời hạn 03 tháng kể từ ngày chấm dứt hợp đồng lao động.\n- Trường hợp mới ra trường chưa từng đi làm và đóng bảo hiểm thất nghiệp thì chưa đủ điều kiện hưởng.\nTóm lại, anh/chị cần đáp ứng đủ 3 điều kiện: chấm dứt hợp đồng đúng quy định, đóng đủ 12 tháng trong 24 tháng trước khi chấm dứt, và nộp hồ sơ trong 3 tháng kể từ ngày chấm dứt ạ.",
+   "spoken_citation": "Theo Luật Việc làm và Nghị định hướng dẫn"
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+# Secrets & local config
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.streamlit/secrets*.toml*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Runtime generated data (ignored)
+data/logs/
+data/private_cache/
+data/eval/
+data/chunks/*.npz
+logs/
+results/
+*.log
+
+# Analysis / debug / prototype scripts (NOT needed for runtime)
+analyze_*.py
+check_*.py
+crim_*.py
+dump_*.py
+legal_analysis.py
+missed_analysis.py
+pat_analysis.py
+prototype*.py
+design_intent.py
+show_*.py
+demo_samples.py
+compare_tts_voices.py
+test_*.mp3
+test_*.wav
+
+# Crawl / ingest / finalize scripts (one-time use)
+scripts/crawl_*.py
+scripts/finalize_*.py
+scripts/ingest_*.py
+scripts/generate_*.py
+scripts/eval_*.py
+scripts/benchmark_*.py
+scripts/vision_*.py
+scripts/_*.ps1
+scripts/_explore_*.py
+scripts/scrub_logs.py
+scripts/run_*.py
+scripts/round*_debate.py
+scripts/council_models.py
+scripts/debate_council.py
+scripts/round18_debate.py
+
+# Council outputs (runtime doesn't need these)
+debate_output/
+
+# Docs & reports (not needed for runtime)
+docs/*.md
+*.md
+!README.md
+
+# Scholarship / intro docs
+RIGHTLY_SCHOLARSHIP_INTRO.md
+
+# OS
+.DS_Store
+Thumbs.db
