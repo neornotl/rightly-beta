@@ -45,6 +45,71 @@ logger = logging.getLogger(__name__)
 _MIN_QUERY_CHARS = 3
 
 
+def _is_followup_continuation(current_query: str, previous_turn: dict) -> bool:
+    """Check if current query is a genuine follow-up of previous turn.
+    
+    Returns True if:
+    - Same legal domain/topic
+    - Same subject/entity
+    - Same intent type (procedure, eligibility, penalty, etc.)
+    - Or contains explicit continuation markers ("còn", "thêm", "nữa", "kế")
+    - Or is a short affirmative response after a successful answer
+    """
+    if not previous_turn:
+        return False
+    
+    current = current_query.casefold().strip()
+    prev_user = previous_turn.get("user", "").casefold()
+    prev_assistant = previous_turn.get("assistant", "").casefold()
+    
+    # Short affirmative responses after a successful answer -> likely continuation
+    short_affirmatives = {
+        "vâng", "vâng ạ", "dạ", "dạ ạ", "ok", "okie", "cảm ơn", "cảm ơn ạ",
+        "được", "được ạ", "ừ", "ừm", "đúng", "đúng ạ", "có", "có ạ"
+    }
+    if current in short_affirmatives:
+        # Only treat as continuation if previous turn had an answer
+        if previous_turn.get("assistant"):
+            return True
+    
+    # Explicit continuation markers
+    continuation_markers = ["còn", "thêm", "nữa", "kế", "tiếp", "hỏi tiếp", "hỏi nữa"]
+    if any(marker in current for marker in continuation_markers):
+        return True
+    
+    # Extract key entities from previous assistant answer
+    prev_entities = set()
+    # Legal domains
+    for domain in ["hộ tịch", "cư trú", "đất đai", "bhxh", "bhyt", "lương hưu", "kết hôn", "ly hôn", "khai sinh", "thừa kế", "giao thông", "phạt", "hồ sơ", "giấy tờ", "điều kiện", "tuổi", "mức phạt", "thời hạn", "cơ quan", "nơi nộp"]:
+        if domain in prev_assistant:
+            prev_entities.add(domain)
+    
+    # Check if current query shares domain entities
+    current_entities = set()
+    for domain in ["hộ tịch", "cư trú", "đất đai", "bhxh", "bhyt", "lương hưu", "kết hôn", "ly hôn", "khai sinh", "thừa kế", "giao thông", "phạt", "hồ sơ", "giấy tờ", "điều kiện", "tuổi", "mức phạt", "thời hạn", "cơ quan", "nơi nộp"]:
+        if domain in current:
+            current_entities.add(domain)
+    
+    if prev_entities & current_entities:
+        return True
+    
+    # Check intent overlap
+    prev_intent = set()
+    for intent in ["thủ tục", "hồ sơ", "giấy tờ", "điều kiện", "ai được", "đối tượng", "mức phạt", "bao nhiêu", "bao lâu", "thời hạn", "nơi nộp", "tuổi"]:
+        if intent in prev_user:
+            prev_intent.add(intent)
+    
+    current_intent = set()
+    for intent in ["thủ tục", "hồ sơ", "giấy tờ", "điều kiện", "ai được", "đối tượng", "mức phạt", "bao nhiêu", "bao lâu", "thời hạn", "nơi nộp", "tuổi"]:
+        if intent in current:
+            current_intent.add(intent)
+    
+    if prev_intent & current_intent:
+        return True
+    
+    return False
+
+
 def _check_answerability(query: str, chunks: list[RetrievedChunk], min_direct: int = 1) -> tuple[bool, str]:
     """Check if retrieved chunks provide sufficient direct evidence to answer the query.
     
@@ -705,54 +770,64 @@ class Pipeline:
 
         # Follow-up rescue: a terse continuation ("em la nam a", "còn nữa
         # không?") often retrieves nothing by itself. When the router only
-        # failed on retrieval sufficiency/ambiguity (never on safety), fall
-        # back to the previous turns' grounded evidence + memory so the model
-        # can still answer the follow-up. Hard gates (RED/ORANGE refusals)
-        # are never bypassed.
+        # failed on retrieval sufficiency/ambiguity (never on safety), AND
+        # the query is a genuine follow-up, fall back to the previous turns'
+        # grounded evidence + memory so the model can still answer the follow-up.
+        # Hard gates (RED/ORANGE refusals) are never bypassed.
         _RESCUE_CODES = {"INSUFFICIENT_SOURCE", "AMBIGUOUS_QUERY"}
         if answer is None and not faq_answered and memory:
             if set(decision.reason_codes) <= _RESCUE_CODES:
-                t0 = time.perf_counter()
-                try:
-                    followup_chunks = list(dict.fromkeys(memory[-1]["chunks"] + list(chunks)))
-                    if not followup_chunks:
-                        followup_chunks = list(chunks)
-                    # Build context with budget enforcement for follow-up too
-                    context, used_followup_chunks = build_context(
-                        followup_chunks[: self.top_k],
-                        self.settings.max_context_chars,
+                # Check continuity with previous turn
+                prev_turn = memory[-1]
+                if not _is_followup_continuation(query.text, prev_turn):
+                    self.store.record(
+                        session_id,
+                        "followup_skipped_no_continuity",
+                        current_query=query.text,
+                        prev_user=prev_turn.get("user", ""),
                     )
-                    doc = self.llm.generate_answer(
-                        outbound_text,
-                        used_followup_chunks,
-                        max_chars=self.settings.max_response_chars,
-                        history=outbound_history,
-                    )
-                    raw_ids = list(dict.fromkeys(str(s) for s in (doc.get("source_ids") or [])))
-                    rescued = GroundedAnswer(
-                        answer_text=str(doc.get("answer_text", "")).strip(),
-                        spoken_citation=str(doc.get("spoken_citation", "")).strip(),
-                        source_ids=raw_ids,
-                        limitations=[str(s) for s in (doc.get("limitations") or [])],
-                        next_step=str(doc.get("next_step", "")).strip(),
-                    )
-                    if not rescued.answer_text or not raw_ids:
-                        rescued = None
-                    if rescued is not None and self.validator is not None:
-                        retrieved = {c.source_id for c in followup_chunks}
-                        verdict = self.validator.validate(rescued, retrieved)
-                        if not verdict.ok:
-                            rescued = None
-                    if rescued is not None:
-                        answer = rescued
-                        chunks = followup_chunks
-                        decision = self.router.policy.safe_decision()
-                        self.store.record(
-                            session_id, "followup_memory_used", source_ids=list(raw_ids)
+                else:
+                    t0 = time.perf_counter()
+                    try:
+                        followup_chunks = list(dict.fromkeys(memory[-1]["chunks"] + list(chunks)))
+                        if not followup_chunks:
+                            followup_chunks = list(chunks)
+                        # Build context with budget enforcement for follow-up too
+                        context, used_followup_chunks = build_context(
+                            followup_chunks[: self.top_k],
+                            self.settings.max_context_chars,
                         )
-                except Exception as exc:
-                    self.store.record(session_id, "followup_failure", reason=str(exc)[:500])
-                lat["followup_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+                        doc = self.llm.generate_answer(
+                            outbound_text,
+                            used_followup_chunks,
+                            max_chars=self.settings.max_response_chars,
+                            history=outbound_history,
+                        )
+                        raw_ids = list(dict.fromkeys(str(s) for s in (doc.get("source_ids") or [])))
+                        rescued = GroundedAnswer(
+                            answer_text=str(doc.get("answer_text", "")).strip(),
+                            spoken_citation=str(doc.get("spoken_citation", "")).strip(),
+                            source_ids=raw_ids,
+                            limitations=[str(s) for s in (doc.get("limitations") or [])],
+                            next_step=str(doc.get("next_step", "")).strip(),
+                        )
+                        if not rescued.answer_text or not raw_ids:
+                            rescued = None
+                        if rescued is not None and self.validator is not None:
+                            retrieved = {c.source_id for c in followup_chunks}
+                            verdict = self.validator.validate(rescued, retrieved)
+                            if not verdict.ok:
+                                rescued = None
+                        if rescued is not None:
+                            answer = rescued
+                            chunks = followup_chunks
+                            decision = self.router.policy.safe_decision()
+                            self.store.record(
+                                session_id, "followup_memory_used", source_ids=list(raw_ids)
+                            )
+                    except Exception as exc:
+                        self.store.record(session_id, "followup_failure", reason=str(exc)[:500])
+                    lat["followup_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         spoken = ""
         if answer is not None:
