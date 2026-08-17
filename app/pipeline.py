@@ -36,7 +36,7 @@ from app.faq import _strip_diacritics
 from app.safety.policy import Policy
 from app.safety.router import SafetyRouter
 from app.safety.rules import normalize_query
-from app.schemas import GroundedAnswer, PipelineResult, RetrievedChunk, UserQuery
+from app.schemas import GroundedAnswer, PipelineResult, RetrievedChunk, UserQuery, Zone, Action
 from app.tts.base import BaseTTS
 from app.tts.mock_tts import MockTTS
 
@@ -555,10 +555,10 @@ class Pipeline:
                 for t in history
             ]
 
-        # F5: FAQ check FIRST - before router decision gates.
-        # FAQ answers are curated & verified, so they can answer even when
-        # router flags CLARIFY/AMBIGUOUS (router doesn't know about FAQ coverage).
-        # Still respects RED/ORANGE hard gates (router already decided those).
+        # F5: FAQ check - respects safety gates, requires evidence verification.
+        # FAQ answers are curated & verified, so they can answer when router
+        # flags CLARIFY/AMBIGUOUS (router doesn't know about FAQ coverage).
+        # But FAQ CANNOT override RED/ORANGE hard gates.
         answer: Optional[GroundedAnswer] = None
         faq_hit = None
         faq_answered = ""
@@ -566,30 +566,62 @@ class Pipeline:
             faq_hit = self.faq.answer(query.text)
 
         if faq_hit is not None:
-            # FAQ hit: use curated answer, override to SAFE. Re-search with the
-            # FAQ's own question so the evidence chunks match the curated answer
-            # (user query chunks may cover a different topic entirely).
-            faq_chunks = self._retrieve(faq_hit.retrieval_query, session_id, self.top_k) or chunks
-            faq_source_list = (
-                list(faq_hit.source_ids)
-                if faq_hit.source_ids
-                else [
-                    c.source_id
-                    for c in faq_chunks
-                    if c.score >= self.settings.min_retrieval_score
-                ]
-                or [c.source_id for c in faq_chunks[:3]]
-            )
-            faq_sources = tuple(dict.fromkeys(faq_source_list))
-            from dataclasses import replace
+            # Check if router decision is a hard gate that FAQ cannot override
+            if decision.zone in (Zone.RED, Zone.ORANGE) and decision.action != Action.GUIDE:
+                # Log and fall through to normal pipeline
+                self.store.record(
+                    session_id,
+                    "faq_blocked_by_safety_gate",
+                    faq_id=faq_hit.faq_id,
+                    router_zone=decision.zone.value,
+                    router_action=decision.action.value,
+                )
+                faq_hit = None  # Treat as no FAQ hit
+            else:
+                # FAQ hit: verify evidence matches curated answer
+                faq_chunks = self._retrieve(faq_hit.retrieval_query, session_id, self.top_k) or chunks
+                if not faq_chunks:
+                    # No evidence for FAQ answer - fall through
+                    self.store.record(
+                        session_id,
+                        "faq_evidence_missing",
+                        faq_id=faq_hit.faq_id,
+                    )
+                    faq_hit = None
+                else:
+                    faq_source_list = (
+                        list(faq_hit.source_ids)
+                        if faq_hit.source_ids
+                        else [
+                            c.source_id
+                            for c in faq_chunks
+                            if c.score >= self.settings.min_retrieval_score
+                        ]
+                        or [c.source_id for c in faq_chunks[:3]]
+                    )
+                    faq_sources = tuple(dict.fromkeys(faq_source_list))
+                    from dataclasses import replace
 
-            faq_hit = replace(faq_hit, source_ids=faq_sources)
-            answer = faq_hit.to_grounded_answer()
-            chunks = faq_chunks
-            faq_answered = faq_hit.faq_id
-            decision = self.router.policy.safe_decision()
-            lat["faq_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
-            self.store.record(session_id, "faq_hit", faq_id=faq_hit.faq_id, score=faq_hit.score)
+                    faq_hit = replace(faq_hit, source_ids=faq_sources)
+                    # Validate FAQ citations
+                    if self.validator is not None:
+                        verdict = self.validator.validate(faq_hit.to_grounded_answer(), {c.source_id for c in faq_chunks})
+                        if not verdict.ok:
+                            self.store.record(
+                                session_id,
+                                "faq_citation_rejected",
+                                faq_id=faq_hit.faq_id,
+                                issues=[vars(i) for i in verdict.issues],
+                            )
+                            faq_hit = None
+                    
+                    if faq_hit is not None:
+                        answer = faq_hit.to_grounded_answer()
+                        chunks = faq_chunks
+                        faq_answered = faq_hit.faq_id
+                        decision = self.router.policy.safe_decision()
+                        lat["faq_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+                        self.store.record(session_id, "faq_hit", faq_id=faq_hit.faq_id, score=faq_hit.score)
         elif self.router.would_answer(decision):
             t0 = time.perf_counter()
 
