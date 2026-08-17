@@ -380,10 +380,53 @@ def _query_focus(query: str, hit: RetrievedChunk) -> float:
     return boost
 
 
+def _extract_legal_structure(text: str) -> tuple[str, ...]:
+    """Extract legal structure identifiers (Điều, Khoản, Điểm) from text.
+    Returns tuple of (điều, khoản, điểm) found, empty strings if not found.
+    """
+    import re
+    text_lower = text.casefold()
+    
+    # Find Điều number
+    dieu_match = re.search(r"điều\s+(\d+[a-z]?)", text_lower)
+    dieu = dieu_match.group(1) if dieu_match else ""
+    
+    # Find Khoản number
+    khoa_match = re.search(r"khoản\s+(\d+)", text_lower)
+    khoa = khoa_match.group(1) if khoa_match else ""
+    
+    # Find Điểm letter
+    diem_match = re.search(r"điểm\s+([a-z])", text_lower)
+    diem = diem_match.group(1) if diem_match else ""
+    
+    return (dieu, khoa, diem)
+
+
+def _same_legal_structure(text1: str, text2: str) -> bool:
+    """Check if two texts share the same Điều/Khoản/Điểm structure."""
+    s1 = _extract_legal_structure(text1)
+    s2 = _extract_legal_structure(text2)
+    # Must have at least Điều matching, and if both have Khoản/Điểm they must match
+    if not s1[0] or not s2[0]:
+        return False
+    if s1[0] != s2[0]:
+        return False
+    if s1[1] and s2[1] and s1[1] != s2[1]:
+        return False
+    if s1[2] and s2[2] and s1[2] != s2[2]:
+        return False
+    return True
+
+
 def _expand_adjacent(
     hits: list[RetrievedChunk], chunks: list[ChunkRecord], query: str
 ) -> list[RetrievedChunk]:
-    """Add nearby chunks when the answer is a legal list or procedure."""
+    """Add nearby chunks when the answer is a legal list or procedure.
+    
+    Only expands to chunks sharing the same Điều/Khoản/Điểm structure
+    to avoid contaminating context with unrelated provisions (timelines,
+    exceptions, repeals from adjacent articles).
+    """
     q = query.casefold()
     if not any(term in q for term in ("hồ sơ", "giấy tờ", "ai được", "những ai", "đối tượng", "điều kiện", "thời giờ làm việc", "nghỉ hưu")):
         return hits
@@ -393,12 +436,17 @@ def _expand_adjacent(
         pos = positions.get(hit.chunk_id)
         if pos is None:
             continue
+        # Only expand to adjacent chunks with SAME legal structure
         for i in range(max(0, pos - 2), min(len(chunks), pos + 3)):
             neighbor = chunks[i]
             if neighbor.source_id != hit.source_id:
                 continue
-            if neighbor.chunk_id not in selected:
-                selected[neighbor.chunk_id] = _to_chunk(neighbor, max(0.001, hit.score - 0.002))
+            if neighbor.chunk_id in selected:
+                continue
+            # Check legal structure match
+            if not _same_legal_structure(hit.text, neighbor.text):
+                continue
+            selected[neighbor.chunk_id] = _to_chunk(neighbor, max(0.001, hit.score - 0.002))
         if "điều kiện" in q or "hồ sơ" in q or "giấy tờ" in q:
             direct_terms = (
                 "điều kiện về nhà ở",
@@ -410,11 +458,15 @@ def _expand_adjacent(
             for candidate in chunks:
                 if candidate.source_id != hit.source_id:
                     continue
+                if candidate.chunk_id in selected:
+                    continue
                 if any(term in candidate.text.casefold() for term in direct_terms):
-                    selected.setdefault(
-                        candidate.chunk_id,
-                        _to_chunk(candidate, max(0.001, hit.score - 0.001)),
-                    )
+                    # Also verify legal structure match for direct terms
+                    if _same_legal_structure(hit.text, candidate.text):
+                        selected.setdefault(
+                            candidate.chunk_id,
+                            _to_chunk(candidate, max(0.001, hit.score - 0.001)),
+                        )
     return list(selected.values())
 
 
