@@ -39,6 +39,108 @@ class ScoreBreakdown:
     final_score: float = 0.0
 
 
+class EvidenceType:
+    """Classification of evidence relevance to the query."""
+    DIRECT_ANSWER = "direct_answer"      # Contains the exact answer (article with numbers, conditions, subjects)
+    CONDITIONS_EXCEPTIONS = "conditions_exceptions"  # Conditions, exceptions, scope limitations
+    PROCEDURE = "procedure"               # Step-by-step procedure, where to submit, timeline
+    CITATION_ONLY = "citation_only"       # Only cites law name/article without substantive content
+    IRRELEVANT = "irrelevant"             # Not related to the query intent
+
+
+def _classify_evidence(query: str, hit: RetrievedChunk) -> str:
+    """Classify a chunk's relevance to the query.
+    
+    Priority: direct_answer > conditions_exceptions > procedure > citation_only > irrelevant
+    """
+    q = query.casefold()
+    text = hit.text.casefold()
+    
+    # Check for direct answer patterns: specific article with numbers, conditions, subjects
+    direct_patterns = [
+        r"điều\s+\d+.*\d+",           # Article with numbers
+        r"mức\s+phạt.*\d+",            # Penalty amount
+        r"tuổi\s+nghỉ\s+hưu.*\d+",     # Retirement age with number
+        r"thời\s+hạn.*\d+\s+ngày",     # Deadline with days
+        r"hồ\s+sơ\s+gồm",              # Dossier composition
+        r"điều\s+kiện.*\d+",           # Conditions with specifics
+        r"đối\s+tượng.*\d+",           # Subjects with specifics
+        r"mức\s+hưởng.*\d+%?",         # Benefit level with percentage
+        r"giảm\s+\d+%?",               # Reduction with percentage
+        r"miễn\s+phí",                 # Free/exempt
+    ]
+    
+    # Check for conditions/exceptions
+    condition_patterns = [
+        r"ngoại\s+lệ",                 # Exceptions
+        r"trường\s+hợp.*không",        # Cases not applicable
+        r"trừ\s+trường\s+hợp",         # Except cases
+        r"không\s+áp\s+dụng",          # Not applicable
+        r"điều\s+kiện.*hưởng",         # Conditions to enjoy
+        r"được\s+hưởng.*khi",          # Enjoyed when
+    ]
+    
+    # Check for procedure
+    procedure_patterns = [
+        r"thủ\s+tục",                  # Procedure
+        r"nộp\s+hồ\s+sơ",              # Submit dossier
+        r"giải\s+quyết\s+trong",       # Resolved within
+        r"cơ\s+quan\s+tiếp\s+nhận",    # Receiving agency
+        r"cổng\s+dịch\s+vụ\s+công",    # Public service portal
+        r"bước\s+\d+",                 # Step N
+    ]
+    
+    # Check for citation only (mentions law/article but no substantive content)
+    citation_only_patterns = [
+        r"theo\s+(luật|nghị\s+định|thông\s+tư|quyết\s+định)",  # "According to Law/Decree..."
+        r"căn\s+cứ\s+(luật|nghị\s+định)",                       # "Based on Law/Decree..."
+        r"điều\s+\d+\.\s*$",                                    # Just article reference at end
+    ]
+    
+    # Query intent detection
+    wants_procedure = any(term in q for term in ["thủ tục", "làm sao", "nộp ở đâu", "giải quyết", "bước"])
+    wants_conditions = any(term in q for term in ["điều kiện", "ai được", "đối tượng", "được hưởng"])
+    wants_penalty = any(term in q for term in ["phạt", "mức phạt", "xử phạt"])
+    wants_dossier = any(term in q for term in ["hồ sơ", "giấy tờ", "cần gì"])
+    wants_age = any(term in q for term in ["tuổi", "bao nhiêu tuổi"])
+    wants_deadline = any(term in q for term in ["thời hạn", "bao lâu", "khi nào"])
+    
+    # Direct answer: high relevance to what user specifically asks for
+    if wants_penalty and any(re.search(p, text) for p in direct_patterns if "phạt" in p or "mức" in p):
+        return EvidenceType.DIRECT_ANSWER
+    if wants_age and any(re.search(p, text) for p in direct_patterns if "tuổi" in p):
+        return EvidenceType.DIRECT_ANSWER
+    if wants_dossier and any(re.search(p, text) for p in direct_patterns if "hồ sơ" in p):
+        return EvidenceType.DIRECT_ANSWER
+    if wants_deadline and any(re.search(p, text) for p in direct_patterns if "thời hạn" in p or "ngày" in p):
+        return EvidenceType.DIRECT_ANSWER
+    if wants_conditions and any(re.search(p, text) for p in direct_patterns if "điều kiện" in p or "đối tượng" in p):
+        return EvidenceType.DIRECT_ANSWER
+    
+    # General direct answer: contains specific numbers/articles that answer the query
+    if any(re.search(p, text) for p in direct_patterns):
+        # Check if it's actually answering the query topic
+        query_topics = set(q.split())
+        text_topics = set(text.split())
+        overlap = query_topics & text_topics
+        if len(overlap) >= 2:  # At least 2 query terms in text
+            return EvidenceType.DIRECT_ANSWER
+    
+    # Conditions/exceptions
+    if any(re.search(p, text) for p in condition_patterns):
+        return EvidenceType.CONDITIONS_EXCEPTIONS
+    
+    # Procedure
+    if any(re.search(p, text) for p in procedure_patterns):
+        return EvidenceType.PROCEDURE
+    
+    # Citation only
+    if any(re.search(p, text) for p in citation_only_patterns):
+        return EvidenceType.CITATION_ONLY
+    
+    return EvidenceType.IRRELEVANT
+
+
 def _to_chunk(rec, score: float, breakdown: Optional[ScoreBreakdown] = None) -> RetrievedChunk:
     metadata = rec.metadata if hasattr(rec, "metadata") else DocumentLoader.to_metadata(rec)
     return RetrievedChunk(
@@ -389,7 +491,31 @@ class HybridRetriever(Retriever):
                     breakdowns[hit.chunk_id].focus_boost = boost
                     breakdowns[hit.chunk_id].final_score = hit.score
         
-        fused.sort(key=lambda hit: (hit.score, breakdowns.get(hit.chunk_id, ScoreBreakdown()).rrf_score), reverse=True)
+        # Classify evidence type for each hit
+        evidence_types = {}
+        for hit in fused:
+            ev_type = _classify_evidence(query, hit)
+            evidence_types[hit.chunk_id] = ev_type
+            # Store in metadata for downstream use
+            if hit.metadata:
+                hit.metadata.evidence_type = ev_type
+        
+        # Sort by evidence type priority, then score
+        type_priority = {
+            EvidenceType.DIRECT_ANSWER: 5,
+            EvidenceType.CONDITIONS_EXCEPTIONS: 4,
+            EvidenceType.PROCEDURE: 3,
+            EvidenceType.CITATION_ONLY: 2,
+            EvidenceType.IRRELEVANT: 1,
+        }
+        fused.sort(
+            key=lambda hit: (
+                type_priority.get(evidence_types.get(hit.chunk_id, EvidenceType.IRRELEVANT), 0),
+                hit.score,
+                breakdowns.get(hit.chunk_id, ScoreBreakdown()).rrf_score
+            ),
+            reverse=True
+        )
         
         if self.rerank and len(fused) > 1:
             reranker = self._load_reranker()
@@ -403,6 +529,10 @@ class HybridRetriever(Retriever):
                     if h.chunk_id in breakdowns:
                         breakdowns[h.chunk_id].rerank_score = float(s)
                         breakdowns[h.chunk_id].final_score = float(s)
+                    # Preserve evidence type
+                    if h.chunk_id in evidence_types:
+                        if new_hit.metadata:
+                            new_hit.metadata.evidence_type = evidence_types[h.chunk_id]
                     scored.append(new_hit)
             scored.sort(key=lambda h: h.score, reverse=True)
             fused = scored
