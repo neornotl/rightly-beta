@@ -1,4 +1,0 @@
-Answer: None
-Zone: ORANGE
-Action: REFUSE
-Reason codes: ['CITATION_UNSUPPORTED']
