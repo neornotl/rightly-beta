@@ -1,0 +1,231 @@
+{
+  "schema": 1,
+  "description": "Probe questions targeting known failure modes for regression detection. Not part of official dataset.",
+  "probes": [
+    {
+      "id": "probe_001",
+      "category": "same_topic_different_intent",
+      "query": "Thủ tục hưởng lương hưu cần những giấy tờ gì?",
+      "expected_intent": "procedure",
+      "expected_focus": "hồ sơ hưởng lương hưu",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat19_2026", "article": "Điều 77", "text": "hồ sơ đề nghị hưởng lương hưu"}
+      ],
+      "forbidden_topics": ["điều kiện hưởng", "tuổi nghỉ hưu", "cách tính tiền"],
+      "critical_claims": [
+        {"claim": "hồ sơ gồm đơn đề nghị, sổ bảo hiểm, chứng minh đóng BHXH", "required": true}
+      ]
+    },
+    {
+      "id": "probe_002",
+      "category": "same_topic_different_intent",
+      "query": "Điều kiện để được hưởng lương hưu là gì?",
+      "expected_intent": "eligibility",
+      "expected_focus": "điều kiện hưởng lương hưu",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat19_2026", "article": "Điều 169", "text": "tuổi nghỉ hưu"}, 
+        {"source_id": "luat19_2026", "article": "Điều 76", "text": "điều kiện hưởng lương hưu"}
+      ],
+      "forbidden_topics": ["hồ sơ thủ tục", "nơi nộp", "thời hạn giải quyết"],
+      "critical_claims": [
+        {"claim": "đóng BHXH đủ 20 năm", "required": true},
+        {"claim": "đạt tuổi nghỉ hưu theo quy định", "required": true}
+      ]
+    },
+    {
+      "id": "probe_003",
+      "category": "same_keyword_different_subject",
+      "query": "Vượt đèn đỏ xe máy bị phạt bao nhiêu?",
+      "expected_intent": "penalty",
+      "expected_focus": "mức phạt xe máy vượt đèn đỏ",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "nd168_2024", "article": "Điều 8", "text": "xe mô tô, xe gắn máy phạt từ 4 đến 6 triệu"}
+      ],
+      "forbidden_topics": ["phạt ô tô", "phạt xe tải", "phạt xe khách", "trừ điểm"],
+      "critical_claims": [
+        {"claim": "phạt tiền từ 4 triệu đến 6 triệu đồng", "required": true},
+        {"claim": "áp dụng cho xe mô tô, xe gắn máy", "required": true}
+      ]
+    },
+    {
+      "id": "probe_004",
+      "category": "same_keyword_different_subject",
+      "query": "Vượt đèn đỏ ô tô bị phạt bao nhiêu?",
+      "expected_intent": "penalty",
+      "expected_focus": "mức phạt ô tô vượt đèn đỏ",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "nd168_2024", "article": "Điều 8", "text": "xe ô tô phạt từ 18 đến 20 triệu"}
+      ],
+      "forbidden_topics": ["phạt xe máy", "phạt xe tải", "trừ điểm"],
+      "critical_claims": [
+        {"claim": "phạt tiền từ 18 triệu đến 20 triệu đồng", "required": true},
+        {"claim": "áp dụng cho xe ô tô", "required": true}
+      ]
+    },
+    {
+      "id": "probe_005",
+      "category": "multi_subject_source",
+      "query": "Người cao tuổi 80 tuổi được miễn phí khám bệnh không?",
+      "expected_intent": "eligibility",
+      "expected_focus": "quyền lợi BHYT người cao tuổi 80 tuổi",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat40_2026", "article": "Điều 14", "text": "người từ 80 tuổi trở lên được miễn phí khám bệnh"}
+      ],
+      "forbidden_topics": ["người 60-79 tuổi", "trẻ em dưới 6 tuổi", "người khuyết tật"],
+      "critical_claims": [
+        {"claim": "người từ 80 tuổi trở lên được miễn phí khám bệnh", "required": true},
+        {"claim": "không phải trả tiền khám bệnh", "required": true}
+      ]
+    },
+    {
+      "id": "probe_006",
+      "category": "followup_topic_switch",
+      "query": "Còn nếu người 75 tuổi thì sao?",
+      "expected_intent": "eligibility",
+      "expected_focus": "quyền lợi BHYT người 75 tuổi",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat40_2026", "article": "Điều 14", "text": "người từ 75 đến dưới 80 tuổi được giảm 50%"}
+      ],
+      "forbidden_topics": ["người 80 tuổi", "trẻ em", "người khuyết tật nặng"],
+      "critical_claims": [
+        {"claim": "người từ 75 đến dưới 80 tuổi được giảm 50% chi phí khám bệnh", "required": true}
+      ]
+    },
+    {
+      "id": "probe_007",
+      "category": "faq_ambiguity",
+      "query": "Làm sổ đỏ đất nông nghiệp cần gì?",
+      "expected_intent": "procedure",
+      "expected_focus": "đăng ký đất nông nghiệp lần đầu",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat133_2025", "article": "Điều 12", "text": "đăng ký đất đai lần đầu"}
+      ],
+      "forbidden_topics": ["chuyển đổi mục đích sử dụng", "đất thổ cư", "đất ở"],
+      "critical_claims": [
+        {"claim": "cần đơn đề nghị, giấy tờ quyền sử dụng đất, căn cước", "required": true}
+      ]
+    },
+    {
+      "id": "probe_008",
+      "category": "asr_noisy",
+      "query": "Dang ki khai sinh can giay gi",
+      "expected_intent": "procedure",
+      "expected_focus": "giấy tờ đăng ký khai sinh",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat60_2014", "article": "Điều 14", "text": "tờ khai, giấy chứng sinh, giấy tờ tùy thân cha mẹ"}
+      ],
+      "forbidden_topics": ["cải chính", "đổi tên", "sửa sai"],
+      "critical_claims": [
+        {"claim": "cần tờ khai đăng ký khai sinh", "required": true},
+        {"claim": "cần giấy chứng sinh", "required": true},
+        {"claim": "cần giấy tờ tùy thân cha mẹ", "required": true}
+      ]
+    },
+    {
+      "id": "probe_009",
+      "category": "pii_dilution",
+      "query": "Tôi tên Nguyễn Văn A, sinh năm 1960, đang ở Hà Nội, muốn hỏi tuổi nghỉ hưu nam là bao nhiêu?",
+      "expected_intent": "eligibility",
+      "expected_focus": "tuổi nghỉ hưu nam giới",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat19_2026", "article": "Điều 169", "text": "tuổi nghỉ hưu nam 62 tuổi theo lộ trình"}
+      ],
+      "forbidden_topics": ["tuổi nghỉ hưu nữ", "nghỉ hưu sớm", "nghỉ hưu đặc biệt"],
+      "critical_claims": [
+        {"claim": "nam giới nghỉ hưu 62 tuổi (theo lộ trình tăng dần)", "required": true}
+      ]
+    },
+    {
+      "id": "probe_010",
+      "category": "retrieval_wrong_chunk_type",
+      "query": "Hồ sơ xin cấp sổ đỏ lần đầu gồm những gì?",
+      "expected_intent": "procedure",
+      "expected_focus": "hồ sơ cấp sổ đỏ lần đầu",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "luat133_2025", "article": "Điều 44", "text": "hồ sơ đăng ký đất đai lần đầu gồm đơn, giấy tờ quyền sử dụng đất, căn cước, sơ đồ thửa đất"}
+      ],
+      "forbidden_topics": ["thời hạn giải quyết", "thủ tục chuyển nhượng", "giá đất"],
+      "critical_claims": [
+        {"claim": "hồ sơ gồm đơn đề nghị, giấy tờ quyền sử dụng đất, căn cước công dân, sơ đồ thửa đất", "required": true}
+      ]
+    },
+    {
+      "id": "probe_011",
+      "category": "legal_judgment_boundary",
+      "query": "Vợ chồng ly hôn thì tài sản chung chia thế nào?",
+      "expected_intent": "legal_info",
+      "expected_focus": "quy định phân chia tài sản ly hôn",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "boluat91_2015", "article": "Điều 59", "text": "tài sản chung được phân chia theo quy định"}
+      ],
+      "forbidden_topics": ["tư vấn cụ thể vụ ly hôn", "phán quyết tòa án", "ai đúng ai sai"],
+      "critical_claims": [
+        {"claim": "tài sản chung phân chia theo thỏa thuận hoặc quy định pháp luật", "required": true}
+      ]
+    },
+    {
+      "id": "probe_012",
+      "category": "out_of_scope_not_answered",
+      "query": "Thời tiết hôm nay Hà Nội như thế nào?",
+      "expected_intent": "out_of_scope",
+      "expected_focus": "none",
+      "expected_answerable": false,
+      "gold_evidence_spans": [],
+      "forbidden_topics": [],
+      "critical_claims": []
+    },
+    {
+      "id": "probe_013",
+      "category": "emergency_not_answered",
+      "query": "Tôi bị chồng đánh, ly hôn ở đâu?",
+      "expected_intent": "emergency",
+      "expected_focus": "none - must guide to 113/115",
+      "expected_answerable": false,
+      "gold_evidence_spans": [],
+      "forbidden_topics": ["thủ tục ly hôn", "tài sản", "con cái"],
+      "critical_claims": []
+    },
+    {
+      "id": "probe_014",
+      "category": "citation_expired_check",
+      "query": "Theo Nghị định 123/2015 thì khai sinh như thế nào?",
+      "expected_intent": "procedure",
+      "expected_focus": "thủ tục khai sinh hiện hành",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "nd123_2015", "article": "Điều 8", "text": "đăng ký khai sinh trong 60 ngày"}
+      ],
+      "forbidden_topics": [],
+      "critical_claims": [
+        {"claim": "đăng ký trong 60 ngày", "required": true},
+        {"claim": "tại UBND cấp xã nơi cư trú của cha hoặc mẹ", "required": true}
+      ]
+    },
+    {
+      "id": "probe_015",
+      "category": "claim_not_supported",
+      "query": "Kết hôn cần kiểm tra sức khỏe không?",
+      "expected_intent": "eligibility",
+      "expected_focus": "điều kiện kết hôn",
+      "expected_answerable": true,
+      "gold_evidence_spans": [
+        {"source_id": "boluat91_2015", "article": "Điều 8", "text": "điều kiện kết hôn: tuổi, tự nguyện, không mất năng lực"}
+      ],
+      "forbidden_topics": ["kiểm tra sức khỏe", "xét nghiệm tiền hôn nhân"],
+      "critical_claims": [
+        {"claim": "không có quy định bắt buộc kiểm tra sức khỏe trước kết hôn", "required": true}
+      ]
+    }
+  ]
+}

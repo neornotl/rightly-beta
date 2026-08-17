@@ -1,0 +1,596 @@
+{
+  "baseline_commit": "541591727d441d7033a4077d98fbfb373feea787",
+  "stats": {
+    "total": 15,
+    "zone_correct": 14,
+    "action_correct": 14,
+    "answerable_correct": 14,
+    "has_answer": 14,
+    "has_citation": 14,
+    "details": [
+      {
+        "probe_id": "probe_001",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat19_2026",
+          "luat41_2024",
+          "nd158_2025"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_002",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat19_2026"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_003",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "nd168_2024"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_004",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "nd168_2024"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_005",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat23_2026",
+          "luat39_2009"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_006",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "boluat135_2025",
+          "boluat100_2015",
+          "nd176_2025",
+          "luat51_2024",
+          "luat40_2026"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_007",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat133_2025"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_008",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat60_2014",
+          "nd123_2015"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_009",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "nd135_2020"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_010",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat133_2025",
+          "nd151_2025"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_011",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat121_2025",
+          "luat52_2014",
+          "luat91_2015",
+          "boluat91_2015"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_012",
+        "zone": "ORANGE",
+        "expected_zone": "ORANGE",
+        "zone_ok": true,
+        "action": "GUIDE",
+        "expected_action": "GUIDE",
+        "action_ok": true,
+        "has_answer": false,
+        "has_citation": false,
+        "retrieval_count": 5,
+        "source_ids": [],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_013",
+        "zone": "YELLOW",
+        "expected_zone": "ORANGE",
+        "zone_ok": false,
+        "action": "ANSWER",
+        "expected_action": "GUIDE",
+        "action_ok": false,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat121_2025",
+          "boluat99_2025"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_014",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat60_2014",
+          "nd123_2015"
+        ],
+        "error": ""
+      },
+      {
+        "probe_id": "probe_015",
+        "zone": "YELLOW",
+        "expected_zone": "YELLOW",
+        "zone_ok": true,
+        "action": "ANSWER",
+        "expected_action": "ANSWER",
+        "action_ok": true,
+        "has_answer": true,
+        "has_citation": true,
+        "retrieval_count": 5,
+        "source_ids": [
+          "luat121_2025",
+          "nd123_2015"
+        ],
+        "error": ""
+      }
+    ]
+  },
+  "results": [
+    {
+      "probe_id": "probe_001",
+      "query": "Thủ tục hưởng lương hưu cần những giấy tờ gì?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì g hợp đã bị tạm dừng hoặc chấm dứt hưởng\nHồ sơ đề nghị tiếp tục hưởng lương hưu, trợ cấp bảo hiểm xã hội hằng tháng đối với các trường hợp quy định tại điểm a và điểm b khoản 3 và khoản 4 Điều 75 của Luật này bao gồm văn bản đề nghị tiếp tục hưởng lương hưu, trợ cấp bảo hiểm xã hội hằng tháng và giấy tờ khác tùy theo từng trường hợp sau đây:\n1. Văn bản của cơ quan nhà nước có thẩm quyền về việc trở về nước đối với trường hợp quy định điểm a khoản 3 Điều 75 của Luật này;\n2. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
+      "spoken_citation": "Thông tin theo 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội.",
+      "source_ids": [
+        "luat19_2026",
+        "luat41_2024",
+        "nd158_2025"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat19_2026",
+        "luat41_2024",
+        "nd158_2025",
+        "luat19_2026",
+        "luat41_2024"
+      ],
+      "latency_ms": 139.6,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_002",
+      "query": "Điều kiện để được hưởng lương hưu là gì?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Theo Luật Bảo hiểm xã hội năm 2024, trường hợp chưa nhận được lương hưu như sau:\n- Lương hưu có thể bị tạm dừng hưởng khi người đang hưởng xuất cảnh trái phép, bị Tòa án tuyên bố mất tích, hoặc khi chưa xác minh được thông tin người thụ hưởng.\n- Hết các căn cứ đó thì người đang hưởng được tiếp tục hưởng lương hưu và được nhận lại số tiền của thời gian chưa nhận.\n- Đề nghị tiếp tục hưởng nộp hồ sơ cho cơ quan bảo hiểm xã hội; trong thời hạn 10 ngày làm việc kể từ khi nhận đủ hồ sơ, cơ quan bảo hiểm xã hội có trách nhiệm giải quyết.\nTóm lại, anh/chị liên hệ cơ quan bảo hiểm xã hội nơi đang chi trả để kiểm tra thông tin cụ thể cho trường hợp của bố anh/chị nhé.",
+      "spoken_citation": "Theo Luật Bảo hiểm xã hội năm 2024",
+      "source_ids": [
+        "luat19_2026"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat19_2026",
+        "luat41_2024",
+        "luat19_2026",
+        "luat41_2024",
+        "nd158_2025"
+      ],
+      "latency_ms": 565.1,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_003",
+      "query": "Vượt đèn đỏ xe máy bị phạt bao nhiêu?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 168/2024/NĐ-CP, hành vi không chấp hành hiệu lệnh của đèn tín hiệu giao thông (vượt đèn đỏ) bị xử phạt như sau:\n- Người điều khiển xe ô tô: phạt tiền từ 18 triệu đến 20 triệu đồng.\n- Người điều khiển xe mô tô, xe gắn máy: phạt tiền từ 4 triệu đến 6 triệu đồng.\n- Ngoài ra còn bị áp dụng hình thức xử phạt bổ sung, biện pháp khắc phục hậu quả theo quy định của Nghị định này.\nTóm lại, vượt đèn đỏ bị phạt từ 18 đến 20 triệu đồng với ô tô, từ 4 đến 6 triệu đồng với xe máy, kèm hình thức xử phạt bổ sung ạ.",
+      "spoken_citation": "Theo Nghị định 168/2024/NĐ-CP",
+      "source_ids": [
+        "nd168_2024"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024"
+      ],
+      "latency_ms": 570.0,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_004",
+      "query": "Vượt đèn đỏ ô tô bị phạt bao nhiêu?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Theo Nghị định 168/2024/NĐ-CP, hành vi không chấp hành hiệu lệnh của đèn tín hiệu giao thông (vượt đèn đỏ) bị xử phạt như sau:\n- Người điều khiển xe ô tô: phạt tiền từ 18 triệu đến 20 triệu đồng.\n- Người điều khiển xe mô tô, xe gắn máy: phạt tiền từ 4 triệu đến 6 triệu đồng.\n- Ngoài ra còn bị áp dụng hình thức xử phạt bổ sung, biện pháp khắc phục hậu quả theo quy định của Nghị định này.\nTóm lại, vượt đèn đỏ bị phạt từ 18 đến 20 triệu đồng với ô tô, từ 4 đến 6 triệu đồng với xe máy, kèm hình thức xử phạt bổ sung ạ.",
+      "spoken_citation": "Theo Nghị định 168/2024/NĐ-CP",
+      "source_ids": [
+        "nd168_2024"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024",
+        "nd168_2024"
+      ],
+      "latency_ms": 965.0,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_005",
+      "query": "Người cao tuổi 80 tuổi được miễn phí khám bệnh không?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Về Người cao tuổi 80 tuổi được miễn phí, theo quy định hiện hành thì 3. Điều 13. ạ. 23-VBHN-VPQH 2026 Luật Người cao tuổi ạ.",
+      "spoken_citation": "Thông tin theo 23-VBHN-VPQH 2026 Luật Người cao tuổi.",
+      "source_ids": [
+        "luat23_2026",
+        "luat39_2009"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat23_2026",
+        "luat39_2009",
+        "luat23_2026",
+        "luat39_2009",
+        "luat23_2026"
+      ],
+      "latency_ms": 276.9,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_006",
+      "query": "Còn nếu người 75 tuổi thì sao?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Về Còn nếu người 75 tuổi thì sao, theo quy định hiện hành thì 3.[13] Không thi hành án tử hình đối với người bị kết án nếu thuộc một trong các trường hợp sau đây:\na) Phụ nữ có thai hoặc phụ nữ đang nuôi con dưới 36 tháng tuổi;\nb) Người đủ 75 tuổi trở lên;\nc) Người mắc bệnh ung thư giai đoạn cuối. ưới 18 tuổi khi phạm tội, phụ nữ có thai, phụ nữ đang nuôi con dưới 36 tháng tuổi hoặc người đủ 75 tuổi trở lên khi phạm tội hoặc khi xét xử. ạ. 135-VBHN-VPQH 2025 Bộ luật Hình sự ạ",
+      "spoken_citation": "Thông tin theo 135-VBHN-VPQH 2025 Bộ luật Hình sự",
+      "source_ids": [
+        "boluat135_2025",
+        "boluat100_2015",
+        "nd176_2025",
+        "luat51_2024",
+        "luat40_2026"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "boluat135_2025",
+        "boluat100_2015",
+        "nd176_2025",
+        "luat51_2024",
+        "luat40_2026"
+      ],
+      "latency_ms": 205.4,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_007",
+      "query": "Làm sổ đỏ đất nông nghiệp cần gì?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ, được ạ. Theo Luật Đất đai năm 2024, chuyển mục đích sử dụng đất nông nghiệp như sau:\n- Đất nông nghiệp có thể chuyển mục đích sử dụng sang mục đích khác khi được cơ quan nhà nước có thẩm quyền cho phép và phù hợp với quy hoạch, kế hoạch sử dụng đất đã được phê duyệt.\n- Ủy ban nhân dân cấp huyện quyết định cho phép chuyển mục đích sử dụng đất đối với cá nhân.\n- Người sử dụng đất nộp hồ sơ đề nghị tại cơ quan đăng ký đất đai nơi có đất hoặc qua cổng dịch vụ công, kèm giấy chứng nhận quyền sử dụng đất.\n- Trường hợp chuyển sang đất ở phải nộp tiền sử dụng đất theo quy định.\nTóm lại, đất nông nghiệp được chuyển mục đích khi được Ủy ban nhân dân cấp huyện cho phép; anh/chị nộp hồ sơ tại cơ quan đăng ký đất đai nơi có đất ạ.",
+      "spoken_citation": "Theo Luật Đất đai năm 2024 và văn bản hướng dẫn",
+      "source_ids": [
+        "luat133_2025"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat133_2025",
+        "luat31_2024",
+        "luat94_2026",
+        "luat08_2017",
+        "nd151_2025"
+      ],
+      "latency_ms": 436.4,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_008",
+      "query": "Dang ki khai sinh can giay gi",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP, việc đăng ký khai sinh được thực hiện như sau:\n- Đăng ký trong 60 ngày kể từ khi trẻ được sinh ra, tại Ủy ban nhân dân cấp xã nơi cư trú của người mẹ hoặc người cha.\n- Cần tờ khai đăng ký khai sinh theo mẫu, giấy chứng sinh và xuất trình giấy tờ tùy thân (căn cước công dân) của cha mẹ.\n- Nếu không có giấy chứng sinh thì nộp giấy tờ thay thế theo quy định của Luật Hộ tịch.\nTóm lại, anh/chị làm khai sinh tại Ủy ban nhân dân cấp xã trong 60 ngày, mang theo tờ khai, giấy chứng sinh và giấy tờ tùy thân của cha mẹ ạ.",
+      "spoken_citation": "Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP",
+      "source_ids": [
+        "luat60_2014",
+        "nd123_2015"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd123_2015",
+        "luat03_2026",
+        "nd123_2015",
+        "luat60_2014",
+        "nd123_2015"
+      ],
+      "latency_ms": 239.29999999999998,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_009",
+      "query": "Tôi tên Nguyễn Văn A, sinh năm 1960, đang ở Hà Nội, muốn hỏi tuổi nghỉ hưu nam là bao nhiêu?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Về tuổi nghỉ hưu theo lộ trình tăng dần, theo quy định hiện hành thì Từ ngày 01 tháng 01 năm 2021, các quy định của chế độ hưu trí gắn với điều kiện về tuổi hưởng lương hưu theo Điều 54, Điều 55, khoản 1 Điều 73 của Luật Bảo hiểm xã hội được thực hiện theo tuổi nghỉ hưu và điều kiện về tuổi hưởng lương hưu tại Điều 169, khoản 1 Điều 219 của Bộ luật Lao động và quy định tại Nghị định này. Đối với lao động nam sinh tháng 12 năm 1960 và lao động nữ sinh tháng 12 năm 1965 làm việc trong điều kiện lao động bình thường thì thời điểm nghỉ hưu là kết thúc ngày 31 tháng 12 năm 2020, thời điểm hưởng lương hưu là bắt đầu ngày 01 tháng 01 năm 2021. ạ. Nghị định quy định về tuổi nghỉ hưu ạ.",
+      "spoken_citation": "Thông tin theo Nghị định quy định về tuổi nghỉ hưu.",
+      "source_ids": [
+        "nd135_2020"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd135_2020",
+        "nd135_2020",
+        "nd135_2020",
+        "nd135_2020",
+        "nd135_2020"
+      ],
+      "latency_ms": 146.20000000000002,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_010",
+      "query": "Hồ sơ xin cấp sổ đỏ lần đầu gồm những gì?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Đất đai năm 2024 và Nghị định 151/2025/NĐ-CP, làm sổ đỏ lần đầu như sau:\n- Hồ sơ gồm đơn đề nghị cấp giấy chứng nhận, giấy tờ về quyền sử dụng đất nếu có, căn cước công dân, và sơ đồ hoặc bản mô tả thửa đất.\n- Nộp tại văn phòng đăng ký đất đai nơi có đất, hoặc qua cổng dịch vụ công.\n- Việc đăng ký đất đai lần đầu, cấp Giấy chứng nhận lần đầu không phụ thuộc địa bàn cấp xã nơi có đất và được giải quyết không quá 17 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ.\nTóm lại, anh/chị chuẩn bị đơn đề nghị, giấy tờ về đất và căn cước công dân, nộp tại văn phòng đăng ký đất đai hoặc cổng dịch vụ công, thời gian giải quyết không quá 17 ngày làm việc ạ.",
+      "spoken_citation": "Theo Luật Đất đai năm 2024 và Nghị định 151/2025/NĐ-CP",
+      "source_ids": [
+        "luat133_2025",
+        "nd151_2025"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat133_2025",
+        "luat31_2024",
+        "luat133_2025",
+        "luat31_2024",
+        "luat133_2025"
+      ],
+      "latency_ms": 385.70000000000005,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_011",
+      "query": "Vợ chồng ly hôn thì tài sản chung chia thế nào?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ vâng ạ. Về quy định về ly hôn, theo quy định hiện hành thì 2. Trong trường hợp vợ chồng sống chung với gia đình mà tài sản của vợ chồng trong khối tài sản chung của gia đình có thể xác định được theo phần thì khi ly hôn, phần tài sản của vợ chồng được trích ra từ khối tài sản chung đó để chia theo quy định tại Điều 59 của Luật này. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
+      "spoken_citation": "Thông tin theo 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình.",
+      "source_ids": [
+        "luat121_2025",
+        "luat52_2014",
+        "luat91_2015",
+        "boluat91_2015"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat121_2025",
+        "luat52_2014",
+        "luat91_2015",
+        "boluat91_2015",
+        "luat121_2025"
+      ],
+      "latency_ms": 132.10000000000002,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_012",
+      "query": "Thời tiết hôm nay Hà Nội như thế nào?",
+      "zone": "ORANGE",
+      "action": "GUIDE",
+      "answer_text": "",
+      "spoken_citation": "",
+      "source_ids": [],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd168_2024",
+        "nd168_2024",
+        "luat55_2026",
+        "luat36_2024",
+        "luat90_2026"
+      ],
+      "latency_ms": 114.4,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_013",
+      "query": "Tôi bị chồng đánh, ly hôn ở đâu?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Ly hôn do Tòa án nhân dân giải quyết, gồm hai trường hợp:\n- Ly hôn thuận tình: vợ chồng cùng yêu cầu, tự nguyện và đã thỏa thuận về con, tài sản; Tòa án hòa giải rồi ra quyết định công nhận thuận tình ly hôn. Hồ sơ gồm đơn yêu cầu công nhận thuận tình ly hôn, Giấy chứng nhận kết hôn, thỏa thuận về con, tài sản (nếu có) và giấy tờ tùy thân.\n- Ly hôn theo yêu cầu của một bên: vợ chồng không thỏa thuận được, một bên yêu cầu ly hôn thì nộp đơn khởi kiện tại Tòa án nhân dân có thẩm quyền; nếu hòa giải không thành và có căn cứ theo quy định của Luật Hôn nhân và Gia đình thì Tòa án giải quyết cho ly hôn.\nTóm lại, anh/chị nộp hồ sơ tại Tòa án nhân dân có thẩm quyền; thuận tình thì làm đơn yêu cầu công nhận thuận tình ly hôn, không thỏa thuận được thì nộp đơn khởi kiện ạ.",
+      "spoken_citation": "Theo Luật Hôn nhân và Gia đình và pháp luật về tố tụng dân sự",
+      "source_ids": [
+        "luat121_2025",
+        "boluat99_2025"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat121_2025",
+        "luat52_2014",
+        "boluat99_2025",
+        "boluat92_2015",
+        "boluat99_2025"
+      ],
+      "latency_ms": 446.59999999999997,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_014",
+      "query": "Theo Nghị định 123/2015 thì khai sinh như thế nào?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ thưa anh/chị ạ. Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP, việc đăng ký khai sinh được thực hiện như sau:\n- Đăng ký trong 60 ngày kể từ khi trẻ được sinh ra, tại Ủy ban nhân dân cấp xã nơi cư trú của người mẹ hoặc người cha.\n- Cần tờ khai đăng ký khai sinh theo mẫu, giấy chứng sinh và xuất trình giấy tờ tùy thân (căn cước công dân) của cha mẹ.\n- Nếu không có giấy chứng sinh thì nộp giấy tờ thay thế theo quy định của Luật Hộ tịch.\nTóm lại, anh/chị làm khai sinh tại Ủy ban nhân dân cấp xã trong 60 ngày, mang theo tờ khai, giấy chứng sinh và giấy tờ tùy thân của cha mẹ ạ.",
+      "spoken_citation": "Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP",
+      "source_ids": [
+        "luat60_2014",
+        "nd123_2015"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "nd123_2015",
+        "luat03_2026",
+        "nd123_2015",
+        "luat60_2014",
+        "nd123_2015"
+      ],
+      "latency_ms": 603.9,
+      "error": ""
+    },
+    {
+      "probe_id": "probe_015",
+      "query": "Kết hôn cần kiểm tra sức khỏe không?",
+      "zone": "YELLOW",
+      "action": "ANSWER",
+      "answer_text": "Dạ, tụi em hiểu ạ. Để cưới mình chuẩn bị giấy tờ trước nhé. Theo Luật Hôn nhân và Gia đình và Nghị định 123/2015/NĐ-CP:\n- Nơi đăng ký: Ủy ban nhân dân cấp xã nơi cư trú của bên nam hoặc bên nữ, hai bên thống nhất chọn một nơi là được.\n- Điều kiện: nam từ đủ 20 tuổi, nữ từ đủ 18, hai bên tự nguyện và không thuộc trường hợp bị cấm kết hôn.\n- Hồ sơ gồm tờ khai đăng ký kết hôn, giấy xác nhận tình trạng hôn nhân của hai bên, và nhớ mang theo giấy tờ tùy thân khi đến.\nTóm lại, hai bên đăng ký tại Ủy ban nhân dân cấp xã nơi cư trú với tờ khai, giấy xác nhận tình trạng hôn nhân và giấy tờ tùy thân ạ. Anh/chị kết hôn với người nước ngoài hay trong nước để em hướng dẫn thêm cho chính xác nhé?",
+      "spoken_citation": "Theo Luật Hôn nhân và Gia đình và Nghị định 123/2015/NĐ-CP",
+      "source_ids": [
+        "luat121_2025",
+        "nd123_2015"
+      ],
+      "retrieval_count": 5,
+      "retrieval_sources": [
+        "luat60_2014",
+        "nd123_2015",
+        "nd126_2014",
+        "nd123_2015",
+        "nd120_2025"
+      ],
+      "latency_ms": 865.3,
+      "error": ""
+    }
+  ]
+}
