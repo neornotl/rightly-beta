@@ -1,0 +1,39 @@
+Q: Tuoi nghi huu nam 2026 la bao nhieu?
+
+ANS: Dạ vâng ạ. Về Tuoi nghi huu nam 2026 la bao nhieu, theo quy định hiện hành thì Tuổi nghỉ hưu thấp nhất của người lao động quy định tại khoản 1 Điều này được thực hiện theo bảng dưới đây:
+Lao động nam
+Lao động nữ
+Năm nghỉ hưu
+Tuổi nghỉ hưu thấp nhất
+Năm nghỉ hưu
+Tuổi nghỉ hưu thấp nhất
+2021
+55 tuổi 3 tháng
+2021
+50 tuổi 4 tháng
+2022
+55 tuổi 6 tháng
+2022
+50 tuổi 8 tháng
+2023
+55 tuổi 9 tháng
+2023
+51 tuổi
+2024
+56 tuổi
+2024
+51 tuổi 4 tháng
+2025
+56 tuổi 3 tháng
+2025
+51 tuổi 8 tháng
+2026
+56 tuổi 6 tháng
+2026
+52 tuổi
+2027
+56 hó khăn, bao gồm cả thời gian làm việc ở nơi có phụ cấp khu vực hệ số 0,7 trở lên trước ngày 01 tháng 01 năm 2021. ạ. Nghị định quy định về tuổi nghỉ hưu ạ
+
+CIT: Thông tin theo Nghị định quy định về tuổi nghỉ hưu
+
+SRC: ['nd135_2020', 'boluat18_2026']

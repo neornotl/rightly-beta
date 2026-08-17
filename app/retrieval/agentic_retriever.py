@@ -1,0 +1,276 @@
+"""Agentic Retrieval: LLM-driven query analysis and search query generation."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from typing import Optional
+
+from app.llm.base import BaseLLM
+from app.llm.prompts import AGENTIC_RETRIEVAL_SYSTEM, AGENTIC_REASONING_SYSTEM
+from app.retrieval.base import Retriever
+from app.schemas import RetrievedChunk
+
+
+@dataclass
+class QueryAnalysis:
+    """LLM's analysis of the user query."""
+    subject: str
+    action: str
+    context: str
+    focus: str
+    info_needed: str
+    primary_keywords: list[str]
+    secondary_keywords: list[str]
+    legal_keywords: list[str]
+    search_queries: list[str]
+    info_type: str  # table|list|procedure|condition|penalty|deadline|agency
+
+
+@dataclass
+class ReasoningResult:
+    """LLM's reasoning over retrieved chunks."""
+    answer_text: str
+    spoken_citation: str
+    source_ids: list[str]
+    limitations: list[str]
+    next_step: str
+    evidence_used: list[str]
+    key_claims: list[dict]
+    excluded_chunks: list[dict]
+
+
+class AgenticRetriever:
+    """LLM-driven retrieval: LLM analyzes query, generates search queries, retrieves, then reasons."""
+    
+    def __init__(
+        self,
+        llm: BaseLLM,
+        retriever: Retriever,
+        top_k: int = 5,
+        max_search_queries: int = 3,
+    ):
+        self.llm = llm
+        self.retriever = retriever
+        self.top_k = top_k
+        self.max_search_queries = max_search_queries
+    
+    def analyze_query(self, query: str) -> QueryAnalysis:
+        """Step 1: LLM analyzes query and generates search queries."""
+        user_prompt = f"""Câu hỏi của người dân: "{query}"
+
+Hãy phân tích và sinh ra JSON theo schema bên trên."""
+        
+        try:
+            response = self.llm.generate_answer(
+                query=user_prompt,
+                chunks=[],  # No chunks needed for analysis
+                max_chars=2000,
+                history=None,
+            )
+            # The LLM should return JSON with analysis and search_queries
+            # For now, we'll parse the response as JSON
+            parsed = json.loads(response.get("answer_text", "{}"))
+            
+            analysis = parsed.get("analysis", {})
+            keywords = parsed.get("keywords", {})
+            search_queries = parsed.get("search_queries", [])
+            info_type = parsed.get("info_type", "procedure")
+            
+            return QueryAnalysis(
+                subject=analysis.get("subject", ""),
+                action=analysis.get("action", ""),
+                context=analysis.get("context", ""),
+                focus=analysis.get("focus", ""),
+                info_needed=analysis.get("info_needed", ""),
+                primary_keywords=keywords.get("primary", []),
+                secondary_keywords=keywords.get("secondary", []),
+                legal_keywords=keywords.get("legal", []),
+                search_queries=search_queries[:3],  # max 3
+                info_type=info_type,
+            )
+        except Exception as e:
+            # Fallback: simple keyword extraction
+            return self._fallback_analysis(query)
+    
+    def _fallback_analysis(self, query: str) -> QueryAnalysis:
+        """Simple fallback when LLM analysis fails."""
+        q_lower = query.lower()
+        
+        # Detect info type
+        if any(w in q_lower for w in ["bao nhiêu", "mức phạt", "phạt"]):
+            info_type = "penalty"
+        elif any(w in q_lower for w in ["tuổi", "khi nào", "năm nào"]):
+            info_type = "table"
+        elif any(w in q_lower for w in ["hồ sơ", "giấy tờ", "cần gì"]):
+            info_type = "list"
+        elif any(w in q_lower for w in ["điều kiện", "được không", "ai được"]):
+            info_type = "condition"
+        elif any(w in q_lower for w in ["thủ tục", "làm sao", "nơi nộp", "thời hạn"]):
+            info_type = "procedure"
+        elif any(w in q_lower for w in ["cơ quan", "ở đâu", "nơi nào"]):
+            info_type = "agency"
+        else:
+            info_type = "procedure"
+        
+        # Extract simple keywords
+        keywords = []
+        for kw in ["nghỉ hưu", "vượt đèn đỏ", "khai sinh", "kết hôn", "ly hôn", "hộ chiếu", "căn cước", "sổ đỏ", "thừa kế", "bảo hiểm", "phạt", "hồ sơ", "giấy tờ", "điều kiện", "tuổi", "mức phạt", "thời hạn", "thủ tục"]:
+            if kw in q_lower:
+                keywords.append(kw)
+        
+        # Build search query
+        search_query = " ".join(keywords[:5]) if keywords else query
+        
+        return QueryAnalysis(
+            subject="người dân",
+            action="hỏi thông tin",
+            context=query,
+            focus=keywords[0] if keywords else "thông tin pháp lý",
+            info_needed="thông tin pháp lý",
+            primary_keywords=keywords[:3],
+            secondary_keywords=keywords[3:],
+            legal_keywords=[],
+            search_queries=[search_query],
+            info_type=info_type,
+        )
+    
+    def retrieve(self, query: str) -> list[RetrievedChunk]:
+        """Agentic retrieval: LLM analyzes → generates queries → retrieves → merges."""
+        # Step 1: LLM analyzes query
+        analysis = self.analyze_query(query)
+        
+        # Step 2: Retrieve with each search query
+        all_chunks = []
+        seen_chunk_ids = set()
+        
+        for sq in analysis.search_queries:
+            chunks = self.retriever.search(sq, top_k=self.top_k)
+            for chunk in chunks:
+                if chunk.chunk_id not in seen_chunk_ids:
+                    seen_chunk_ids.add(chunk.chunk_id)
+                    all_chunks.append(chunk)
+        
+        # Also search with original query as fallback
+        if query not in analysis.search_queries:
+            fallback_chunks = self.retriever.search(query, top_k=self.top_k)
+            for chunk in fallback_chunks:
+                if chunk.chunk_id not in seen_chunk_ids:
+                    seen_chunk_ids.add(chunk.chunk_id)
+                    all_chunks.append(chunk)
+        
+        # Sort by score, limit to top_k
+        all_chunks.sort(key=lambda c: c.score, reverse=True)
+        return all_chunks[:self.top_k]
+
+
+class AgenticReasoner:
+    """LLM reasons over retrieved chunks to produce final answer."""
+    
+    def __init__(self, llm: BaseLLM):
+        self.llm = llm
+    
+    def reason(self, query: str, chunks: list[RetrievedChunk]) -> ReasoningResult:
+        """Step 2: LLM reasons over retrieved chunks and produces answer.
+        
+        Compatible with standard LLM interface (returns dict with fields directly).
+        """
+        # Build evidence text
+        evidence_text = "\n\n".join(
+            f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}"
+            for c in chunks
+        )
+        
+        user_prompt = f"""CÂU HỎI: {query}
+
+EVIDENCE (các đoạn văn bản pháp luật được cung cấp):
+{evidence_text}
+
+Hãy suy luận và trả lời theo JSON schema:
+{{
+  "answer_text": "string",
+  "spoken_citation": "string", 
+  "source_ids": ["string"],
+  "limitations": ["string"],
+  "next_step": "string",
+  "reasoning": {{
+    "evidence_used": ["source_id"],
+    "key_claims": [{{"claim": "string", "evidence": "source_id"}}],
+    "excluded_chunks": [{{"source_id": "string", "reason": "string"}}]
+  }}
+}}"""
+        
+        try:
+            response = self.llm.generate_answer(
+                query=user_prompt,
+                chunks=chunks,
+                max_chars=2000,
+                history=None,
+            )
+            
+            # Standard LLM interface returns dict with fields directly
+            # New agentic format: answer_text contains JSON string
+            # Handle both formats
+            if isinstance(response, dict):
+                # Standard format: response has fields directly
+                parsed = response
+            elif isinstance(response, str):
+                # String response, try to parse as JSON
+                try:
+                    parsed = json.loads(response)
+                except json.JSONDecodeError:
+                    # Fallback: treat as plain text answer
+                    return self._fallback_reasoning(query, chunks)
+            else:
+                return self._fallback_reasoning(query, chunks)
+            
+            # Extract source_ids - handle both list and comma-separated string
+            source_ids = parsed.get("source_ids", [])
+            if isinstance(source_ids, str):
+                source_ids = [s.strip() for s in source_ids.split(",") if s.strip()]
+            elif not isinstance(source_ids, list):
+                source_ids = []
+            
+            return ReasoningResult(
+                answer_text=parsed.get("answer_text", ""),
+                spoken_citation=parsed.get("spoken_citation", ""),
+                source_ids=source_ids,
+                limitations=parsed.get("limitations", []),
+                next_step=parsed.get("next_step", ""),
+                evidence_used=parsed.get("reasoning", {}).get("evidence_used", []),
+                key_claims=parsed.get("reasoning", {}).get("key_claims", []),
+                excluded_chunks=parsed.get("reasoning", {}).get("excluded_chunks", []),
+            )
+        except (TimeoutError, ConnectionError, ConnectionRefusedError, ConnectionResetError, OSError) as e:
+            # Re-raise critical network/timeout errors for pipeline-level handling
+            raise
+        except Exception as e:
+            # Fallback: simple answer for other errors (parsing, format, etc.)
+            return self._fallback_reasoning(query, chunks)
+    
+    def _fallback_reasoning(self, query: str, chunks: list[RetrievedChunk]) -> ReasoningResult:
+        """Simple fallback when LLM reasoning fails."""
+        if not chunks:
+            return ReasoningResult(
+                answer_text="Dạ phần này hiện em chưa có dữ liệu chính xác trong nguồn pháp luật. Anh/chị vui lòng gọi 1022 hoặc đến UBND phường/xã nơi anh/chị sinh sống để được hướng dẫn chính xác hơn nha.",
+                spoken_citation="",
+                source_ids=[],
+                limitations=["Không tìm thấy bằng chứng trong corpus"],
+                next_step="Liên hệ 1022 hoặc UBND cấp xã",
+                evidence_used=[],
+                key_claims=[],
+                excluded_chunks=[],
+            )
+        
+        # Use first chunk
+        chunk = chunks[0]
+        return ReasoningResult(
+            answer_text=f"Dạ vâng ạ. Theo {chunk.source_id} thì {chunk.text[:200]}...",
+            spoken_citation=f"Theo {chunk.source_id}",
+            source_ids=[chunk.source_id],
+            limitations=["Đây là dữ liệu DEMO, không phải hướng dẫn chính thức."],
+            next_step="Anh/chị cần em giải thích thêm phần nào không ạ?",
+            evidence_used=[chunk.source_id],
+            key_claims=[{"claim": chunk.text[:100], "evidence": chunk.source_id}],
+            excluded_chunks=[],
+        )

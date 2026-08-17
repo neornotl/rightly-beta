@@ -32,6 +32,7 @@ from app.metrics_logger import log_pipeline_result
 from app.retrieval.base import Retriever
 from app.retrieval.bm25_retriever import BM25Retriever
 from app.retrieval.document_loader import DocumentLoader
+from app.retrieval.agentic_retriever import AgenticRetriever, AgenticReasoner
 from app.faq import _strip_diacritics
 from app.safety.policy import Policy
 from app.safety.router import SafetyRouter
@@ -396,6 +397,9 @@ class Pipeline:
     validator: object = None  # CitationValidator when app_mode != "mock"
     faq: object = None  # FAQMatcher when data/faq.json exists
     top_k: int = 5
+    # Agentic components (LLM-driven retrieval & reasoning)
+    agentic_retriever: Optional[AgenticRetriever] = field(default=None, repr=False)
+    agentic_reasoner: Optional[AgenticReasoner] = field(default=None, repr=False)
     #: Temporary per-session conversation memory (RAM only, never persisted).
     #: Kept for the lifetime of the session; cleared by delete_session()
     #: (user says "kết thúc"/"thoát" in CLI/UI). Each entry:
@@ -430,6 +434,15 @@ class Pipeline:
             self.tts = make_tts(self.settings)
         if self.router is None:
             self.router = SafetyRouter(settings=self.settings, policy=Policy())
+        # Initialize agentic retriever and reasoner (LLM-driven retrieval & reasoning)
+        if self.agentic_retriever is None:
+            self.agentic_retriever = AgenticRetriever(
+                llm=self.llm,
+                retriever=self.retriever,
+                top_k=self.top_k,
+            )
+        if self.agentic_reasoner is None:
+            self.agentic_reasoner = AgenticReasoner(llm=self.llm)
         if self.validator is None and self.settings.app_mode != "mock":
             from app.validation.citation_validator import CitationValidator
 
@@ -697,29 +710,31 @@ class Pipeline:
                 self.store.record(session_id, "empty_chunks_rejected", num_chunks=len(chunks))
                 answer = None
             else:
+                t0 = time.perf_counter()
                 try:
-                    # Build context with budget enforcement
-                    context, used_chunks = build_context(
-                        chunks[: self.top_k],
-                        self.settings.max_context_chars,
-                    )
-                    doc = self.llm.generate_answer(
-                        outbound_text,
-                        used_chunks,  # Pass only chunks that fit in context
-                        max_chars=self.settings.max_response_chars,
-                        history=outbound_history,
-                    )
-                    raw_ids = list(dict.fromkeys(str(s) for s in (doc.get("source_ids") or [])))
+                    # Agentic retrieval: LLM analyzes query -> generates search queries -> retrieves
+                    agentic_chunks = self.agentic_retriever.retrieve(query.text)
+                    
+                    # Sync agentic reasoner with current LLM (in case llm was replaced)
+                    self.agentic_reasoner.llm = self.llm
+                    
+                    # Agentic reasoning: LLM reasons over retrieved chunks
+                    reasoning_result = self.agentic_reasoner.reason(query.text, agentic_chunks)
+                    
+                    # Build answer from reasoning result
+                    raw_ids = list(dict.fromkeys(str(s) for s in (reasoning_result.source_ids or [])))
                     answer = GroundedAnswer(
-                        answer_text=str(doc.get("answer_text", "")).strip(),
-                        spoken_citation=str(doc.get("spoken_citation", "")).strip(),
+                        answer_text=str(reasoning_result.answer_text or "").strip(),
+                        spoken_citation=str(reasoning_result.spoken_citation or "").strip(),
                         source_ids=raw_ids,
-                        limitations=[str(s) for s in (doc.get("limitations") or [])],
-                        next_step=str(doc.get("next_step", "")).strip(),
+                        limitations=[str(s) for s in (reasoning_result.limitations or [])],
+                        next_step=str(reasoning_result.next_step or "").strip(),
                     )
+                    chunks = agentic_chunks  # Use agentic chunks for citation validation
                 except Exception as exc:
                     decision = self.router.policy.insufficient_decision()
                     self.store.record(session_id, "llm_failure", reason=str(exc)[:500])
+                    answer = None
                 lat["llm_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
                 if answer is not None and not raw_ids:
