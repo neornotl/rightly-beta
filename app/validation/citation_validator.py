@@ -13,6 +13,7 @@ The registry is curated human-verified data: data/law_status.json.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -132,6 +133,118 @@ class CitationValidator:
             # Valid current citation
             valid_citations += 1
         # If no citations at all, pass (no citations to validate).
-        # If citations exist, require at least one valid current citation.
-        ok = (total_citations == 0) or (valid_citations > 0)
+        # If citations exist, require ALL citations to be valid current citations.
+        ok = (total_citations == 0) or (valid_citations == total_citations)
         return CitationVerdict(ok=ok, issues=issues)
+
+    def validate_claims(
+        self,
+        answer: GroundedAnswer,
+        retrieved_sources: Optional[set[str]] = None,
+    ) -> CitationVerdict:
+        """Validate that critical claims in answer are supported by evidence.
+        
+        Extracts claims with numbers, dates, ages, percentages, agencies, articles
+        and verifies they appear in the cited source chunks.
+        """
+        retrieved_sources = retrieved_sources or set()
+        issues: list = []
+        
+        # Extract critical claims from answer_text
+        claims = self._extract_critical_claims(answer.answer_text)
+        
+        # Get full text of retrieved chunks for claim verification
+        # This would need access to chunk texts - for now check source-level
+        for claim in claims:
+            claim_supported = False
+            for sid in retrieved_sources:
+                info = self.sources.get(sid)
+                if info and "text" in info:
+                    if self._claim_in_source(claim, info["text"]):
+                        claim_supported = True
+                        break
+            if not claim_supported and claim.get("required", True):
+                issues.append(
+                    CitationIssue(
+                        source_id="claim_verification",
+                        kind="unsupported_claim",
+                        message=f"Claim not supported by retrieved evidence: {claim['text']}",
+                    )
+                )
+        
+        ok = len([i for i in issues if i.kind == "unsupported_claim"]) == 0
+        return CitationVerdict(ok=ok, issues=issues)
+    
+    def _extract_critical_claims(self, text: str) -> list[dict]:
+        """Extract critical claims that need evidence support."""
+        claims = []
+        text_lower = text.casefold()
+        
+        # Money amounts
+        for match in re.finditer(r"(\d+(?:[.,]\d+)?)\s*(triệu|nghìn|đồng|vnd)", text_lower):
+            claims.append({
+                "type": "amount",
+                "text": match.group(0),
+                "value": match.group(1),
+                "unit": match.group(2),
+                "required": True,
+            })
+        
+        # Ages
+        for match in re.finditer(r"(\d+)\s*tuổi", text_lower):
+            claims.append({
+                "type": "age",
+                "text": match.group(0),
+                "value": match.group(1),
+                "required": True,
+            })
+        
+        # Percentages
+        for match in re.finditer(r"(\d+(?:[.,]\d+)?)\s*%", text_lower):
+            claims.append({
+                "type": "percentage",
+                "text": match.group(0),
+                "value": match.group(1),
+                "required": True,
+            })
+        
+        # Deadlines (days/months/years)
+        for match in re.finditer(r"(\d+)\s*(ngày|tháng|năm)", text_lower):
+            if any(kw in text_lower for kw in ["thời hạn", "giải quyết", "bảo lưu", "chờ"]):
+                claims.append({
+                    "type": "deadline",
+                    "text": match.group(0),
+                    "value": match.group(1),
+                    "unit": match.group(2),
+                    "required": True,
+                })
+        
+        # Legal articles
+        for match in re.finditer(r"điều\s+(\d+[a-z]?)", text_lower):
+            claims.append({
+                "type": "article",
+                "text": f"Điều {match.group(1)}",
+                "value": match.group(1),
+                "required": True,
+            })
+        
+        return claims
+    
+    def _claim_in_source(self, claim: dict, source_text: str) -> bool:
+        """Check if claim appears in source text (simplified)."""
+        source_lower = source_text.casefold()
+        claim_text = claim["text"].casefold()
+        
+        # For amounts, check if the number appears with same unit
+        if claim["type"] == "amount":
+            return claim["value"] in source_lower and claim["unit"] in source_lower
+        if claim["type"] == "age":
+            return claim["value"] in source_lower and "tuổi" in source_lower
+        if claim["type"] == "percentage":
+            return claim["value"] in source_lower and "%" in source_lower
+        if claim["type"] == "deadline":
+            return claim["value"] in source_lower and claim["unit"] in source_lower
+        if claim["type"] == "article":
+            return claim["text"].lower() in source_lower
+        
+        return claim_text in source_lower
