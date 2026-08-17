@@ -51,6 +51,62 @@ def _strip_diacritics(text: str) -> str:
     return "".join(ch for ch in text if not unicodedata.combining(ch)).casefold()
 
 
+def build_context(
+    chunks: list[RetrievedChunk],
+    max_chars: int,
+    *,
+    reserve_chars: int = 1000,
+) -> tuple[str, list[RetrievedChunk]]:
+    """Build context string from chunks with budget enforcement.
+    
+    Prioritizes chunks by evidence_type (direct_answer > conditions > procedure > citation > irrelevant),
+    then by score. Returns (context_string, used_chunks).
+    
+    Args:
+        chunks: Retrieved chunks sorted by relevance
+        max_chars: Maximum context budget (from settings.max_context_chars)
+        reserve_chars: Reserve space for query, history, prompt overhead
+    """
+    budget = max(0, max_chars - reserve_chars)
+    if budget <= 0:
+        return "", []
+    
+    # Priority order for evidence types
+    type_priority = {
+        "direct_answer": 5,
+        "conditions_exceptions": 4,
+        "procedure": 3,
+        "citation_only": 2,
+        "irrelevant": 1,
+    }
+    
+    # Sort chunks by evidence type priority, then by score
+    def chunk_priority(c: RetrievedChunk) -> tuple[int, float]:
+        ev_type = getattr(c.metadata, "evidence_type", "irrelevant") if c.metadata else "irrelevant"
+        return (type_priority.get(ev_type, 1), c.score)
+    
+    sorted_chunks = sorted(chunks, key=chunk_priority, reverse=True)
+    
+    context_parts = []
+    used_chunks = []
+    current_len = 0
+    
+    for chunk in sorted_chunks:
+        chunk_text = f"[source_id={chunk.source_id}|chunk_id={chunk.chunk_id}]\n{chunk.text}"
+        # Add separator overhead
+        needed = len(chunk_text) + (2 if context_parts else 0)
+        if current_len + needed > budget:
+            break
+        if context_parts:
+            context_parts.append("\n\n")
+            current_len += 2
+        context_parts.append(chunk_text)
+        current_len += len(chunk_text)
+        used_chunks.append(chunk)
+    
+    return "".join(context_parts), used_chunks
+
+
 def make_asr(settings: Settings) -> BaseASR:
     if settings.asr_backend == "phowhisper":
         from app.asr.phowhisper_asr import PhoWhisperASR
@@ -475,9 +531,14 @@ class Pipeline:
                 answer = None
             else:
                 try:
+                    # Build context with budget enforcement
+                    context, used_chunks = build_context(
+                        chunks[: self.top_k],
+                        self.settings.max_context_chars,
+                    )
                     doc = self.llm.generate_answer(
                         outbound_text,
-                        chunks[: self.top_k],
+                        used_chunks,  # Pass only chunks that fit in context
                         max_chars=self.settings.max_response_chars,
                         history=outbound_history,
                     )
@@ -554,9 +615,14 @@ class Pipeline:
                     followup_chunks = list(dict.fromkeys(memory[-1]["chunks"] + list(chunks)))
                     if not followup_chunks:
                         followup_chunks = list(chunks)
+                    # Build context with budget enforcement for follow-up too
+                    context, used_followup_chunks = build_context(
+                        followup_chunks[: self.top_k],
+                        self.settings.max_context_chars,
+                    )
                     doc = self.llm.generate_answer(
                         outbound_text,
-                        followup_chunks[: self.top_k],
+                        used_followup_chunks,
                         max_chars=self.settings.max_response_chars,
                         history=outbound_history,
                     )
