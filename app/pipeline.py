@@ -32,6 +32,7 @@ from app.metrics_logger import log_pipeline_result
 from app.retrieval.base import Retriever
 from app.retrieval.bm25_retriever import BM25Retriever
 from app.retrieval.document_loader import DocumentLoader
+from app.faq import _strip_diacritics
 from app.safety.policy import Policy
 from app.safety.router import SafetyRouter
 from app.safety.rules import normalize_query
@@ -44,11 +45,80 @@ logger = logging.getLogger(__name__)
 _MIN_QUERY_CHARS = 3
 
 
-def _strip_diacritics(text: str) -> str:
-    """Normalize Vietnamese text for colloquial retrieval pattern checks."""
-    text = text.replace("đ", "d").replace("Đ", "D")
-    text = unicodedata.normalize("NFD", text)
-    return "".join(ch for ch in text if not unicodedata.combining(ch)).casefold()
+def _check_answerability(query: str, chunks: list[RetrievedChunk], min_direct: int = 1) -> tuple[bool, str]:
+    """Check if retrieved chunks provide sufficient direct evidence to answer the query.
+    
+    Returns (can_answer, reason).
+    """
+    if not chunks:
+        return False, "no_chunks_retrieved"
+    
+    # Count direct answer chunks
+    direct_count = 0
+    for chunk in chunks:
+        ev_type = getattr(chunk.metadata, "evidence_type", "irrelevant") if chunk.metadata else "irrelevant"
+        if ev_type == "direct_answer":
+            direct_count += 1
+    
+    if direct_count < min_direct:
+        return False, f"insufficient_direct_evidence (direct={direct_count}, min={min_direct})"
+    
+    # Check coverage of query components
+    q = query.casefold()
+    query_terms = set(q.split())
+    
+    # Define critical query components based on intent
+    needs_amount = any(t in q for t in ("bao nhiêu", "mức", "số tiền", "phạt"))
+    needs_age = any(t in q for t in ("tuổi", "bao nhiêu tuổi"))
+    needs_deadline = any(t in q for t in ("thời hạn", "bao lâu", "khi nào", "thời gian"))
+    needs_dossier = any(t in q for t in ("hồ sơ", "giấy tờ", "cần gì"))
+    needs_subject = any(t in q for t in ("ai", "đối tượng", "những ai", "ai được"))
+    needs_condition = any(t in q for t in ("điều kiện", "khi nào", "được khi"))
+    
+    found = {
+        "amount": False,
+        "age": False,
+        "deadline": False,
+        "dossier": False,
+        "subject": False,
+        "condition": False,
+    }
+    
+    for chunk in chunks:
+        text = chunk.text.casefold()
+        if needs_amount and any(re.search(r"\d+\s*(triệu|nghìn|đồng|%)", text) for _ in [0]):
+            found["amount"] = True
+        if needs_age and re.search(r"\d+\s*tuổi", text):
+            found["age"] = True
+        if needs_deadline and any(t in text for t in ("ngày", "tháng", "năm", "thời hạn", "giải quyết")):
+            found["deadline"] = True
+        if needs_dossier and any(t in text for t in ("hồ sơ", "giấy tờ", "tờ khai", "chứng minh")):
+            found["dossier"] = True
+        if needs_subject and any(t in text for t in ("đối tượng", "ai được", "người được", "chủ thể")):
+            found["subject"] = True
+        if needs_condition and any(t in text for t in ("điều kiện", "khi", "nếu", "được khi")):
+            found["condition"] = True
+    
+    required = []
+    if needs_amount and not found["amount"]:
+        required.append("amount")
+    if needs_age and not found["age"]:
+        required.append("age")
+    if needs_deadline and not found["deadline"]:
+        required.append("deadline")
+    if needs_dossier and not found["dossier"]:
+        required.append("dossier")
+    if needs_subject and not found["subject"]:
+        required.append("subject")
+    if needs_condition and not found["condition"]:
+        required.append("condition")
+    
+    if required:
+        return False, f"missing_evidence_for: {', '.join(required)}"
+    
+    return True, "ok"
+
+
 
 
 def build_context(
