@@ -242,7 +242,7 @@ OUTPUT JSON:
 #: Slots filled by LLM from retrieved chunks: {topic}, {core}, {citation}, {agency}, {doc}, {replacement}, {needed}
 TEMPLATES = {
     "answer_full": (
-        "{core}\n\n"
+        "Dạ vâng ạ. {core}\n\n"
         "Căn cứ và giải thích:\n"
         "- Theo quy định liên quan đến {topic}, {citation}.\n\n"
         "Kết luận: {core}"

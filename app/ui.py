@@ -11,6 +11,7 @@ secrets or raw internal prompts.
 from __future__ import annotations
 
 import sys
+from html import escape
 from pathlib import Path
 
 # Streamlit Cloud runs `streamlit run app/ui.py`: only the *script dir*
@@ -77,6 +78,8 @@ st.markdown(
         padding: 20px 22px;
         border-radius: 16px;
         margin: 12px 0;
+        white-space: pre-wrap;
+        line-height: 1.7;
       }
       .citation-box {
         background: #fff9ed;
@@ -283,7 +286,7 @@ if "last_result" in st.session_state:
         # ANSWER
         st.markdown("### ✅ Câu trả lời")
         st.markdown(
-            f'<div class="answer-box">{answer["answer_text"]}</div>',
+            f'<div class="answer-box">{escape(str(answer["answer_text"]))}</div>',
             unsafe_allow_html=True,
         )
         
