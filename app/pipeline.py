@@ -69,6 +69,15 @@ def _has_gender(text: str) -> bool:
     return bool(re.search(r"\b(nam|nữ|nu)\b", _strip_diacritics(normalize_query(text))))
 
 
+def _needs_retirement_gender_clarification(analysis: object, text: str = "") -> bool:
+    return bool(
+        analysis
+        and getattr(analysis, "focus", "") == "nghỉ hưu"
+        and "giới tính" in getattr(analysis, "missing_facts", [])
+        and re.search(r"\b(toi|anh|chi|minh)\b", _strip_diacritics(normalize_query(text)))
+    )
+
+
 _EVIDENCE_TOPIC_MARKERS = {
     "nghi huu": ("nghi huu", "tuoi nghi huu", "luong huu"),
     "bao hiem xa hoi": ("bao hiem xa hoi", "luong huu"),
@@ -676,6 +685,15 @@ class Pipeline:
             chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
             lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
             decision, normalized = self.router.route(query.text, chunks)
+            if _needs_retirement_gender_clarification(query_analysis, query.text):
+                decision = replace(
+                    self.router.policy.ambiguous_decision(),
+                    user_message=(
+                        "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết "
+                        "giới tính được không ạ? Tuổi nghỉ hưu của nam và nữ có "
+                        "lộ trình khác nhau."
+                    ),
+                )
             lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
@@ -747,7 +765,10 @@ class Pipeline:
         faq_answered = ""
         if self.faq is not None:
             faq_hit = self.faq.answer(query.text)
-            if faq_hit is not None and _is_personalized_rule_query(query.text):
+            if faq_hit is not None and (
+                _is_personalized_rule_query(query.text)
+                or _needs_retirement_gender_clarification(query_analysis, query.text)
+            ):
                 self.store.record(
                     session_id,
                     "faq_skipped_personalized_query",
@@ -826,11 +847,7 @@ class Pipeline:
                     agentic_chunks = chunks
                     self.agentic_reasoner.query_analysis = query_analysis
                     analysis = query_analysis
-                    if (
-                        analysis
-                        and "giới tính" in analysis.missing_facts
-                        and any(marker in normalize_query(query.text) for marker in ("tôi sinh", "năm nay", "tuổi của tôi"))
-                    ):
+                    if _needs_retirement_gender_clarification(analysis, query.text):
                         decision = replace(
                             self.router.policy.ambiguous_decision(),
                             user_message=(
