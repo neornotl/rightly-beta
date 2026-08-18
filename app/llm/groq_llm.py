@@ -18,7 +18,7 @@ class GroqLLM(BaseLLM):
     def __init__(
         self,
         api_key: str = "",
-        model: str = "llama-3.1-8b-instant",
+        model: str = "llama-3.1-70b-versatile",
         timeout_seconds: float = 60.0,
         max_retries: int = 3,
         backoff_seconds: float = 1.0,

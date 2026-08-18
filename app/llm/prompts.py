@@ -117,7 +117,16 @@ BƯỚC 2 — XÁC ĐỊNH TRỌNG TÂM & TỪ KHÓA TÌM KIẾM:
 - Từ khóa PHÁP LÝ: Điều khoản/Luật/Nghị định có thể liên quan (vd: "Điều 169", "Luật Lao động", "Nghị định 168")
 - Loại thông tin cần tìm: "bảng tuổi", "mức phạt", "danh sách hồ sơ", "thủ tục", "điều kiện", "thời hạn", "cơ quan"
 
-BƯỚC 3 — SINH CÂU TRUY VẤN (tối đa 3 câu):
+BƯỚC 3 — TRÍCH XUẤT FACTS VÀ PHÁT HIỆN DỮ KIỆN THIẾU:
+- Liệt kê facts người dân ĐÃ cung cấp: gender (giới tính nam/nữ), birth_date (ngày sinh), birth_year (năm sinh), age (tuổi), years (số năm đóng BHXH), job (loại công việc), location (địa điểm), v.v.
+- Chuẩn hóa "2k2" → 2002, "2k" → 2000; "nam" → gender nam, "nữ/nu" → gender nữ.
+- Liệt kê missing_facts: dữ kiện QUYẾT ĐỊNH kết luận pháp lý mà người dân CHƯA cung cấp.
+  + Hỏi tuổi nghỉ hưu → bắt buộc cần "giới tính" (nam/nữ có lộ trình khác nhau).
+  + Đã có giới tính nhưng chưa có năm/ngày sinh → cần "năm sinh" để tính mốc.
+  + Hỏi mức lương hưu → cần số năm đóng và mức đóng.
+- Nếu thiếu dữ kiện quyết định → đưa vào missing_facts và ambiguity_flags.
+
+BƯỚC 4 — SINH CÂU TRUY VẤN (tối đa 3 câu):
 Mỗi câu truy vấn nên:
 - Ngắn gọn, tập trung vào 1 khía cạnh
 - Dùng ngôn ngữ tự nhiên + từ khóa pháp lý
@@ -130,12 +139,29 @@ Phân tích:
 - Hành vi: Nghỉ hưu
 - Bối cảnh: Sinh 24/09/2000, làm 3 năm
 - Trọng tâm: Tuổi nghỉ hưu theo lộ trình
+extracted_facts: [{"field":"birth_date","value":"24/09/2000","source":"user"},{"field":"age","value":"26 tuổi","source":"user"},{"field":"years","value":"3 năm","source":"user"}]
+missing_facts: ["giới tính"]
+ambiguity_flags: ["thiếu giới tính"]
 Từ khóa: ["tuổi nghỉ hưu", "lộ trình tăng dần", "nam 1962", "nữ 1967", "Điều 169", "Bộ luật Lao động"]
 Câu truy vấn:
 1. "tuổi nghỉ hưu lộ trình tăng dần nam nữ 2026 Điều 169 Bộ luật Lao động"
 2. "nghỉ hưu sớm điều kiện đóng bảo hiểm 3 năm"
 
-OUTPUT JSON:
+VÍ DỤ 2:
+Câu hỏi: "khi nào tôi được nghỉ hưu"
+extracted_facts: []
+missing_facts: ["giới tính"]
+ambiguity_flags: ["thiếu giới tính"]
+
+LƯU Ý QUAN TRỌNG: PHẢI xuất ra ĐẦY ĐỦ các trường JSON ở trên, kể cả khi rỗng.
+- extracted_facts: LUÔN là mảng (có thể []), mỗi phần tử có field/value/source.
+- missing_facts: LUÔN là mảng chuỗi, liệt kê dữ kiện QUYẾT ĐỊNH còn thiếu.
+- ambiguity_flags: LUÔN là mảng chuỗi.
+- Nếu chủ đề "nghỉ hưu" → BẮT BUỘC kiểm tra: có "giới tính"? có "năm sinh/ngày sinh"? → thiếu thì đưa vào missing_facts.
+- Nếu chủ đề "kết hôn" → BẮT BUỘC kiểm tra: có "tuổi/ngày sinh" của cả hai bên? → thiếu thì đưa vào missing_facts.
+- Nếu chủ đề "lương hưu" → BẮT BUỘC kiểm tra: có "số năm đóng", "mức đóng", "loại BHXH"? → thiếu thì đưa vào missing_facts.
+
+OUTPUT JSON (BẮT BUỘC đủ các trường):
 {
   "analysis": {
     "subject": "string",
@@ -150,7 +176,10 @@ OUTPUT JSON:
     "legal": ["string"]
   },
   "search_queries": ["string", "string", "string"],
-  "info_type": "table|list|procedure|condition|penalty|deadline|agency"
+  "info_type": "table|list|procedure|condition|penalty|deadline|agency",
+  "extracted_facts": [{"field": "string", "value": "string", "source": "user|evidence"}],
+  "missing_facts": ["string"],
+  "ambiguity_flags": ["string"]
 }"""
 
 # Agentic Reasoning: LLM reasons over retrieved chunks
