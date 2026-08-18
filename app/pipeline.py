@@ -78,6 +78,18 @@ def _needs_retirement_gender_clarification(analysis: object, text: str = "") -> 
     )
 
 
+def _retirement_clarification_message(analysis: object) -> str:
+    missing = set(getattr(analysis, "missing_facts", []) if analysis else [])
+    if "giới tính" in missing:
+        return (
+            "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết giới tính "
+            "được không ạ? Tuổi nghỉ hưu của nam và nữ có lộ trình khác nhau."
+        )
+    if "năm sinh" in missing:
+        return "Anh/chị cho em biết năm sinh để em tính mốc tuổi nghỉ hưu dự kiến được không ạ?"
+    return "Anh/chị cho em biết thêm thông tin còn thiếu để em trả lời chính xác được không ạ?"
+
+
 _EVIDENCE_TOPIC_MARKERS = {
     "nghi huu": ("nghi huu", "tuoi nghi huu", "luong huu"),
     "bao hiem xa hoi": ("bao hiem xa hoi", "luong huu"),
@@ -572,8 +584,36 @@ class Pipeline:
         """Full pipeline for a text query (no audio involved)."""
         if self.settings.save_transcripts:
             self.store.record(session_id, "transcript_saved", transcript=text)
-        query = UserQuery(text=text, session_id=session_id, timestamp=utc_now_iso())
+        contextual_text = self._contextualize_followup(session_id, text)
+        query = UserQuery(text=contextual_text, session_id=session_id, timestamp=utc_now_iso())
         return self._run(session_id, query)
+
+    def _contextualize_followup(self, session_id: str, text: str) -> str:
+        """Attach short answers to the previous clarification in this session."""
+        memory = self._memory.get(session_id) or []
+        if not memory:
+            return text
+        plain = _strip_diacritics(normalize_query(text))
+        retirement_turns = [
+            turn for turn in memory[-self._MEMORY_MAX_TURNS :]
+            if "nghi huu" in _strip_diacritics(normalize_query(str(turn.get("user", ""))))
+        ]
+        previous = memory[-1]
+        pending = previous.get("action") == Action.CLARIFY.value
+        is_followup_fact = (
+            plain in {"nam", "nu", "nữ"}
+            or bool(re.search(r"\bsinh\s+(?:nam\s+)?(?:\d{4}|\d{1,2}k\d{1,2})\b", plain))
+        )
+        if pending and is_followup_fact and retirement_turns:
+            base = retirement_turns[0]["user"].split(" Người dùng bổ sung", 1)[0]
+            supplements = []
+            for turn in memory:
+                user_text = str(turn.get("user", ""))
+                if "Người dùng bổ sung" in user_text:
+                    supplements.append(user_text.split("Người dùng bổ sung:", 1)[-1].strip(" ."))
+            supplements.append(text.strip())
+            return f"{base} Người dùng bổ sung: {', '.join(supplements)}."
+        return text
 
     def process_audio(self, session_id: str, audio_path: str | Path) -> PipelineResult:
         """Full pipeline for an audio query (ASR first, audio privacy rules)."""
@@ -685,14 +725,19 @@ class Pipeline:
             chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
             lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
             decision, normalized = self.router.route(query.text, chunks)
-            if _needs_retirement_gender_clarification(query_analysis, query.text):
+            retirement_missing = bool(
+                query_analysis
+                and getattr(query_analysis, "focus", "") == "nghỉ hưu"
+                and getattr(query_analysis, "missing_facts", [])
+                and (
+                    _needs_retirement_gender_clarification(query_analysis, query.text)
+                    or "nguoi dung bo sung gioi tinh" in _strip_diacritics(normalize_query(query.text))
+                )
+            )
+            if retirement_missing:
                 decision = replace(
                     self.router.policy.ambiguous_decision(),
-                    user_message=(
-                        "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết "
-                        "giới tính được không ạ? Tuổi nghỉ hưu của nam và nữ có "
-                        "lộ trình khác nhau."
-                    ),
+                    user_message=_retirement_clarification_message(query_analysis),
                 )
             lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
@@ -847,14 +892,15 @@ class Pipeline:
                     agentic_chunks = chunks
                     self.agentic_reasoner.query_analysis = query_analysis
                     analysis = query_analysis
-                    if _needs_retirement_gender_clarification(analysis, query.text):
+                    if (
+                        analysis
+                        and getattr(analysis, "focus", "") == "nghỉ hưu"
+                        and getattr(analysis, "missing_facts", [])
+                        and re.search(r"\b(toi|anh|chi|minh)\b", _strip_diacritics(normalize_query(query.text)))
+                    ):
                         decision = replace(
                             self.router.policy.ambiguous_decision(),
-                            user_message=(
-                                "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết "
-                                "giới tính được không ạ? Tuổi nghỉ hưu của nam và nữ có "
-                                "lộ trình khác nhau."
-                            ),
+                            user_message=_retirement_clarification_message(analysis),
                         )
                         self.store.record(
                             session_id,
@@ -1047,14 +1093,19 @@ class Pipeline:
                 self.store.record(session_id, "tts_failure", reason=str(exc)[:300])
             lat["tts_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
-        # Keep the accepted turn in the session's temporary memory (RAM only).
-        if answer is not None and answer.answer_text:
-            turns = self._memory.setdefault(session_id, [])
-            turns.append(
-                {"user": query.text, "assistant": answer.answer_text, "chunks": list(chunks)}
-            )
-            if len(turns) > self._MEMORY_MAX_TURNS:
-                del turns[: -self._MEMORY_MAX_TURNS]
+        # Keep every turn, including clarifications, so short follow-ups such
+        # as "nam" retain the question they answer. Memory remains RAM-only.
+        turns = self._memory.setdefault(session_id, [])
+        turns.append(
+            {
+                "user": query.text,
+                "assistant": answer.answer_text if answer else decision.user_message,
+                "action": decision.action.value,
+                "chunks": list(chunks),
+            }
+        )
+        if len(turns) > self._MEMORY_MAX_TURNS:
+            del turns[: -self._MEMORY_MAX_TURNS]
 
         result = PipelineResult(
             session_id=session_id,

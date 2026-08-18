@@ -201,8 +201,14 @@ class MockLLM(BaseLLM):
             "search_queries": search[:3],
             "info_type": info_type,
             "extracted_facts": self._extract_facts(question),
-            "missing_facts": ["giới tính"] if "nghỉ hưu" in q and not self._has_gender(question) else [],
-            "ambiguity_flags": ["thiếu giới tính"] if "nghỉ hưu" in q and not self._has_gender(question) else [],
+            "missing_facts": (
+                ["giới tính"] if "nghỉ hưu" in q and not self._has_gender(question)
+                else (["năm sinh"] if "nghỉ hưu" in q and self._has_gender(question) and not any(f["field"] == "birth_year" for f in self._extract_facts(question)) else [])
+            ),
+            "ambiguity_flags": (
+                ["thiếu giới tính"] if "nghỉ hưu" in q and not self._has_gender(question)
+                else (["thiếu năm sinh"] if "nghỉ hưu" in q and self._has_gender(question) and not any(f["field"] == "birth_year" for f in self._extract_facts(question)) else [])
+            ),
         }
 
     @staticmethod
