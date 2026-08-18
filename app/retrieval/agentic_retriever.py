@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from app.llm.base import BaseLLM
@@ -25,6 +25,26 @@ class QueryAnalysis:
     legal_keywords: list[str]
     search_queries: list[str]
     info_type: str  # table|list|procedure|condition|penalty|deadline|agency
+    extracted_facts: list[dict] = field(default_factory=list)
+    missing_facts: list[str] = field(default_factory=list)
+    ambiguity_flags: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "subject": self.subject,
+            "action": self.action,
+            "context": self.context,
+            "focus": self.focus,
+            "info_needed": self.info_needed,
+            "primary_keywords": list(self.primary_keywords),
+            "secondary_keywords": list(self.secondary_keywords),
+            "legal_keywords": list(self.legal_keywords),
+            "search_queries": list(self.search_queries),
+            "info_type": self.info_type,
+            "extracted_facts": list(self.extracted_facts),
+            "missing_facts": list(self.missing_facts),
+            "ambiguity_flags": list(self.ambiguity_flags),
+        }
 
 
 @dataclass
@@ -38,6 +58,12 @@ class ReasoningResult:
     evidence_used: list[str]
     key_claims: list[dict]
     excluded_chunks: list[dict]
+    extracted_facts: list[dict] = field(default_factory=list)
+    missing_facts: list[str] = field(default_factory=list)
+    applicable_rules: list[dict] = field(default_factory=list)
+    calculations: list[dict] = field(default_factory=list)
+    conflicts: list[dict] = field(default_factory=list)
+    confidence: str = "low"
 
 
 class AgenticRetriever:
@@ -54,6 +80,7 @@ class AgenticRetriever:
         self.retriever = retriever
         self.top_k = top_k
         self.max_search_queries = max_search_queries
+        self.last_analysis: Optional[QueryAnalysis] = None
     
     def analyze_query(self, query: str) -> QueryAnalysis:
         """Step 1: LLM analyzes query and generates search queries."""
@@ -88,6 +115,9 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
                 legal_keywords=keywords.get("legal", []),
                 search_queries=search_queries[:3],  # max 3
                 info_type=info_type,
+                extracted_facts=parsed.get("extracted_facts", []),
+                missing_facts=parsed.get("missing_facts", []),
+                ambiguity_flags=parsed.get("ambiguity_flags", []),
             )
         except Exception as e:
             # Fallback: simple keyword extraction
@@ -133,12 +163,16 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
             legal_keywords=[],
             search_queries=[search_query],
             info_type=info_type,
+            extracted_facts=[],
+            missing_facts=[],
+            ambiguity_flags=[],
         )
     
-    def retrieve(self, query: str) -> list[RetrievedChunk]:
+    def retrieve(self, query: str, analysis: Optional[QueryAnalysis] = None) -> list[RetrievedChunk]:
         """Agentic retrieval: LLM analyzes → generates queries → retrieves → merges."""
         # Step 1: LLM analyzes query
-        analysis = self.analyze_query(query)
+        analysis = analysis or self.analyze_query(query)
+        self.last_analysis = analysis
         
         # Step 2: Retrieve with each search query
         all_chunks = []
@@ -169,6 +203,7 @@ class AgenticReasoner:
     
     def __init__(self, llm: BaseLLM):
         self.llm = llm
+        self.query_analysis: Optional[QueryAnalysis] = None
     
     def reason(self, query: str, chunks: list[RetrievedChunk]) -> ReasoningResult:
         """Step 2: LLM reasons over retrieved chunks and produces answer.
@@ -181,12 +216,37 @@ class AgenticReasoner:
             for c in chunks
         )
         
+        analysis_text = ""
+        if self.query_analysis is not None:
+            analysis_text = f"""
+QUERY ANALYSIS (đã trích xuất, cần kiểm tra lại):
+{json.dumps({
+    "subject": self.query_analysis.subject,
+    "action": self.query_analysis.action,
+    "context": self.query_analysis.context,
+    "focus": self.query_analysis.focus,
+    "info_needed": self.query_analysis.info_needed,
+    "primary_keywords": self.query_analysis.primary_keywords,
+    "secondary_keywords": self.query_analysis.secondary_keywords,
+    "legal_keywords": self.query_analysis.legal_keywords,
+    "search_queries": self.query_analysis.search_queries,
+    "facts": self.query_analysis.extracted_facts,
+    "missing_facts": self.query_analysis.missing_facts,
+    "ambiguity_flags": self.query_analysis.ambiguity_flags,
+    "info_type": self.query_analysis.info_type,
+}, ensure_ascii=False)}
+"""
         user_prompt = f"""CÂU HỎI: {query}
+{analysis_text}
 
 EVIDENCE (các đoạn văn bản pháp luật được cung cấp):
 {evidence_text}
 
-Hãy suy luận và trả lời theo JSON schema:
+Hãy suy luận và trả lời theo JSON schema. Nội dung answer_text bắt buộc theo đúng bố cục sau:
+1. Mở đầu lịch sự bằng "Dạ," rồi đưa kết luận trực tiếp trong 1-2 câu.
+2. "Căn cứ và giải thích:" — xuống dòng, liệt kê rules/điều kiện/phép tính bằng "- "; phải ghi rõ tên loại văn bản, số/ký hiệu và Điều/Khoản nếu evidence cung cấp.
+3. "Kết luận:" — chốt lại kết quả và giới hạn trong 1-2 câu.
+Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa ví dụ trong văn bản thành facts của người dân.
 {{
   "answer_text": "string",
   "spoken_citation": "string", 
@@ -194,6 +254,12 @@ Hãy suy luận và trả lời theo JSON schema:
   "limitations": ["string"],
   "next_step": "string",
   "reasoning": {{
+    "extracted_facts": [{{"field": "string", "value": "string", "source": "user|evidence"}}],
+    "missing_facts": ["string"],
+    "applicable_rules": [{{"rule": "string", "evidence": "source_id"}}],
+    "calculations": [{{"expression": "string", "result": "string", "evidence": "source_id"}}],
+    "conflicts": [{{"issue": "string", "sources": ["source_id"], "resolution": "string"}}],
+    "confidence": "high|medium|low",
     "evidence_used": ["source_id"],
     "key_claims": [{{"claim": "string", "evidence": "source_id"}}],
     "excluded_chunks": [{{"source_id": "string", "reason": "string"}}]
@@ -240,6 +306,12 @@ Hãy suy luận và trả lời theo JSON schema:
                 evidence_used=parsed.get("reasoning", {}).get("evidence_used", []),
                 key_claims=parsed.get("reasoning", {}).get("key_claims", []),
                 excluded_chunks=parsed.get("reasoning", {}).get("excluded_chunks", []),
+                extracted_facts=parsed.get("reasoning", {}).get("extracted_facts", []),
+                missing_facts=parsed.get("reasoning", {}).get("missing_facts", []),
+                applicable_rules=parsed.get("reasoning", {}).get("applicable_rules", []),
+                calculations=parsed.get("reasoning", {}).get("calculations", []),
+                conflicts=parsed.get("reasoning", {}).get("conflicts", []),
+                confidence=parsed.get("reasoning", {}).get("confidence", "low"),
             )
         except (TimeoutError, ConnectionError, ConnectionRefusedError, ConnectionResetError, OSError) as e:
             # Re-raise critical network/timeout errors for pipeline-level handling
@@ -260,6 +332,7 @@ Hãy suy luận và trả lời theo JSON schema:
                 evidence_used=[],
                 key_claims=[],
                 excluded_chunks=[],
+                confidence="low",
             )
         
         # Use first chunk
@@ -273,4 +346,5 @@ Hãy suy luận và trả lời theo JSON schema:
             evidence_used=[chunk.source_id],
             key_claims=[{"claim": chunk.text[:100], "evidence": chunk.source_id}],
             excluded_chunks=[],
+            confidence="low",
         )

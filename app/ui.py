@@ -243,6 +243,7 @@ if "last_result" in st.session_state:
     data = st.session_state.last_result
     decision = data["decision"]
     answer = data.get("answer")
+    analysis = data.get("query_analysis")
     
     # Decision zone display
     zone_icons = {"YELLOW": "🟢", "ORANGE": "🟠", "RED": "🔴", "GREEN": "🟢"}
@@ -262,6 +263,21 @@ if "last_result" in st.session_state:
         """,
         unsafe_allow_html=True,
     )
+
+    if analysis:
+        st.markdown("### 🧠 LLM nhận diện câu hỏi")
+        st.json({
+            "đối tượng": analysis.get("subject"),
+            "hành động": analysis.get("action"),
+            "bối cảnh": analysis.get("context"),
+            "chủ đề": analysis.get("focus"),
+            "thông tin cần tìm": analysis.get("info_needed"),
+            "loại thông tin": analysis.get("info_type"),
+            "thông tin đã nhận diện": analysis.get("extracted_facts", []),
+            "thông tin còn thiếu": analysis.get("missing_facts", []),
+            "cờ mơ hồ": analysis.get("ambiguity_flags", []),
+            "truy vấn retrieval": analysis.get("search_queries", []),
+        })
     
     if answer:
         # ANSWER

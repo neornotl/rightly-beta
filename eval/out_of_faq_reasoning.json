@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {"id": "weather", "query": "Ngày mai ở Hà Nội có mưa không?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "recipe", "query": "Chỉ tôi cách nấu phở bò ngon tại nhà.", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "stock", "query": "Có nên mua cổ phiếu nào hôm nay để kiếm lời không?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "medical", "query": "Tôi đau bụng ba ngày nay, nên uống thuốc gì?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "coding", "query": "Viết giúp tôi một hàm Python sắp xếp danh sách.", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "foreign_study", "query": "Tôi muốn xin visa du học Canada cần chuẩn bị gì?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "alien", "query": "Tôi có thể kiện người ngoài hành tinh theo luật Việt Nam không?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "foreign_tax", "query": "Tôi làm việc ở Nhật thì khai thuế thu nhập cá nhân thế nào?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "reasoning_expected": false},
+    {"id": "neighbor_noise", "query": "Hàng xóm mở nhạc lớn mỗi đêm, tôi phải xử lý thế nào?", "expected_zone": "ORANGE", "expected_action": "REFUSE", "reasoning_expected": true},
+    {"id": "online_fraud", "query": "Tôi bị lừa chuyển tiền qua mạng, cần làm gì để lấy lại tiền?", "expected_zone": "YELLOW", "expected_action": "ANSWER", "reasoning_expected": false}
+  ]
+}

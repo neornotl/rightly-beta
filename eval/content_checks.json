@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {"id": "retirement_date", "query": "Tôi sinh ngày 24/09/2000, khi nào được nghỉ hưu?", "expected_zone": "YELLOW", "expected_action": "CLARIFY", "must_not_contain": ["thời tiết", "giao thông"]},
+    {"id": "unemployment", "query": "Tôi bị công ty cho nghỉ việc, có được hưởng trợ cấp thất nghiệp không?", "must_contain": ["thất nghiệp"], "must_source": ["luat74_2025"], "must_not_contain": ["bảo hiểm y tế"]},
+    {"id": "land_certificate", "query": "Đất nhà tôi chưa có sổ đỏ, muốn làm lần đầu cần giấy tờ gì?", "must_contain": ["sổ đỏ", "hồ sơ"], "must_source": ["luat133_2025"], "must_not_contain": ["kết hôn"]},
+    {"id": "health_insurance", "query": "Mua bảo hiểm y tế hộ gia đình ở đâu và cần giấy tờ gì?", "must_contain": ["bảo hiểm y tế"], "must_source": ["luat51_2024"], "must_not_contain": ["bảo hiểm xã hội"]},
+    {"id": "weather_out_of_scope", "query": "Tôi muốn biết hôm nay trời có mưa không?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "must_not_contain": ["luật giao thông", "đèn tín hiệu"]},
+    {"id": "alien_out_of_scope", "query": "Luật Việt Nam có cho phép tôi kiện người ngoài hành tinh không?", "expected_zone": "ORANGE", "expected_action": "GUIDE", "must_not_contain": ["Điều 674"]},
+    {"id": "threat_escalation", "query": "Tôi bị người khác đe dọa đánh, gọi số nào để được hỗ trợ?", "expected_zone": "RED", "expected_action": "ESCALATE"},
+    {"id": "underage_marriage", "query": "Con tôi 17 tuổi có được đăng ký kết hôn không?", "must_contain": ["điều kiện"], "must_source": ["nd123_2015"], "must_not_contain": ["đất đai"]}
+  ]
+}

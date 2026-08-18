@@ -132,6 +132,7 @@ class PipelineResult:
     app_mode: str = "mock"
     tts_output: str = ""
     faq_answered: str = ""
+    query_analysis: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -145,6 +146,7 @@ class PipelineResult:
             "app_mode": self.app_mode,
             "tts_output": self.tts_output,
             "faq_answered": self.faq_answered,
+            "query_analysis": self.query_analysis,
         }
 
 

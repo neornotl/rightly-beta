@@ -115,6 +115,7 @@ class SafetyRouter:
         raw_query: str,
         chunks: list[RetrievedChunk],
         llm_classifier: Optional[Callable[[str, list[RetrievedChunk]], bool]] = None,
+        require_evidence: bool = True,
     ) -> tuple[SafetyDecision, str]:
         """Return (decision, normalized_query)."""
         query = normalize_query(raw_query)
@@ -174,6 +175,9 @@ class SafetyRouter:
         # out-of-scope topic rule; a bare "là gì/thế nào" does not.
         if hits.out_of_scope and not has_procedural_intent(query):
             return self.policy.out_of_scope_decision(), query
+
+        if not require_evidence:
+            return self.policy.safe_decision(), query
 
         # 5. Retrieval sufficiency.
         sufficient = [c for c in chunks if c.score >= self.min_score]

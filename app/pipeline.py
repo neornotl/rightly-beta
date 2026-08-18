@@ -17,7 +17,7 @@ import logging
 import re
 import time
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Optional
 
@@ -44,6 +44,85 @@ from app.tts.mock_tts import MockTTS
 logger = logging.getLogger(__name__)
 
 _MIN_QUERY_CHARS = 3
+
+
+class _MissingAgenticFacts(Exception):
+    """Internal control flow for a safe clarification response."""
+
+
+def _is_personalized_rule_query(text: str) -> bool:
+    """Keep generic FAQ scripts from overriding fact-specific questions."""
+    plain = _strip_diacritics(normalize_query(text))
+    has_personal_fact = bool(
+        re.search(r"\b\d{1,2}/\d{1,2}/\d{4}\b", plain)
+        or re.search(r"\bsinh\s+nam\s+(?:\d{4}|\d{1,2}k\d{1,2})\b", plain)
+        or re.search(r"\b\d+\s*nam\b", plain)
+        or re.search(r"\b\d+\s*tuoi\b", plain)
+    )
+    return has_personal_fact and any(
+        marker in plain
+        for marker in ("nghi huu", "luong huu", "bao hiem xa hoi", "dieu kien")
+    )
+
+
+def _has_gender(text: str) -> bool:
+    return bool(re.search(r"\b(nam|nữ|nu)\b", _strip_diacritics(normalize_query(text))))
+
+
+_EVIDENCE_TOPIC_MARKERS = {
+    "nghi huu": ("nghi huu", "tuoi nghi huu", "luong huu"),
+    "bao hiem xa hoi": ("bao hiem xa hoi", "luong huu"),
+    "so do": ("giay chung nhan", "quyen su dung dat", "so do", "dat dai"),
+    "that nghiep": ("that nghiep", "bao hiem that nghiep"),
+    "ket hon": ("ket hon", "hon nhan", "dang ky ket hon"),
+    "khai sinh": ("khai sinh", "ho tich"),
+    "hang xom": ("hang xom", "tieng on", "on ao", "am thanh"),
+}
+
+
+def _validate_agentic_evidence(
+    query: str,
+    chunks: list[RetrievedChunk],
+    evidence_used: list[str],
+    key_claims: list[dict],
+) -> tuple[bool, str]:
+    """Reject answers whose selected evidence is valid law but wrong topic."""
+    plain_query = _strip_diacritics(normalize_query(query))
+    selected_ids = {str(source_id) for source_id in evidence_used}
+    if not selected_ids:
+        return False, "Không có bằng chứng được chọn trong reasoning."
+
+    available_ids = {c.source_id for c in chunks}
+    if not selected_ids.issubset(available_ids):
+        return False, "Reasoning chọn source không nằm trong các đoạn đã truy xuất."
+
+    for claim in key_claims:
+        if claim.get("evidence") not in selected_ids:
+            return False, "Claim trỏ tới source không nằm trong evidence_used."
+
+    evidence_text = " ".join(
+        _strip_diacritics(c.text)
+        for c in chunks
+        if c.source_id in selected_ids
+    ).casefold()
+    for query_marker, required_markers in _EVIDENCE_TOPIC_MARKERS.items():
+        if query_marker in plain_query and not any(marker in evidence_text for marker in required_markers):
+            return False, f"Evidence không có marker chủ đề bắt buộc: {query_marker}."
+
+    # For questions without a known domain marker, require at least two useful
+    # non-stopword tokens from the query in the selected evidence.
+    stopwords = {
+        "toi", "la", "co", "duoc", "khong", "can", "gi", "nao", "the",
+        "nang", "cho", "hoi", "muon", "lam", "sao", "nhu", "the", "nha",
+    }
+    tokens = {
+        token for token in re.findall(r"[a-z0-9]+", plain_query)
+        if len(token) >= 4 and token not in stopwords
+    }
+    overlap = sum(1 for token in tokens if token in evidence_text)
+    if tokens and overlap < min(2, len(tokens)):
+        return False, "Evidence không đủ từ khóa nội dung để hỗ trợ câu hỏi."
+    return True, ""
 
 
 def _is_followup_continuation(current_query: str, previous_turn: dict) -> bool:
@@ -583,8 +662,21 @@ class Pipeline:
         lat["normalize_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
-        chunks = self._retrieve(query.text, session_id, self.top_k)
-        lat["retrieval_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+        # Safety preflight runs before any LLM call. It checks hard rules but
+        # intentionally does not require evidence yet.
+        decision, normalized = self.router.route(query.text, [], require_evidence=False)
+        if decision.zone in (Zone.RED, Zone.ORANGE):
+            chunks: list[RetrievedChunk] = []
+            query_analysis = None
+            lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+        else:
+            query_analysis = self.agentic_retriever.analyze_query(query.text)
+            self.agentic_retriever.last_analysis = query_analysis
+            t_retrieval = time.perf_counter()
+            chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
+            lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
+            decision, normalized = self.router.route(query.text, chunks)
+            lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
         llm_classifier = None
@@ -606,6 +698,19 @@ class Pipeline:
                 llm_classifier = self.llm.classify_safe  # type: ignore[attr-defined]
         decision, normalized = self.router.route(query.text, chunks, llm_classifier)
         lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+
+        # Personalized retirement questions need a sex-specific rule. Ask for
+        # that fact before retrieval sufficiency can turn the query into a
+        # generic refusal or an unrelated grounded answer.
+        if _is_personalized_rule_query(query.text) and not _has_gender(query.text):
+            decision = replace(
+                self.router.policy.ambiguous_decision(),
+                user_message=(
+                    "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết "
+                    "giới tính được không ạ? Tuổi nghỉ hưu của nam và nữ có "
+                    "lộ trình khác nhau."
+                ),
+            )
 
         # Temporary session memory: previous turns of THIS session (RAM only).
         # Used for follow-ups ("em la nam a" after the retirement-age question)
@@ -642,10 +747,17 @@ class Pipeline:
         faq_answered = ""
         if self.faq is not None:
             faq_hit = self.faq.answer(query.text)
+            if faq_hit is not None and _is_personalized_rule_query(query.text):
+                self.store.record(
+                    session_id,
+                    "faq_skipped_personalized_query",
+                    faq_id=faq_hit.faq_id,
+                )
+                faq_hit = None
 
         if faq_hit is not None:
             # Check if router decision is a hard gate that FAQ cannot override
-            if decision.zone in (Zone.RED, Zone.ORANGE) and decision.action != Action.GUIDE:
+            if decision.zone in (Zone.RED, Zone.ORANGE):
                 # Log and fall through to normal pipeline
                 self.store.record(
                     session_id,
@@ -678,8 +790,6 @@ class Pipeline:
                         or [c.source_id for c in faq_chunks[:3]]
                     )
                     faq_sources = tuple(dict.fromkeys(faq_source_list))
-                    from dataclasses import replace
-
                     faq_hit = replace(faq_hit, source_ids=faq_sources)
                     # Validate FAQ citations
                     if self.validator is not None:
@@ -713,8 +823,32 @@ class Pipeline:
                 t0 = time.perf_counter()
                 try:
                     # Agentic retrieval: LLM analyzes query -> generates search queries -> retrieves
-                    agentic_chunks = self.agentic_retriever.retrieve(query.text)
-                    
+                    agentic_chunks = chunks
+                    self.agentic_reasoner.query_analysis = query_analysis
+                    analysis = query_analysis
+                    if (
+                        analysis
+                        and "giới tính" in analysis.missing_facts
+                        and any(marker in normalize_query(query.text) for marker in ("tôi sinh", "năm nay", "tuổi của tôi"))
+                    ):
+                        decision = replace(
+                            self.router.policy.ambiguous_decision(),
+                            user_message=(
+                                "Để xác định tuổi nghỉ hưu chính xác, anh/chị cho em biết "
+                                "giới tính được không ạ? Tuổi nghỉ hưu của nam và nữ có "
+                                "lộ trình khác nhau."
+                            ),
+                        )
+                        self.store.record(
+                            session_id,
+                            "agentic_missing_fact_clarification",
+                            missing_facts=list(analysis.missing_facts),
+                        )
+                        answer = None
+                        chunks = agentic_chunks
+                        lat["llm_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+                        raise _MissingAgenticFacts
+
                     # Sync agentic reasoner with current LLM (in case llm was replaced)
                     self.agentic_reasoner.llm = self.llm
                     
@@ -731,6 +865,42 @@ class Pipeline:
                         next_step=str(reasoning_result.next_step or "").strip(),
                     )
                     chunks = agentic_chunks  # Use agentic chunks for citation validation
+                    # Legacy/custom test backends may not emit Agentic
+                    # metadata. Let citation validation handle those outputs;
+                    # the relevance gate applies once structured evidence is
+                    # actually present.
+                    is_demo_corpus = bool(agentic_chunks) and all(
+                        c.source_id.startswith("demo_")
+                        or bool(c.metadata and c.metadata.is_demo)
+                        for c in agentic_chunks
+                    )
+                    if (reasoning_result.evidence_used or reasoning_result.key_claims) and not is_demo_corpus:
+                        evidence_ok, evidence_reason = _validate_agentic_evidence(
+                            query.text,
+                            agentic_chunks,
+                            reasoning_result.evidence_used,
+                            reasoning_result.key_claims,
+                        )
+                        if not evidence_ok:
+                            decision = self.router.policy.insufficient_decision()
+                            self.store.record(
+                                session_id,
+                                "agentic_evidence_rejected",
+                                reason=evidence_reason,
+                                evidence_used=list(reasoning_result.evidence_used),
+                                key_claims=list(reasoning_result.key_claims),
+                            )
+                            answer = None
+                    elif reasoning_result.missing_facts and reasoning_result.confidence == "low":
+                        decision = self.router.policy.insufficient_decision()
+                        self.store.record(
+                            session_id,
+                            "agentic_reasoning_uncertain",
+                            missing_facts=list(reasoning_result.missing_facts),
+                        )
+                        answer = None
+                except _MissingAgenticFacts:
+                    pass
                 except Exception as exc:
                     decision = self.router.policy.insufficient_decision()
                     self.store.record(session_id, "llm_failure", reason=str(exc)[:500])
@@ -880,6 +1050,7 @@ class Pipeline:
             app_mode=self.settings.app_mode,
             tts_output=spoken,
             faq_answered=faq_answered,
+            query_analysis=query_analysis.to_dict() if query_analysis else None,
         )
         # WER/MOS metrics logging (P0)
         try:

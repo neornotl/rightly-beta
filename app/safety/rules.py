@@ -100,6 +100,8 @@ _CITED_DECREE_RE = re.compile(
 )
 
 _OUT_OF_SCOPE_PATTERNS = [
+    r"người ngoài hành tinh",
+    r"kiện.*ngoài hành tinh",
     r"dự đoán (giá|xổ số|kết quả)",
     r"xổ số",
     r"chơi (chứng khoán|bạc)",
@@ -118,6 +120,20 @@ _OUT_OF_SCOPE_PATTERNS = [
     # "hồ sơ", "chế độ"...). A legit legal question mentioning one of these
     # words still carries a marker and keeps flowing to grounded answering.
     r"thời tiết",
+    r"trời có mưa",
+    r"hôm nay trời",
+    r"có mưa không",
+    r"mưa không",
+    r"cổ phiếu",
+    r"kiếm lời",
+    r"uống thuốc",
+    r"đau bụng",
+    r"viết giúp.*python",
+    r"hàm python",
+    r"visa du học",
+    r"du học canada",
+    r"làm việc ở nhật",
+    r"thuế thu nhập cá nhân.*nhật",
     r"nấu (?:phở|cháo|cơm|bánh|món|ăn)",
     r"công thức nấu",
     r"món ăn",

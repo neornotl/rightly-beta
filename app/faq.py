@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import re
+import re
 import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
@@ -25,6 +26,15 @@ from app.schemas import GroundedAnswer
 _FAQ_FILE = Path("data") / "faq.json"
 
 _STRIP_MARKS = re.compile(r"[\u0300-\u036f]")
+
+
+def format_faq_answer(text: str) -> str:
+    """Keep curated FAQ wording while making its structure readable."""
+    formatted = re.sub(r"\s+-\s+", "\n- ", text.strip())
+    formatted = re.sub(r"\s+(Tóm lại|Kết luận)\s*[,：:]\s*", r"\n\n\1: ", formatted, flags=re.IGNORECASE)
+    if not re.search(r"(?:^|\n\n)(?:Tóm lại|Kết luận):", formatted, re.IGNORECASE):
+        formatted = f"{formatted}\n\nTóm lại: Nội dung trên là căn cứ trả lời theo nguồn FAQ đã được kiểm chứng."
+    return formatted
 _D_MAP = {"đ": "d", "Đ": "d", "ð": "d"}
 
 
@@ -48,7 +58,7 @@ class FaqHit:
 
     def to_grounded_answer(self) -> GroundedAnswer:
         return GroundedAnswer(
-            answer_text=self.answer_text,
+            answer_text=format_faq_answer(self.answer_text),
             spoken_citation=self.spoken_citation,
             source_ids=list(self.source_ids),
             limitations=[
