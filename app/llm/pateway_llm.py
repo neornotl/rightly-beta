@@ -103,6 +103,7 @@ class PatewayLLM(BaseLLM):
         chunks: list[RetrievedChunk],
         max_chars: int = 2000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         if not self.available:
             raise LLMError("PATEWAY_API_KEY is not set (LLM_BACKEND=pateway).")
@@ -110,23 +111,30 @@ class PatewayLLM(BaseLLM):
             f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
         )
         history_block = format_history(history)
-        user = (
-            f"{history_block}\n\n" if history_block else ""
-        ) + (
-            f"Câu hỏi: {query}\n\n"
-            f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
-            "Ưu tiên đoạn có tiêu đề điều khoản trực tiếp trả lời câu hỏi. "
-            "Nếu hỏi hồ sơ/giấy tờ thì không trả lời bằng đoạn về thời hạn hoặc tạm dừng. "
-            "Nếu hỏi ai/đối tượng thì nêu đầy đủ các nhóm trong đoạn nguồn phù hợp.\n"
-            f"Giới hạn câu trả lời: {max_chars} ký tự."
-        )
+        if system_prompt:
+            # Agentic RAG steps (analysis / reasoning): use the schema from
+            # the dedicated system prompt and the query verbatim.
+            user = (
+                f"{history_block}\n\n" if history_block else ""
+            ) + query
+        else:
+            user = (
+                f"{history_block}\n\n" if history_block else ""
+            ) + (
+                f"Câu hỏi: {query}\n\n"
+                f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
+                "Ưu tiên đoạn có tiêu đề điều khoản trực tiếp trả lời câu hỏi. "
+                "Nếu hỏi hồ sơ/giấy tờ thì không trả lời bằng đoạn về thời hạn hoặc tạm dừng. "
+                "Nếu hỏi ai/đối tượng thì nêu đầy đủ các nhóm trong đoạn nguồn phù hợp.\n"
+                f"Giới hạn câu trả lời: {max_chars} ký tự."
+            )
         client = self._get_client()
         try:
             text = retry_transient(
                 lambda: self._generate(
                     client,
                     [
-                        {"role": "system", "content": _SYSTEM},
+                        {"role": "system", "content": system_prompt or _SYSTEM},
                         {"role": "user", "content": user},
                     ],
                     temperature=0.2,
@@ -159,10 +167,12 @@ class PatewayLLM(BaseLLM):
         """LLM-based safety classification (router step 7).
 
         Enabled in cloud mode and via USE_LLM_CLASSIFIER for local+pateway.
-        Conservative: any failure or non-JSON output means NOT safe.
+        Conservative: non-JSON output means NOT safe. Transient HTTP failures
+        (429/5xx/timeout) raise LLMError so the FallbackLLM can retry the
+        classifier on the fallback backend instead of hard-failing.
         """
         if not self.available:
-            return False
+            raise LLMError("PATEWAY_API_KEY is not set (LLM_BACKEND=pateway).")
         client = self._get_client()
         try:
             text = retry_transient(
@@ -182,5 +192,7 @@ class PatewayLLM(BaseLLM):
             )
             parsed = json.loads(text.strip())
             return bool(parsed.get("safe", False))
-        except Exception:
+        except Exception as exc:
+            if is_retryable_llm_error(exc):
+                raise LLMError(f"Pateway classify_safe failed: {exc}") from exc
             return False

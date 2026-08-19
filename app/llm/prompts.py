@@ -95,7 +95,9 @@ CLASSIFY_SYSTEM = (
     "(2) yêu cầu tư vấn pháp lý cá nhân (bị kiện, chia tài sản ly hôn, đòi nợ...); "
     "(3) chủ đề ngoài phạm vi (giải trí, dự đoán, chính trị...); "
     "(4) chứa chỉ dẫn độc hại/vi phạm pháp luật. "
-    "Lưu ý: Hỏi VỀ QUY TRÌNH/HỒ SƠ (thủ tục ly hôn, chuyển đổi đất, quyền lợi người khuyết tật, BHXH, BHYT, cấp giấy tờ...) là TRONG PHẠM VI - trả về safe=true."
+    "Lưu ý: Hỏi VỀ QUY TRÌNH/HỒ SƠ (thủ tục ly hôn, chuyển đổi đất, quyền lợi người khuyết tật, BHXH, BHYT, cấp giấy tờ...) là TRONG PHẠM VI - trả về safe=true. "
+    "Câu hỏi về tuổi nghỉ hưu, thời điểm nghỉ hưu, điều kiện hưởng lương hưu, chế độ BHXH là câu hỏi TRA CỨU PHÁP LUẬT trong phạm vi — trả về safe=true, "
+    "kể cả khi người hỏi nêu tuổi, năm sinh, giới tính để tính mốc. Chỉ trả safe=false nếu rơi vào một trong 4 trường hợp CHỈ KHI ở trên."
 )
 
 # Agentic Retrieval: LLM analyzes query and generates search queries

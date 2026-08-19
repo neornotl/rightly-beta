@@ -18,7 +18,7 @@ class GroqLLM(BaseLLM):
     def __init__(
         self,
         api_key: str = "",
-        model: str = "llama-3.1-70b-versatile",
+        model: str = "openai/gpt-oss-120b",
         timeout_seconds: float = 60.0,
         max_retries: int = 3,
         backoff_seconds: float = 1.0,
@@ -93,6 +93,7 @@ class GroqLLM(BaseLLM):
         chunks: list[RetrievedChunk],
         max_chars: int = 2000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         if not self.available:
             raise LLMError("GROQ_API_KEY is not set (LLM_BACKEND=groq).")
@@ -100,22 +101,27 @@ class GroqLLM(BaseLLM):
             f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
         )
         history_block = format_history(history)
-        user = (
-            (f"{history_block}\n\n" if history_block else "")
-            + f"Câu hỏi: {query}\n\n"
-            f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
-            f"Giới hạn câu trả lời: {max_chars} ký tự.\n\n"
-            "Trả lời theo đúng JSON sau, không thêm chú thích ngoài JSON:\n"
-            '{"answer_text": "...", "spoken_citation": "...", '
-            '"source_ids": ["source_id đã dùng"], "limitations": ["..."], '
-            '"next_step": "..."}'
-        )
+        if system_prompt:
+            user = (
+                f"{history_block}\n\n" if history_block else ""
+            ) + query
+        else:
+            user = (
+                (f"{history_block}\n\n" if history_block else "")
+                + f"Câu hỏi: {query}\n\n"
+                f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
+                f"Giới hạn câu trả lời: {max_chars} ký tự.\n\n"
+                "Trả lời theo đúng JSON sau, không thêm chú thích ngoài JSON:\n"
+                '{"answer_text": "...", "spoken_citation": "...", '
+                '"source_ids": ["source_id đã dùng"], "limitations": ["..."], '
+                '"next_step": "..."}'
+            )
         try:
             completion = self._call_with_rotation(
                 lambda client: client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": _SYSTEM},
+                        {"role": "system", "content": system_prompt or _SYSTEM},
                         {"role": "user", "content": user},
                     ],
                     temperature=0.2,

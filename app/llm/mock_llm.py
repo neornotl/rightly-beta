@@ -43,11 +43,12 @@ class MockLLM(BaseLLM):
         chunks: list[RetrievedChunk],
         max_chars: int = 2000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         # Keep the mock backend compatible with the two-step Agentic RAG
         # contract. This makes tests exercise parsing/grounding metadata
         # instead of silently falling back when analysis has no chunks.
-        if not chunks and "Hãy phân tích và sinh ra JSON" in query:
+        if not chunks and system_prompt and "missing_facts" in system_prompt:
             question = query.split('Câu hỏi của người dân:', 1)[-1]
             return {
                 "answer_text": json.dumps(self._agentic_analysis(question), ensure_ascii=False),

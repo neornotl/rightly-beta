@@ -722,7 +722,15 @@ class Pipeline:
             query_analysis = self.agentic_retriever.analyze_query(query.text)
             self.agentic_retriever.last_analysis = query_analysis
             t_retrieval = time.perf_counter()
-            chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
+            try:
+                # Keep the agentic retriever in sync with the pipeline's
+                # current retriever (tests swap it to inject faults), then
+                # degrade gracefully if a retriever fault surfaces (gate 7).
+                self.agentic_retriever.retriever = self.retriever
+                chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
+            except Exception as exc:  # noqa: BLE001 - retriever fault must not crash a session
+                self.store.record(session_id, "retriever_failure", reason=str(exc)[:500])
+                chunks = []
             lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
             decision, normalized = self.router.route(query.text, chunks)
             retirement_missing = bool(

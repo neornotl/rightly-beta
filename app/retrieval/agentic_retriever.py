@@ -94,10 +94,18 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
                 chunks=[],  # No chunks needed for analysis
                 max_chars=2000,
                 history=None,
+                system_prompt=AGENTIC_RETRIEVAL_SYSTEM,
             )
-            # The LLM should return JSON with analysis and search_queries
-            # For now, we'll parse the response as JSON
-            parsed = json.loads(response.get("answer_text", "{}"))
+            # The LLM should return JSON with analysis and search_queries.
+            # Backends differ in shape: MockLLM wraps the JSON in
+            # {"answer_text": "<json>"}; Pateway/Groq parse it and return the
+            # analysis dict directly. Normalize both to the analysis dict.
+            if isinstance(response, dict) and isinstance(response.get("answer_text"), str):
+                parsed = json.loads(response["answer_text"])
+            elif isinstance(response, dict):
+                parsed = response
+            else:
+                parsed = json.loads(str(response))
             
             analysis = parsed.get("analysis", {})
             keywords = parsed.get("keywords", {})
@@ -272,6 +280,7 @@ Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa v
                 chunks=chunks,
                 max_chars=2000,
                 history=None,
+                system_prompt=AGENTIC_REASONING_SYSTEM,
             )
             
             # Standard LLM interface returns dict with fields directly

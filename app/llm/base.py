@@ -88,12 +88,18 @@ class BaseLLM(ABC):
         chunks: list[RetrievedChunk],
         max_chars: int = 2000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         """Return a JSON dict with answer fields.
 
         ``history`` carries the previous turns of the same session (temporary
         memory); backends may include it in the prompt, but answers must stay
         grounded on the ``chunks`` of the CURRENT turn.
+
+        ``system_prompt`` overrides the default system prompt (used by the
+        Agentic RAG analysis/reasoning steps, whose JSON schema lives in the
+        system prompt). When set, backends should use the query verbatim and
+        skip the hotline-style wrapping.
         """
 
     def enforce_source_ids(self, parsed: dict, allowed: set[str]) -> dict:

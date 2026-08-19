@@ -44,10 +44,12 @@ class FallbackLLM(BaseLLM):
         chunks: list[RetrievedChunk],
         max_chars: int = 2000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         try:
             out = self.primary.generate_answer(
-                query, chunks, max_chars=max_chars, history=history
+                query, chunks, max_chars=max_chars, history=history,
+                system_prompt=system_prompt,
             )
             self._last_served = self.primary
             return out
@@ -59,7 +61,8 @@ class FallbackLLM(BaseLLM):
                 ) from primary_error
             try:
                 out = self.fallback.generate_answer(
-                    query, chunks, max_chars=max_chars, history=history
+                    query, chunks, max_chars=max_chars, history=history,
+                    system_prompt=system_prompt,
                 )
                 self._last_served = self.fallback
                 return out
