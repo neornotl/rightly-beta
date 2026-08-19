@@ -198,7 +198,7 @@ def test_hallucinated_citation_rejected_by_pipeline(tmp_path):
     class FakeLLM:
         name = "fake"
 
-        def generate_answer(self, query, chunks, max_chars=2000, history=None):
+        def generate_answer(self, query, chunks, max_chars=2000, history=None, system_prompt=None):
             # Hallucinate a source_id NOT in retrieved chunks (nd123_2015)
             return {
                 "answer_text": "câu trả lời bịa",
@@ -225,7 +225,7 @@ def test_ungrounded_answer_refused(tmp_path):
     class NoCiteLLM:
         name = "nocite"
 
-        def generate_answer(self, query, chunks, max_chars=2000, history=None):
+        def generate_answer(self, query, chunks, max_chars=2000, history=None, system_prompt=None):
             return {
                 "answer_text": "Tôi khẳng định chắc chắn câu này đúng.",
                 "spoken_citation": "",

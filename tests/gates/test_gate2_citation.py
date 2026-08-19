@@ -121,7 +121,7 @@ def test_gate2_hallucinated_citation_refused_end_to_end(offline_pipeline):
     class HallucinateLLM:
         name = "hallucinate"
 
-        def generate_answer(self, query, chunks, max_chars=2000, history=None):
+        def generate_answer(self, query, chunks, max_chars=2000, history=None, system_prompt=None):
             return {
                 "answer_text": "câu trả lời bịa",
                 "spoken_citation": "",

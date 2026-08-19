@@ -42,7 +42,7 @@ def test_gate7_llm_failure_degrades_to_refusal(offline_pipeline):
     class BoomLLM:
         name = "boom"
 
-        def generate_answer(self, query, chunks, max_chars=2000, history=None):
+        def generate_answer(self, query, chunks, max_chars=2000, history=None, system_prompt=None):
             raise TimeoutError("upstream timed out")
 
     offline_pipeline.llm = BoomLLM()  # type: ignore[assignment]

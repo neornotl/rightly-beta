@@ -535,22 +535,31 @@ class HybridRetriever(Retriever):
         fused = _expand_adjacent(fused, self.bm25.chunks, query)
         
         # Apply focus boost and track in breakdowns
+        boosted = []
         for hit in fused:
             boost = _query_focus(query, hit)
             if boost > 0:
-                hit.score += boost
+                # Create new chunk with boosted score (RetrievedChunk is frozen)
+                boosted_hit = RetrievedChunk(
+                    chunk_id=hit.chunk_id,
+                    source_id=hit.source_id,
+                    text=hit.text,
+                    score=round(hit.score + boost, 4),
+                    metadata=hit.metadata,
+                )
+                boosted.append(boosted_hit)
                 if hit.chunk_id in breakdowns:
                     breakdowns[hit.chunk_id].focus_boost = boost
-                    breakdowns[hit.chunk_id].final_score = hit.score
+                    breakdowns[hit.chunk_id].final_score = hit.score + boost
+            else:
+                boosted.append(hit)
+        fused = boosted
         
         # Classify evidence type for each hit
         evidence_types = {}
         for hit in fused:
             ev_type = _classify_evidence(query, hit)
             evidence_types[hit.chunk_id] = ev_type
-            # Store in metadata for downstream use
-            if hit.metadata:
-                hit.metadata.evidence_type = ev_type
         
         # Sort by evidence type priority, then score
         type_priority = {
@@ -581,10 +590,6 @@ class HybridRetriever(Retriever):
                     if h.chunk_id in breakdowns:
                         breakdowns[h.chunk_id].rerank_score = float(s)
                         breakdowns[h.chunk_id].final_score = float(s)
-                    # Preserve evidence type
-                    if h.chunk_id in evidence_types:
-                        if new_hit.metadata:
-                            new_hit.metadata.evidence_type = evidence_types[h.chunk_id]
                     scored.append(new_hit)
             scored.sort(key=lambda h: h.score, reverse=True)
             fused = scored
