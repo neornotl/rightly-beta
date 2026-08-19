@@ -69,10 +69,21 @@ def _has_gender(text: str) -> bool:
     return bool(re.search(r"\b(nam|nữ|nu)\b", _strip_diacritics(normalize_query(text))))
 
 
+def _focus_is_retirement(focus: str) -> bool:
+    """True when the analysis focus concerns retirement age/timing.
+
+    Real LLMs return varied phrasings ("Xác định thời điểm và tuổi được nghỉ
+    hưu...", "thời điểm đủ điều kiện nghỉ hưu"), so match on the keyword
+    instead of exact equality. Compare against the diacritic-stripped form
+    ("nghi huu") since focus is normalized before matching.
+    """
+    return bool(focus) and "nghi huu" in _strip_diacritics(normalize_query(focus))
+
+
 def _needs_retirement_gender_clarification(analysis: object, text: str = "") -> bool:
     return bool(
         analysis
-        and getattr(analysis, "focus", "") == "nghỉ hưu"
+        and _focus_is_retirement(getattr(analysis, "focus", ""))
         and "giới tính" in getattr(analysis, "missing_facts", [])
         and re.search(r"\b(toi|anh|chi|minh)\b", _strip_diacritics(normalize_query(text)))
     )
@@ -733,20 +744,6 @@ class Pipeline:
                 chunks = []
             lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
             decision, normalized = self.router.route(query.text, chunks)
-            retirement_missing = bool(
-                query_analysis
-                and getattr(query_analysis, "focus", "") == "nghỉ hưu"
-                and getattr(query_analysis, "missing_facts", [])
-                and (
-                    _needs_retirement_gender_clarification(query_analysis, query.text)
-                    or "nguoi dung bo sung gioi tinh" in _strip_diacritics(normalize_query(query.text))
-                )
-            )
-            if retirement_missing:
-                decision = replace(
-                    self.router.policy.ambiguous_decision(),
-                    user_message=_retirement_clarification_message(query_analysis),
-                )
             lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
@@ -772,7 +769,24 @@ class Pipeline:
 
         # Personalized retirement questions need a sex-specific rule. Ask for
         # that fact before retrieval sufficiency can turn the query into a
-        # generic refusal or an unrelated grounded answer.
+        # generic refusal or an unrelated grounded answer. This override runs
+        # AFTER the final router call (which includes the LLM classifier) so
+        # a missing-gender retirement query always asks for gender instead of
+        # falling through to REFUSE/AMBIGUOUS.
+        retirement_missing = bool(
+            query_analysis
+            and _focus_is_retirement(getattr(query_analysis, "focus", ""))
+            and getattr(query_analysis, "missing_facts", [])
+            and (
+                _needs_retirement_gender_clarification(query_analysis, query.text)
+                or "nguoi dung bo sung gioi tinh" in _strip_diacritics(normalize_query(query.text))
+            )
+        )
+        if retirement_missing:
+            decision = replace(
+                self.router.policy.ambiguous_decision(),
+                user_message=_retirement_clarification_message(query_analysis),
+            )
         if _is_personalized_rule_query(query.text) and not _has_gender(query.text):
             decision = replace(
                 self.router.policy.ambiguous_decision(),
@@ -902,7 +916,7 @@ class Pipeline:
                     analysis = query_analysis
                     if (
                         analysis
-                        and getattr(analysis, "focus", "") == "nghỉ hưu"
+                        and _focus_is_retirement(getattr(analysis, "focus", ""))
                         and getattr(analysis, "missing_facts", [])
                         and re.search(r"\b(toi|anh|chi|minh)\b", _strip_diacritics(normalize_query(query.text)))
                     ):
