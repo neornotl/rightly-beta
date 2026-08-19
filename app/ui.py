@@ -142,6 +142,35 @@ st.markdown(
 )
 
 # ============================================================
+def _render_assistant(st, msg: dict) -> None:
+    """Render assistant message: answer text + citation + sources + limitations + next step."""
+    st.markdown(msg["text"])
+    if msg.get("citation"):
+        st.markdown(
+            f'<div class="cite">📌 {escape(msg["citation"])}</div>',
+            unsafe_allow_html=True,
+        )
+    if msg.get("next_step"):
+        st.markdown(
+            f'<div class="notice">➡️ {escape(msg["next_step"])}</div>',
+            unsafe_allow_html=True,
+        )
+    if msg.get("limitations"):
+        for lim in msg["limitations"]:
+            st.markdown(
+                f'<div class="warn">⚠️ {escape(lim)}</div>',
+                unsafe_allow_html=True,
+            )
+    if msg.get("sources"):
+        srcs = " · ".join(
+            f"<code>{escape(s)}</code>" for s in msg["sources"]
+        )
+        st.markdown(
+            f'<div class="src-line">📚 Nguồn: {srcs}</div>',
+            unsafe_allow_html=True,
+        )
+
+
 # RENDER CONVERSATION THREAD
 # ============================================================
 for msg in st.session_state.messages:
