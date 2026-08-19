@@ -233,10 +233,14 @@ if pending:
 # ============================================================
 # CHAT INPUT (continuous thread)
 # ============================================================
-st.chat_input(
+# Chat input (continuous thread)
+prompt = st.chat_input(
     "Hỏi về quy định, thủ tục hành chính hoặc pháp luật...",
     key="chat_input_box",
 )
+
+if prompt:
+    handle_query(prompt)
 
 # ============================================================
 # FOOTER DISCLAIMER
