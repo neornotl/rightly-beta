@@ -4925,6 +4925,303 @@
       "gazette_number": "",
       "pages": 0,
       "source_file": "Bach-Xuan/99-VBHN-VPQH 2025 Bộ luật Tố tụng dân sự.txt"
+    },
+    "nd401_2026": {
+      "source_id": "nd401_2026",
+      "docid": "",
+      "ky_hieu": "401/VBHN-BTP 2026",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "15-11-2015",
+      "ngay_hieu_luc": "01-01-2016",
+      "trich_yeu": "Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Hộ tịch (hợp nhất)",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 70813,
+      "status": "active_verified",
+      "linh_vuc": "Hộ tịch",
+      "tags": [
+        "hộ tịch",
+        "khai sinh",
+        "kết hôn",
+        "đăng ký hộ tịch"
+      ]
+    },
+    "tt11_2025_bhxh": {
+      "source_id": "tt11_2025_bhxh",
+      "docid": "",
+      "ky_hieu": "11/2025/TT-BNV",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Nội vụ",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định chi tiết một số điều của Luật Bảo hiểm xã hội về bảo hiểm xã hội tự nguyện",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 6176,
+      "status": "active_verified",
+      "linh_vuc": "Bảo hiểm xã hội",
+      "tags": [
+        "bhxh",
+        "bảo hiểm tự nguyện",
+        "lương hưu"
+      ]
+    },
+    "tt12_2025_bhxh": {
+      "source_id": "tt12_2025_bhxh",
+      "docid": "",
+      "ky_hieu": "12/2025/TT-BNV",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Nội vụ",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định chi tiết một số điều của Luật Bảo hiểm xã hội về bảo hiểm xã hội bắt buộc",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 39599,
+      "status": "active_verified",
+      "linh_vuc": "Bảo hiểm xã hội",
+      "tags": [
+        "bhxh",
+        "bảo hiểm bắt buộc",
+        "lương hưu"
+      ]
+    },
+    "nd144_2017": {
+      "source_id": "nd144_2017",
+      "docid": "",
+      "ky_hieu": "144/2017/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2017",
+      "ngay_hieu_luc": "2017",
+      "trich_yeu": "Nghị định quy định chi tiết một số điều của Luật Trợ giúp pháp lý",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 22931,
+      "status": "active_verified",
+      "linh_vuc": "Trợ giúp pháp lý",
+      "tags": [
+        "trợ giúp pháp lý",
+        "trợ giúp"
+      ]
+    },
+    "nd69_2024": {
+      "source_id": "nd69_2024",
+      "docid": "",
+      "ky_hieu": "69/2024/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2024",
+      "ngay_hieu_luc": "2024",
+      "trich_yeu": "Nghị định quy định về định danh và xác thực điện tử",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 78005,
+      "status": "active_verified",
+      "linh_vuc": "Định danh điện tử",
+      "tags": [
+        "định danh",
+        "xác thực điện tử",
+        "tài khoản định danh"
+      ]
+    },
+    "nd118_2025": {
+      "source_id": "nd118_2025",
+      "docid": "",
+      "ky_hieu": "118/2025/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị định về thực hiện thủ tục hành chính theo cơ chế một cửa, một cửa liên thông",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 94102,
+      "status": "active_verified",
+      "linh_vuc": "Thủ tục hành chính",
+      "tags": [
+        "một cửa",
+        "thủ tục hành chính",
+        "dịch vụ công"
+      ]
+    },
+    "nd45_2022": {
+      "source_id": "nd45_2022",
+      "docid": "",
+      "ky_hieu": "45/2022/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2022",
+      "ngay_hieu_luc": "2022",
+      "trich_yeu": "Nghị định quy định về xử phạt vi phạm hành chính trong lĩnh vực bảo vệ môi trường",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 402550,
+      "status": "active_verified",
+      "linh_vuc": "Môi trường",
+      "tags": [
+        "xử phạt",
+        "môi trường",
+        "vi phạm hành chính"
+      ]
+    },
+    "nd282_2025": {
+      "source_id": "nd282_2025",
+      "docid": "",
+      "ky_hieu": "282/2025/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng, chống bạo lực gia đình",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 191621,
+      "status": "active_verified",
+      "linh_vuc": "An ninh trật tự",
+      "tags": [
+        "xử phạt",
+        "bạo lực gia đình",
+        "an ninh trật tự"
+      ]
+    },
+    "nd91_2020": {
+      "source_id": "nd91_2020",
+      "docid": "",
+      "ky_hieu": "91/2020/NĐ-CP",
+      "loai": "Nghị định",
+      "co_quan": "Chính phủ",
+      "ngay_ban_hanh": "2020",
+      "ngay_hieu_luc": "2020",
+      "trich_yeu": "Nghị định chống tin nhắn rác, thư điện tử rác, cuộc gọi rác",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 50635,
+      "status": "active_verified",
+      "linh_vuc": "An ninh mạng",
+      "tags": [
+        "tin nhắn rác",
+        "spam",
+        "cuộc gọi rác"
+      ]
+    },
+    "nq110_2025": {
+      "source_id": "nq110_2025",
+      "docid": "",
+      "ky_hieu": "110/2025/UBTVQH15",
+      "loai": "Nghị quyết",
+      "co_quan": "Ủy ban Thường vụ Quốc hội",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị quyết về điều chỉnh mức giảm trừ gia cảnh của thuế thu nhập cá nhân",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 1429,
+      "status": "active_verified",
+      "linh_vuc": "Thuế",
+      "tags": [
+        "giảm trừ gia cảnh",
+        "thuế thu nhập cá nhân",
+        "thuế"
+      ]
+    },
+    "tt04_2026_bgddt": {
+      "source_id": "tt04_2026_bgddt",
+      "docid": "",
+      "ky_hieu": "04/VBHN-BGDĐT 2026",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Giáo dục và Đào tạo",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư quy định về dạy thêm, học thêm",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 26084,
+      "status": "active_verified",
+      "linh_vuc": "Giáo dục",
+      "tags": [
+        "dạy thêm",
+        "học thêm"
+      ]
+    },
+    "tt02_2025_bgddt": {
+      "source_id": "tt02_2025_bgddt",
+      "docid": "",
+      "ky_hieu": "02/2025/TT-BGDĐT",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Giáo dục và Đào tạo",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định về Khung năng lực số cho người học trong hệ thống giáo dục quốc dân",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 85260,
+      "status": "active_verified",
+      "linh_vuc": "Giáo dục",
+      "tags": [
+        "năng lực số",
+        "giáo dục"
+      ]
+    },
+    "tt15_2026_bgddt": {
+      "source_id": "tt15_2026_bgddt",
+      "docid": "",
+      "ky_hieu": "15/2026/TT-BGDĐT",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Giáo dục và Đào tạo",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư ban hành Điều lệ trường tiểu học, trung học cơ sở, trung học phổ thông",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 66674,
+      "status": "active_verified",
+      "linh_vuc": "Giáo dục",
+      "tags": [
+        "điều lệ trường học",
+        "giáo dục"
+      ]
+    },
+    "tt53_2026_bgddt": {
+      "source_id": "tt53_2026_bgddt",
+      "docid": "",
+      "ky_hieu": "53/2026/TT-BGDĐT",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Giáo dục và Đào tạo",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư ban hành Quy chế tuyển sinh và đào tạo sau đại học",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 66806,
+      "status": "active_verified",
+      "linh_vuc": "Giáo dục",
+      "tags": [
+        "tuyển sinh",
+        "sau đại học",
+        "giáo dục"
+      ]
+    },
+    "tt15_2019_bgddt": {
+      "source_id": "tt15_2019_bgddt",
+      "docid": "",
+      "ky_hieu": "15/2019/TT-BGDĐT",
+      "loai": "Thông tư",
+      "co_quan": "Bộ Giáo dục và Đào tạo",
+      "ngay_ban_hanh": "2019",
+      "ngay_hieu_luc": "2019",
+      "trich_yeu": "Thông tư ban hành quy định Chuẩn quốc gia về chữ nổi Braille cho người khuyết tật",
+      "url": "https://vanban.chinhphu.vn",
+      "pdf_local": "",
+      "chars": 2188,
+      "status": "active_verified",
+      "linh_vuc": "Người khuyết tật",
+      "tags": [
+        "braille",
+        "người khuyết tật",
+        "giáo dục"
+      ]
     }
   },
   "missing_critical": {

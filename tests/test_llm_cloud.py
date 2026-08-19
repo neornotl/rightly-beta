@@ -389,4 +389,5 @@ def test_pateway_classify_safe_conservative_on_failure(monkeypatch):
             },
         )(),
     )
-    assert llm.classify_safe("câu hỏi?", CHUNKS) is False
+    with pytest.raises(LLMError, match="classify_safe failed"):
+        llm.classify_safe("câu hỏi?", CHUNKS)

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "verified_on": "2026-08-12",
+  "verified_on": "2026-08-19",
   "sources": {
     "nd123_2015": {
       "ky_hieu": "123/2015/NĐ-CP",
@@ -2209,6 +2209,186 @@
       "note": "VBHN from Bach-Xuan batch",
       "status": "active_verified",
       "verified_on": "2026-08-10"
+    },
+    "nd401_2026": {
+      "ky_hieu": "401/VBHN-BTP 2026",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "15-11-2015",
+      "ngay_hieu_luc": "01-01-2016",
+      "trich_yeu": "Nghị định quy định chi tiết một số điều và biện pháp thi hành Luật Hộ tịch (hợp nhất)",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt11_2025_bhxh": {
+      "ky_hieu": "11/2025/TT-BNV",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định chi tiết một số điều của Luật Bảo hiểm xã hội về bảo hiểm xã hội tự nguyện",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt12_2025_bhxh": {
+      "ky_hieu": "12/2025/TT-BNV",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định chi tiết một số điều của Luật Bảo hiểm xã hội về bảo hiểm xã hội bắt buộc",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd144_2017": {
+      "ky_hieu": "144/2017/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2017",
+      "ngay_hieu_luc": "2017",
+      "trich_yeu": "Nghị định quy định chi tiết một số điều của Luật Trợ giúp pháp lý",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd69_2024": {
+      "ky_hieu": "69/2024/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2024",
+      "ngay_hieu_luc": "2024",
+      "trich_yeu": "Nghị định quy định về định danh và xác thực điện tử",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd118_2025": {
+      "ky_hieu": "118/2025/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị định về thực hiện thủ tục hành chính theo cơ chế một cửa, một cửa liên thông",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd45_2022": {
+      "ky_hieu": "45/2022/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2022",
+      "ngay_hieu_luc": "2022",
+      "trich_yeu": "Nghị định quy định về xử phạt vi phạm hành chính trong lĩnh vực bảo vệ môi trường",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd282_2025": {
+      "ky_hieu": "282/2025/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng, chống bạo lực gia đình",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nd91_2020": {
+      "ky_hieu": "91/2020/NĐ-CP",
+      "loai": "Nghị định",
+      "ngay_ban_hanh": "2020",
+      "ngay_hieu_luc": "2020",
+      "trich_yeu": "Nghị định chống tin nhắn rác, thư điện tử rác, cuộc gọi rác",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "nq110_2025": {
+      "ky_hieu": "110/2025/UBTVQH15",
+      "loai": "Nghị quyết",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Nghị quyết về điều chỉnh mức giảm trừ gia cảnh của thuế thu nhập cá nhân",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt04_2026_bgddt": {
+      "ky_hieu": "04/VBHN-BGDĐT 2026",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư quy định về dạy thêm, học thêm",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt02_2025_bgddt": {
+      "ky_hieu": "02/2025/TT-BGDĐT",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2025",
+      "ngay_hieu_luc": "2025",
+      "trich_yeu": "Thông tư quy định về Khung năng lực số cho người học trong hệ thống giáo dục quốc dân",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt15_2026_bgddt": {
+      "ky_hieu": "15/2026/TT-BGDĐT",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư ban hành Điều lệ trường tiểu học, trung học cơ sở, trung học phổ thông",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt53_2026_bgddt": {
+      "ky_hieu": "53/2026/TT-BGDĐT",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2026",
+      "ngay_hieu_luc": "2026",
+      "trich_yeu": "Thông tư ban hành Quy chế tuyển sinh và đào tạo sau đại học",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
+    },
+    "tt15_2019_bgddt": {
+      "ky_hieu": "15/2019/TT-BGDĐT",
+      "loai": "Thông tư",
+      "ngay_ban_hanh": "2019",
+      "ngay_hieu_luc": "2019",
+      "trich_yeu": "Thông tư ban hành quy định Chuẩn quốc gia về chữ nổi Braille cho người khuyết tật",
+      "expired_on": null,
+      "replaced_by": null,
+      "note": "",
+      "status": "active_verified",
+      "verified_on": "2026-08-19"
     }
   }
 }

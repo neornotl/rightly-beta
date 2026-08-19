@@ -305,22 +305,42 @@ Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa v
                 source_ids = [s.strip() for s in source_ids.split(",") if s.strip()]
             elif not isinstance(source_ids, list):
                 source_ids = []
-            
+
+            def _norm(sid: str) -> str:
+                # LLM may echo the full marker "[source_id=X|chunk_id=Y]" or
+                # "X|chunk_id=Y"; reduce to the bare source_id for validation.
+                sid = str(sid).strip()
+                if "|chunk_id=" in sid:
+                    sid = sid.split("|chunk_id=", 1)[0]
+                if sid.startswith("source_id="):
+                    sid = sid[len("source_id="):]
+                return sid.strip()
+
+            source_ids = [_norm(s) for s in source_ids]
+            reasoning = parsed.get("reasoning", {}) or {}
+            evidence_used = [_norm(s) for s in reasoning.get("evidence_used", [])]
+            key_claims = [
+                {**claim, "evidence": _norm(claim.get("evidence", ""))}
+                for claim in reasoning.get("key_claims", [])
+            ]
+            missing_facts = reasoning.get("missing_facts", [])
+            confidence = reasoning.get("confidence", "low")
+
             return ReasoningResult(
                 answer_text=parsed.get("answer_text", ""),
                 spoken_citation=parsed.get("spoken_citation", ""),
                 source_ids=source_ids,
                 limitations=parsed.get("limitations", []),
                 next_step=parsed.get("next_step", ""),
-                evidence_used=parsed.get("reasoning", {}).get("evidence_used", []),
-                key_claims=parsed.get("reasoning", {}).get("key_claims", []),
+                evidence_used=evidence_used,
+                key_claims=key_claims,
                 excluded_chunks=parsed.get("reasoning", {}).get("excluded_chunks", []),
                 extracted_facts=parsed.get("reasoning", {}).get("extracted_facts", []),
-                missing_facts=parsed.get("reasoning", {}).get("missing_facts", []),
+                missing_facts=missing_facts,
                 applicable_rules=parsed.get("reasoning", {}).get("applicable_rules", []),
                 calculations=parsed.get("reasoning", {}).get("calculations", []),
                 conflicts=parsed.get("reasoning", {}).get("conflicts", []),
-                confidence=parsed.get("reasoning", {}).get("confidence", "low"),
+                confidence=confidence,
             )
         except (TimeoutError, ConnectionError, ConnectionRefusedError, ConnectionResetError, OSError) as e:
             # Re-raise critical network/timeout errors for pipeline-level handling
