@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rightly — Hỏi pháp luật bằng giọng nói</title>
+  <title>Rightly - H&#7887;i ph&#225;p lu&#7853;t b&#7857;ng gi&#7885;ng n&#243;i</title>
   <style>
     :root {
       color-scheme: light;
@@ -263,7 +263,7 @@
     <section id="messages">
       <div class="empty" id="empty">
         <span class="kicker">— Rightly · Pháp luật &amp; hành chính —</span>
-        <h1>Hỏi pháp luật <em>bằng giọng nói</em></h1>
+        <h1>H&#7887;i ph&#225;p lu&#7853;t <em>b&#7857;ng gi&#7885;ng n&#243;i</em></h1>
         <p>Nói hoặc gõ câu hỏi về thủ tục hành chính, quyền lợi, pháp luật. Trả lời có trích dẫn nguồn, đọc lại được bằng giọng nói.</p>
         <div class="chips">
           <button class="chip" data-q="Nghỉ hưu năm 2026 thì nam bao nhiêu tuổi?">Tuổi nghỉ hưu</button>
@@ -521,7 +521,7 @@
     modeChat.addEventListener('click', exitCall);
     modeCall.addEventListener('click', enterCall);
 
-    document.querySelector('#clear').addEventListener('click', async () => { stopSpeak(); await fetch('/api/session/'+sessionId,{method:'DELETE'}); sessionId=crypto.randomUUID(); messages.innerHTML='<div class="empty" id="empty"><span class="kicker">— Rightly · Pháp luật &amp; hành chính —</span><h1>Hỏi pháp luật <em>bằng giọng nói</em></h1><p>Nói hoặc gõ câu hỏi về thủ tục hành chính, quyền lợi, pháp luật. Trả lời có trích dẫn nguồn, đọc lại được bằng giọng nói.</p><div class="chips"><button class="chip" data-q="Nghỉ hưu năm 2026 thì nam bao nhiêu tuổi?">Tuổi nghỉ hưu</button><button class="chip" data-q="Mức phạt vượt đèn đỏ với xe máy là bao nhiêu?">Phạt giao thông</button><button class="chip" data-q="Bạn có thể giới thiệu về trợ lý nhân tạo không?">Trò chuyện</button></div></div>'; input.focus(); });
+    document.querySelector('#clear').addEventListener('click', async () => { stopSpeak(); await fetch('/api/session/'+sessionId,{method:'DELETE'}); sessionId=crypto.randomUUID(); messages.innerHTML='<div class="empty" id="empty"><span class="kicker">— Rightly · Pháp luật &amp; hành chính —</span><h1>H&#7887;i ph&#225;p lu&#7853;t <em>b&#7857;ng gi&#7885;ng n&#243;i</em></h1><p>Nói hoặc gõ câu hỏi về thủ tục hành chính, quyền lợi, pháp luật. Trả lời có trích dẫn nguồn, đọc lại được bằng giọng nói.</p><div class="chips"><button class="chip" data-q="Nghỉ hưu năm 2026 thì nam bao nhiêu tuổi?">Tuổi nghỉ hưu</button><button class="chip" data-q="Mức phạt vượt đèn đỏ với xe máy là bao nhiêu?">Phạt giao thông</button><button class="chip" data-q="Bạn có thể giới thiệu về trợ lý nhân tạo không?">Trò chuyện</button></div></div>'; input.focus(); });
 
     if(synth) synth.addEventListener('voiceschanged', () => {}); // warm the voice list
   </script>
