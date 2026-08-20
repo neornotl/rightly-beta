@@ -1,56 +1,59 @@
-"""Slim Vercel entrypoint without the optional ML stack."""
+"""Dependency-free Vercel public fallback handler.
+
+The full FastAPI app lives in ``webhook_server.py`` for local/Docker use.
+This public function deliberately uses only the Python standard library so a
+serverless build cannot fail on ML or web-framework dependencies.
+"""
 
 import json
+from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, StreamingResponse
-from pydantic import BaseModel
-
 ROOT = Path(__file__).resolve().parent.parent
-app = FastAPI(title="Rightly public demo")
 
 
-class ChatRequest(BaseModel):
-    session_id: str
-    text: str
+class handler(BaseHTTPRequestHandler):
+    def _send(self, status, content_type, body):
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
 
+    def do_GET(self):
+        if self.path.split("?", 1)[0] == "/health":
+            self._send(200, "application/json", json.dumps({
+                "status": "ok", "runtime": "public-slim", "models": "fallback-only"
+            }))
+            return
+        page = (ROOT / "web" / "index.html").read_bytes()
+        self._send(200, "text/html; charset=utf-8", page)
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "runtime": "public-slim", "models": "fallback-only"}
-
-
-@app.get("/")
-def index():
-    return FileResponse(ROOT / "web" / "index.html")
-
-
-def fallback_answer(text: str) -> str:
-    return (
-        "Bản web public đang ở chế độ demo an toàn. Để tra cứu đầy đủ bằng "
-        "Whisper và LLM local, hãy chạy start.bat trên máy của bạn. "
-        "Câu hỏi đã được ghi nhận: " + text[:300]
-    )
-
-
-@app.post("/api/chat")
-def chat(body: ChatRequest):
-    reply = fallback_answer(body.text.strip())
-    return {"reply": reply, "sources": [], "decision": "guide", "summary": "", "appropriate": True}
-
-
-@app.post("/api/chat/stream")
-def chat_stream(body: ChatRequest):
-    reply = fallback_answer(body.text.strip())
-    payload = [
-        {"type": "progress", "percent": 100, "detail": "Chế độ demo public"},
-        {"type": "answer", "reply": reply, "sources": [], "decision": "guide", "summary": "", "appropriate": True},
-    ]
-    body_text = "".join(f"data: {json.dumps(item, ensure_ascii=False)}\n\n" for item in payload)
-    return StreamingResponse(iter([body_text]), media_type="text/event-stream")
-
-
-@app.post("/api/tts")
-def tts_unavailable():
-    return {"detail": "Use local mode for TTS."}
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", "0"))
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self._send(400, "application/json", '{"detail":"Invalid JSON"}')
+            return
+        text = str(payload.get("text", "")).strip()[:300]
+        reply = (
+            "Bản web public đang ở chế độ demo an toàn. Để tra cứu đầy đủ bằng "
+            "Whisper và LLM local, hãy chạy start.bat trên máy của bạn. "
+            "Câu hỏi đã được ghi nhận: " + text
+        )
+        if self.path.startswith("/api/chat/stream"):
+            events = [
+                {"type": "progress", "percent": 100, "detail": "Chế độ demo public"},
+                {"type": "answer", "reply": reply, "sources": [], "decision": "guide", "summary": "", "appropriate": True},
+            ]
+            body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
+            self._send(200, "text/event-stream", body)
+        elif self.path.startswith("/api/chat"):
+            self._send(200, "application/json", json.dumps({"reply": reply, "sources": []}, ensure_ascii=False))
+        else:
+            self._send(404, "application/json", '{"detail":"Not found"}')
