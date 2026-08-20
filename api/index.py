@@ -12,9 +12,9 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
-API_KEY = os.getenv("AI_API_KEY") or os.getenv("OPENAI_API_KEY", "")
-API_BASE_URL = os.getenv("AI_BASE_URL") or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-MODEL = os.getenv("AI_MODEL") or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+API_KEY = os.getenv("PATEWAY_API_KEY") or os.getenv("AI_API_KEY", "")
+API_BASE_URL = os.getenv("PATEWAY_BASE_URL", "https://api.pateway.ai/v1")
+MODEL = os.getenv("PATEWAY_MODEL", "gpt-5.6-luna")
 
 
 class handler(BaseHTTPRequestHandler):
