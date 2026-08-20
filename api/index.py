@@ -65,8 +65,36 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, "text/event-stream", body)
         elif self.path.startswith("/api/chat"):
             self._send(200, "application/json", json.dumps({"reply": reply, "sources": [], "lang": reply_lang}, ensure_ascii=False))
+        elif self.path.startswith("/api/tts"):
+            self._tts(payload)
         else:
             self._send(404, "application/json", '{"detail":"Not found"}')
+
+    def _tts(self, payload):
+        text = str(payload.get("text", "")).strip()[:500]
+        if not text:
+            self._send(400, "application/json", '{"detail":"Empty text"}')
+            return
+        lang = str(payload.get("lang", "vi")).lower()
+        tl = "vi" if lang.startswith("vi") else "en"
+        from urllib.parse import quote
+        url = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + quote(text) + "&tl=" + tl + "&client=tw-ob"
+        req = Request(url, headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://translate.google.com/",
+        })
+        try:
+            with urlopen(req, timeout=20) as resp:
+                data = resp.read()
+        except Exception as exc:
+            self._send(502, "application/json", json.dumps({"detail": "TTS unavailable: " + str(exc)}))
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/mpeg")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(data)
 
     @staticmethod
     def _fallback(text, lang):
