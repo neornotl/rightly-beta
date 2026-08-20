@@ -58,6 +58,19 @@
     }
     .mode.active { background: var(--card); color: var(--verm); font-weight: 600; box-shadow: 0 1px 4px rgba(28,27,24,.12); }
     .mode:hover:not(.active) { color: var(--ink); }
+    .lang-switch {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #efece4; border: 1px solid var(--line); border-radius: 3px; padding: 3px;
+      font-family: var(--sans); font-size: 11px; letter-spacing: .04em;
+    }
+    .lang-switch .flag { color: var(--muted); padding: 0 4px; }
+    .lang-btn {
+      border: 0; background: transparent; color: var(--muted);
+      font-family: var(--sans); font-size: 11px; letter-spacing: .04em;
+      padding: 5px 10px; border-radius: 2px; cursor: pointer; transition: all .2s ease;
+    }
+    .lang-btn.active { background: var(--card); color: var(--verm); font-weight: 600; box-shadow: 0 1px 4px rgba(28,27,24,.12); }
+    .lang-btn:hover:not(.active) { color: var(--ink); }
     .status {
       font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
       border: 1px solid var(--line-2); padding: 5px 12px; border-radius: 2px;
@@ -256,6 +269,12 @@
         <span class="kicker">Hỏi đáp pháp luật bằng giọng nói · chạy ngay trên máy của bạn</span>
       </div>
       <div class="spacer"></div>
+      <div class="lang-switch" id="langSwitch" role="group" aria-label="Ngôn ngữ">
+        <span class="flag" aria-hidden="true">🌐</span>
+        <button class="lang-btn active" data-lang="auto" type="button" title="Tự động theo ngôn ngữ câu hỏi">Auto</button>
+        <button class="lang-btn" data-lang="vi" type="button" title="Tiếng Việt">VI</button>
+        <button class="lang-btn" data-lang="en" type="button" title="English">EN</button>
+      </div>
       <nav class="modes" id="modeSwitch">
         <button class="mode active" id="modeChat" type="button">💬 Chat</button>
         <button class="mode" id="modeCall" type="button">📞 Cuộc gọi</button>
@@ -412,9 +431,10 @@
       const disableMic = target ? callMic : mic;
       disableMic.disabled=true; if(!target){ input.disabled=true; send.disabled=true; send.textContent='...'; }
       setStatus('đang xử lý');
+      const reqLang = currentLang === 'auto' ? detectLang(text) : currentLang;
       const box=progressBox(container);
       try {
-        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text})});
+        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang})});
         if(!r.ok) throw new Error('Không thể kết nối');
         const reader=r.body.getReader(), decoder=new TextDecoder(); let buffer='';
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
@@ -548,6 +568,17 @@
 
     modeChat.addEventListener('click', exitCall);
     modeCall.addEventListener('click', enterCall);
+
+    let currentLang = 'auto';
+    document.querySelectorAll('#langSwitch .lang-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        currentLang = b.dataset.lang;
+        document.querySelectorAll('#langSwitch .lang-btn').forEach(x => x.classList.toggle('active', x === b));
+        try { localStorage.setItem('rightly.lang', currentLang); } catch(e){}
+        setStatus(currentLang === 'en' ? 'English' : currentLang === 'vi' ? 'Tiếng Việt' : 'Tự động');
+      });
+    });
+    try { const saved = localStorage.getItem('rightly.lang'); if (saved && ['auto','vi','en'].includes(saved)) { currentLang = saved; document.querySelectorAll('#langSwitch .lang-btn').forEach(x => x.classList.toggle('active', x.dataset.lang === saved)); } } catch(e){}
 
     document.querySelector('#clear').addEventListener('click', async () => { stopSpeak(); await fetch('/api/session/'+sessionId,{method:'DELETE'}); sessionId=crypto.randomUUID(); messages.innerHTML='<div class="empty" id="empty"><span class="kicker">— Rightly · Pháp luật &amp; hành chính —</span><h1>H&#7887;i ph&#225;p lu&#7853;t <em>b&#7857;ng gi&#7885;ng n&#243;i</em></h1><p>Nói hoặc gõ câu hỏi về thủ tục hành chính, quyền lợi, pháp luật. Trả lời có trích dẫn nguồn, đọc lại được bằng giọng nói.</p><div class="chips"><button class="chip" data-q="Nghỉ hưu năm 2026 thì nam bao nhiêu tuổi?">Tuổi nghỉ hưu</button><button class="chip" data-q="Mức phạt vượt đèn đỏ với xe máy là bao nhiêu?">Phạt giao thông</button><button class="chip" data-q="Bạn có thể giới thiệu về trợ lý nhân tạo không?">Trò chuyện</button></div></div>'; input.focus(); });
 

@@ -18,6 +18,21 @@ import os
 import sys
 import time
 import logging
+
+def _detect_lang(text: str, hint: str | None) -> str:
+    """Pick the reply language. Hint from client wins; else detect."""
+    if hint and hint.lower() in ("vi", "en"):
+        return hint.lower()
+    if not text:
+        return "vi"
+    try:
+        import re
+        if re.search(r"[ăâđêôơưăÂĐÊÔƠƯáàảãạằầậẳếẵẽềéèẻẹặệểễíìỉịẩọóòỏõọốộớởợờỡứúùủụựữửỳỹýỳỷỵỽ]", text):
+            return "vi"
+        letters = sum(1 for c in text if c.isascii() and c.isalpha())
+        return "en" if letters >= 4 else "vi"
+    except Exception:
+        return "vi"
 import json
 import queue
 import threading
@@ -104,6 +119,7 @@ class ZaloMessage(BaseModel):
 class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=100)
     text: str = Field(min_length=1, max_length=1000)
+    lang: str | None = None
 
 
 class TTSRequest(BaseModel):
@@ -185,13 +201,15 @@ async def local_chat_stream(body: ChatRequest, request: Request):
                 body.session_id, body.text.strip(), progress_callback=on_progress
             )
             answer = result.answer
+            reply_text = answer.answer_text if answer else result.decision.user_message
             events.put({
                 "type": "answer",
-                "reply": answer.answer_text if answer else result.decision.user_message,
+                "reply": reply_text,
                 "sources": list(answer.source_ids) if answer else [],
                 "decision": result.decision.zone.value,
                 "summary": answer.summary if answer else "",
                 "appropriate": answer.appropriate if answer else None,
+                "lang": _detect_lang(reply_text, body.lang),
             })
             _record_success()
         except Exception:

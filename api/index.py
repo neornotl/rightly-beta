@@ -46,26 +46,35 @@ class handler(BaseHTTPRequestHandler):
             self._send(400, "application/json", '{"detail":"Invalid JSON"}')
             return
         text = str(payload.get("text", "")).strip()[:300]
-        reply = self._fallback(text)
+        lang = str(payload.get("lang", "auto")).lower()
+        if lang not in ("vi", "en", "auto"):
+            lang = "auto"
+        reply = self._fallback(text, lang)
         if API_KEY and text:
             try:
-                reply = self._ask_api(text)
+                reply = self._ask_api(text, lang)
             except Exception:
-                reply = self._fallback(text) + " (API tạm thời không khả dụng.)"
+                reply = self._fallback(text, lang) + (" (API temporarily unavailable.)" if lang == "en" else " (API tạm thời không khả dụng.)")
+        reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
         if self.path.startswith("/api/chat/stream"):
             events = [
-                {"type": "progress", "percent": 100, "detail": "Chế độ demo public"},
-                {"type": "answer", "reply": reply, "sources": [], "decision": "guide", "summary": "", "appropriate": True},
+                {"type": "progress", "percent": 100, "detail": "Public demo"},
+                {"type": "answer", "reply": reply, "sources": [], "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
             ]
             body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
             self._send(200, "text/event-stream", body)
         elif self.path.startswith("/api/chat"):
-            self._send(200, "application/json", json.dumps({"reply": reply, "sources": []}, ensure_ascii=False))
+            self._send(200, "application/json", json.dumps({"reply": reply, "sources": [], "lang": reply_lang}, ensure_ascii=False))
         else:
             self._send(404, "application/json", '{"detail":"Not found"}')
 
     @staticmethod
-    def _fallback(text):
+    def _fallback(text, lang):
+        if lang == "en":
+            return (
+                "The public demo runs in safe mode. For full Whisper + LLM local "
+                "search, run start.bat on your machine. Question received: " + text
+            )
         return (
             "Bản web public đang ở chế độ demo an toàn. Để tra cứu đầy đủ bằng "
             "Whisper và LLM local, hãy chạy start.bat trên máy của bạn. "
@@ -73,13 +82,27 @@ class handler(BaseHTTPRequestHandler):
         )
 
     @staticmethod
-    def _ask_api(text):
+    def _detect_lang(text):
+        if not text:
+            return "vi"
+        import re
+        if re.search(r"[ăâđêôơưáàảãạằẳẵặắấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]", text):
+            return "vi"
+        letters = sum(1 for c in text if c.isascii() and c.isalpha())
+        return "en" if letters >= 4 else "vi"
+
+    @staticmethod
+    def _ask_api(text, lang):
+        if lang == "en":
+            system_prompt = "You are Rightly, a concise and helpful Vietnamese legal/administrative assistant. Reply in English when the user writes in English."
+        else:
+            system_prompt = "Bạn là trợ lý Rightly. Trả lời bằng tiếng Việt, ngắn gọn và hữu ích."
         request = Request(
             API_BASE_URL.rstrip("/") + "/chat/completions",
             data=json.dumps({
                 "model": MODEL,
                 "messages": [
-                    {"role": "system", "content": "Bạn là trợ lý Rightly. Trả lời bằng tiếng Việt, ngắn gọn và hữu ích."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": text},
                 ],
                 "temperature": 0.2,
