@@ -108,6 +108,7 @@ class ChatRequest(BaseModel):
 
 class TTSRequest(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
+    lang: str | None = None
 
 
 # FastAPI lifespan
@@ -308,12 +309,13 @@ async def delete_local_session(session_id: str):
 
 @app.post("/api/tts")
 def local_tts(body: TTSRequest, request: Request):
-    """Synthesize Vietnamese speech via Edge-TTS (vi-VN-HoaiMyNeural).
+    """Synthesize speech via Edge-TTS (vi-VN-HoaiMyNeural or en-US-*).
 
     The browser's built-in speechSynthesis often has no Vietnamese voice and
     falls back to an English voice that mispronounces Vietnamese text. This
-    endpoint always produces a real Vietnamese neural voice. The audio file is
-    written to the project TTS cache and reused for identical text.
+    endpoint produces a real neural voice matching the requested language.
+    The audio file is written to the project TTS cache and reused for
+    identical text.
 
     Note: sync def on purpose — EdgeTTS calls asyncio.run() internally, which
     cannot run inside the FastAPI event loop (FastAPI executes sync defs in a
@@ -325,17 +327,22 @@ def local_tts(body: TTSRequest, request: Request):
     text = body.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Empty text")
+    lang = (body.lang or "vi").lower()
+    voice_key = "hoaimy" if lang.startswith("vi") else "aria"
     try:
-        from app.tts.fallback import TTSFallback
+        from app.tts.edge_tts import EdgeTTS
 
-        tts = TTSFallback(
+        tts = EdgeTTS(
+            voice=voice_key,
+            rate="-10%",
+            pitch="+0Hz",
             cache_dir=settings.resolved_results_dir() / "tts_cache",
             output_format="mp3",
         )
         out = Path(settings.resolved_results_dir()) / "tts_cache" / f"live_{uuid.uuid4().hex}.mp3"
         path = tts.synthesize(text, out)
-        if not Path(path).suffix.lower() in {".mp3", ".wav", ".ogg"}:
-            raise RuntimeError("TTS fallback returned no audio file")
+        if Path(path).suffix.lower() not in {".mp3", ".wav", ".ogg"}:
+            raise RuntimeError("TTS returned no audio file")
     except Exception as exc:
         logger.exception("TTS synthesis failed")
         raise HTTPException(status_code=502, detail="TTS unavailable") from exc

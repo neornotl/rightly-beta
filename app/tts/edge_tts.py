@@ -26,6 +26,11 @@ class EdgeTTS(BaseTTS):
         "hoaimy": "vi-VN-HoaiMyNeural",      # Female, warm, clear (DEFAULT)
         "namminh": "vi-VN-NamMinhNeural",    # Male, calm, steady
     }
+    ENGLISH_VOICES = {
+        "aria": "en-US-AriaNeural",          # Female, natural
+        "guy": "en-US-GuyNeural",            # Male, natural
+        "jenny": "en-US-JennyNeural",        # Female, warm
+    }
 
     def __init__(
         self,
@@ -36,7 +41,11 @@ class EdgeTTS(BaseTTS):
         output_format: str = "wav",  # WAV for telephony compatibility
     ):
         self.voice_key = voice.lower()
-        self.voice = self.VIETNAMESE_VOICES.get(self.voice_key, voice)
+        self.voice = (
+            self.VIETNAMESE_VOICES.get(self.voice_key)
+            or self.ENGLISH_VOICES.get(self.voice_key)
+            or voice
+        )
         self.rate = rate
         self.pitch = pitch
         self.cache_dir = Path(cache_dir)
