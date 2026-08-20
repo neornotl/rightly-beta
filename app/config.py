@@ -91,11 +91,17 @@ class Settings:
     pateway_model: str = ""
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_model: str = "qwen2.5:7b-instruct-q4_k_m"
+    whisper_model: str = "small"
+    whisper_device: str = "auto"
+    phowhisper_model: str = "vinai/PhoWhisper-small"
     llm_fallback_backend: str = ""
     rate_limit_per_ip: int = 60
     rate_limit_window_seconds: int = 3600
     delete_raw_audio_after_session: bool = True
     save_transcripts: bool = False
+    legal_intake: bool = False
+    answer_review: bool = False
+    answer_review_max_revisions: int = 2
     max_context_chars: int = 12000
     max_response_chars: int = 2000
     pii_scrub_outbound: bool = True
@@ -182,7 +188,7 @@ def _float_env(key: str, default: float) -> float:
 
 
 _VALID_MODES = {"mock", "local", "cloud"}
-_VALID_ASR = {"mock", "phowhisper"}
+_VALID_ASR = {"mock", "phowhisper", "whisper"}
 _VALID_RETRIEVAL = {"bm25", "hybrid"}
 _VALID_LLM = {"mock", "gemini", "groq", "pateway", "local"}
 _VALID_FALLBACK = {"", "gemini", "groq", "pateway", "local"}
@@ -326,11 +332,19 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
             "OLLAMA_BASE_URL", "http://localhost:11434/v1"
         ).strip(),
         ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5:7b-instruct-q4_k_m").strip(),
+        whisper_model=os.environ.get("WHISPER_MODEL", "small").strip(),
+        whisper_device=os.environ.get("WHISPER_DEVICE", "auto").strip(),
+        phowhisper_model=os.environ.get(
+            "PHOWHISPER_MODEL", "vinai/PhoWhisper-small"
+        ).strip(),
         llm_fallback_backend=llm_fallback_backend,
         rate_limit_per_ip=rate_limit_per_ip,
         rate_limit_window_seconds=rate_limit_window,
         delete_raw_audio_after_session=_bool_env("DELETE_RAW_AUDIO_AFTER_SESSION", True),
         save_transcripts=_bool_env("SAVE_TRANSCRIPTS", False),
+        legal_intake=_bool_env("LEGAL_INTAKE", False),
+        answer_review=_bool_env("ANSWER_REVIEW", False),
+        answer_review_max_revisions=_int_env("ANSWER_REVIEW_MAX_REVISIONS", 2),
         max_context_chars=max_context,
         max_response_chars=max_response,
         pii_scrub_outbound=pii_scrub_outbound,

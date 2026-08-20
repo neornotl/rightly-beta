@@ -75,10 +75,10 @@ dẫn hành chính thật.
   model (xem `docs/hardware_benchmark_plan.md`).
 - `LLM_BACKEND=gemini|groq|pateway`: cần API key trong `.env` (`GEMINI_API_KEY`,
   `GROQ_API_KEY`, `PATEWAY_API_KEY`). Chỉ transcript + chunks được gửi; không gửi audio.
-- `LLM_BACKEND=local`: **100% offline** — Ollama (hoặc server OpenAI-compatible
-  bất kỳ), mặc định `qwen2.5:7b-instruct-q4_k_m` (quyết định hội đồng round 26); một lần `ollama pull qwen2.5:7b-instruct-q4_k_m` rồi chạy không
-  mạng. Kiểm tra nhanh: `python scripts/check_local_llm.py`. Xem
-  `docs/offline_runbook.md` (có hướng dẫn cho PC RTX 3060 Ti 8GB).
+- `LLM_BACKEND=local`: Ollama (hoặc server OpenAI-compatible bất kỳ), với model
+  được `scripts/detect_hardware.py` chọn theo RAM/GPU. Sau khi pull model một
+  lần, phần LLM chạy offline. Nếu Ollama chưa sẵn sàng, web vẫn khởi động bằng
+  `MockLLM` an toàn thay vì crash.
 - `TTS_BACKEND=edge`: cần `edge-tts`, cần mạng lúc chạy.
 - `APP_MODE=cloud`: bật thêm LLM classification trong router (vẫn bị rule
   RED/ORANGE ghi đè).
@@ -93,6 +93,45 @@ model, launches Streamlit with local-only settings, and automatically records
 the runtime manifest, one-time local benchmark, session traces and latency
 under `logs/` and `results/`. It never falls back to cloud. Export consenting
 pilot metrics separately with `python scripts/log_pilot_metrics.py --export`.
+
+### One-click deploy to another machine (Windows)
+
+Copy the whole folder to the target PC, then
+double-click **`start.bat`**. It:
+
+1. Creates a local `.venv` and installs `requirements-deploy.txt`.
+2. Creates `.env` from `.env.example` (defaults: LLM `local`/Ollama, ASR
+   `whisper`/faster-whisper, retrieval `bm25` — fully offline).
+3. Detects RAM/CPU/GPU/disk and chooses a fitting local LLM and ASR model.
+4. If `LLM_BACKEND=local`, verifies Ollama is installed and pulls the selected
+   model. If it is unavailable, the API stays online with safe fallbacks.
+5. Starts the FastAPI web server on `http://localhost:8010` and opens the browser.
+
+Optional feature flags in `.env`:
+- `ASR_BACKEND=whisper` + `WHISPER_MODEL=small` — local Vietnamese speech input.
+  The web UI has Chat and simulated Call modes. TTS tries the Vietnamese neural
+  endpoint first, then gTTS, then the browser's local voice as a no-network
+  fallback.
+- `LEGAL_INTAKE=true` — before answering a personalized legal question, the
+  assistant asks (one at a time) for the missing facts the answer depends on.
+- `ANSWER_REVIEW=true` — before sending the answer, the model reviews the
+  question against the answer by itself. If it finds the answer unfit it is
+  allowed to rewrite it and redo the answer process (self-correction loop,
+  bounded by `ANSWER_REVIEW_MAX_REVISIONS`, default 2), still grounded in the
+  retrieved evidence. The summary + fit result is shown in the web UI.
+- `RETRIEVAL_BACKEND=hybrid` — better answers but needs a one-time download of
+  the `multilingual-e5-small` embedding model (internet on first run).
+
+### Web deployment
+
+The production container runs `webhook_server.py` with FastAPI, not Streamlit,
+so missing Ollama, embedding models, or native ML libraries cannot prevent the
+health endpoint and UI from starting. It uses BM25 + safe fallback modes by
+default. `Dockerfile` and `render.yaml` are included for a Render Docker web
+service; set the service health check to `/health`.
+
+To stop the server: close the window that runs `webhook_server.py`, or kill the
+python process listening on port 8010.
 
 ## Data structure
 

@@ -135,6 +135,16 @@ class Policy:
             requires_human=False,
         )
 
+    def clarify_decision(self, message: str) -> SafetyDecision:
+        """A clarification that asks the user a concrete question (e.g. intake)."""
+        return SafetyDecision(
+            zone=Zone.YELLOW,
+            action=Action.CLARIFY,
+            reason_codes=[ReasonCode.AMBIGUOUS_QUERY.value],
+            user_message=message,
+            requires_human=False,
+        )
+
     def safe_decision(self, llm_reasoned: bool = False) -> SafetyDecision:
         codes = [ReasonCode.SAFE_GROUNDED_QUERY.value]
         if llm_reasoned:

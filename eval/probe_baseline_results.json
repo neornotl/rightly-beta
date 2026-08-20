@@ -266,7 +266,7 @@
       "query": "Thủ tục hưởng lương hưu cần những giấy tờ gì?",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì g hợp đã bị tạm dừng hoặc chấm dứt hưởng\nHồ sơ đề nghị tiếp tục hưởng lương hưu, trợ cấp bảo hiểm xã hội hằng tháng đối với các trường hợp quy định tại điểm a và điểm b khoản 3 và khoản 4 Điều 75 của Luật này bao gồm văn bản đề nghị tiếp tục hưởng lương hưu, trợ cấp bảo hiểm xã hội hằng tháng và giấy tờ khác tùy theo từng trường hợp sau đây:\n1. Văn bản của cơ quan nhà nước có thẩm quyền về việc trở về nước đối với trường hợp quy định điểm a khoản 3 Điều 75 của Luật này;\n2. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
+      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì Trong thời hạn 20 ngày, không bao gồm ngày nghỉ lễ, tết, kể từ ngày nhận đủ hồ sơ theo quy định đối với người đề nghị hưởng lương hưu hoặc trong thời hạn 07 ngày làm việc kể từ ngày nhận đủ hồ sơ theo quy định đối với người đề nghị hưởng bảo hiểm xã hội một lần, cơ quan bảo hiểm xã hội có trách nhiệm giải quyết; trường hợp không giải quyết thì phải trả lời bằng văn bản và nêu rõ lý do. kiện hưởng lương hưu, người đang bảo lưu thời gian đóng bảo hiểm xã hội bắt buộc nộp hồ sơ quy định tại Điều 77 của Luật này cho cơ quan bảo hiểm xã hội. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
       "spoken_citation": "Thông tin theo 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội.",
       "source_ids": [
         "luat19_2026",
@@ -281,7 +281,7 @@
         "luat19_2026",
         "luat41_2024"
       ],
-      "latency_ms": 126.7,
+      "latency_ms": 1030.0,
       "error": ""
     },
     {
@@ -302,7 +302,7 @@
         "luat41_2024",
         "nd158_2025"
       ],
-      "latency_ms": 529.8,
+      "latency_ms": 1449.5,
       "error": ""
     },
     {
@@ -323,7 +323,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 565.8000000000001,
+      "latency_ms": 1468.2,
       "error": ""
     },
     {
@@ -344,7 +344,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 824.5,
+      "latency_ms": 1459.8,
       "error": ""
     },
     {
@@ -352,7 +352,7 @@
       "query": "Người cao tuổi 80 tuổi được miễn phí khám bệnh không?",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về Người cao tuổi 80 tuổi được miễn phí, theo quy định hiện hành thì 3. Điều 13. ạ. 23-VBHN-VPQH 2026 Luật Người cao tuổi ạ.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Người cao tuổi 80 tuổi được, theo quy định hiện hành thì Việc ưu tiên khám bệnh, chữa bệnh cho người cao tuổi được thực hiện như sau:\na) Người từ đủ 80 tuổi trở lên được ưu tiên khám trước người bệnh khác, trừ bệnh nhân cấp cứu, trẻ em dưới 6 tuổi, người khuyết tật nặng;\nb) Bố trí giường nằm phù hợp khi điều trị nội trú. Mục 2. ạ. 23-VBHN-VPQH 2026 Luật Người cao tuổi ạ.",
       "spoken_citation": "Thông tin theo 23-VBHN-VPQH 2026 Luật Người cao tuổi.",
       "source_ids": [
         "luat23_2026",
@@ -366,7 +366,7 @@
         "luat39_2009",
         "luat23_2026"
       ],
-      "latency_ms": 280.0,
+      "latency_ms": 660.3,
       "error": ""
     },
     {
@@ -374,8 +374,8 @@
       "query": "Còn nếu người 75 tuổi thì sao?",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về Còn nếu người 75 tuổi thì sao, theo quy định hiện hành thì 3.[13] Không thi hành án tử hình đối với người bị kết án nếu thuộc một trong các trường hợp sau đây:\na) Phụ nữ có thai hoặc phụ nữ đang nuôi con dưới 36 tháng tuổi;\nb) Người đủ 75 tuổi trở lên;\nc) Người mắc bệnh ung thư giai đoạn cuối. ưới 18 tuổi khi phạm tội, phụ nữ có thai, phụ nữ đang nuôi con dưới 36 tháng tuổi hoặc người đủ 75 tuổi trở lên khi phạm tội hoặc khi xét xử. ạ. 135-VBHN-VPQH 2025 Bộ luật Hình sự ạ",
-      "spoken_citation": "Thông tin theo 135-VBHN-VPQH 2025 Bộ luật Hình sự",
+      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì 3.[13] Không thi hành án tử hình đối với người bị kết án nếu thuộc một trong các trường hợp sau đây:\na) Phụ nữ có thai hoặc phụ nữ đang nuôi con dưới 36 tháng tuổi;\nb) Người đủ 75 tuổi trở lên;\nc) Người mắc bệnh ung thư giai đoạn cuối. ưới 18 tuổi khi phạm tội, phụ nữ có thai, phụ nữ đang nuôi con dưới 36 tháng tuổi hoặc người đủ 75 tuổi trở lên khi phạm tội hoặc khi xét xử. ạ. 135-VBHN-VPQH 2025 Bộ luật Hình sự ạ.",
+      "spoken_citation": "Thông tin theo 135-VBHN-VPQH 2025 Bộ luật Hình sự.",
       "source_ids": [
         "boluat135_2025",
         "boluat100_2015",
@@ -391,7 +391,7 @@
         "luat51_2024",
         "luat40_2026"
       ],
-      "latency_ms": 185.5,
+      "latency_ms": 503.09999999999997,
       "error": ""
     },
     {
@@ -412,7 +412,7 @@
         "luat08_2017",
         "nd151_2025"
       ],
-      "latency_ms": 564.4,
+      "latency_ms": 784.4,
       "error": ""
     },
     {
@@ -434,7 +434,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 238.7,
+      "latency_ms": 656.4,
       "error": ""
     },
     {
@@ -442,7 +442,7 @@
       "query": "Tôi tên Nguyễn Văn A, sinh năm 1960, đang ở Hà Nội, muốn hỏi tuổi nghỉ hưu nam là bao nhiêu?",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về tuổi nghỉ hưu theo lộ trình tăng dần, theo quy định hiện hành thì Từ ngày 01 tháng 01 năm 2021, các quy định của chế độ hưu trí gắn với điều kiện về tuổi hưởng lương hưu theo Điều 54, Điều 55, khoản 1 Điều 73 của Luật Bảo hiểm xã hội được thực hiện theo tuổi nghỉ hưu và điều kiện về tuổi hưởng lương hưu tại Điều 169, khoản 1 Điều 219 của Bộ luật Lao động và quy định tại Nghị định này. Đối với lao động nam sinh tháng 12 năm 1960 và lao động nữ sinh tháng 12 năm 1965 làm việc trong điều kiện lao động bình thường thì thời điểm nghỉ hưu là kết thúc ngày 31 tháng 12 năm 2020, thời điểm hưởng lương hưu là bắt đầu ngày 01 tháng 01 năm 2021. ạ. Nghị định quy định về tuổi nghỉ hưu ạ.",
+      "answer_text": "Dạ vâng ạ. Về tuổi nghỉ hưu theo lộ trình tăng dần, theo quy định hiện hành thì Số: 135/2020/NĐ-CP\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\nHà Nội, ngày 18 tháng 11 năm 2020\nNGHỊ ĐỊNH\nQuy định về tuổi nghỉ hưu\nCăn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015;\nCăn cứ Luật sửa đổi, bổ sung một số điều của Luật Tổ chức Chính phủ và Luật Tổ chức chính quyền địa phương ngày 22 tháng 11 năm 2019;\nCăn cứ Bộ luật Lao động ngày 20 tháng 11 năm 2019;\nCăn cứ Luật Bảo hiểm xã hội ngày 20 tháng 11 năm 2014;\nTheo đề nghị của Bộ trưởng Bộ Lao động - Thương binh và Xã hội;\nChính phủ ban hành Nghị định quy định về tuổi nghỉ hưu. Người lao động và người sử dụng lao động quy định tại các khoản 1, 2 và 3 Điều 2 của Bộ luật Lao động. ạ. Nghị định quy định về tuổi nghỉ hưu ạ.",
       "spoken_citation": "Thông tin theo Nghị định quy định về tuổi nghỉ hưu.",
       "source_ids": [
         "nd135_2020"
@@ -455,7 +455,7 @@
         "nd135_2020",
         "nd135_2020"
       ],
-      "latency_ms": 143.7,
+      "latency_ms": 599.7,
       "error": ""
     },
     {
@@ -477,7 +477,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 461.6,
+      "latency_ms": 589.3000000000001,
       "error": ""
     },
     {
@@ -485,8 +485,8 @@
       "query": "Vợ chồng ly hôn thì tài sản chung chia thế nào?",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về quy định về ly hôn, theo quy định hiện hành thì 2. Trong trường hợp vợ chồng sống chung với gia đình mà tài sản của vợ chồng trong khối tài sản chung của gia đình có thể xác định được theo phần thì khi ly hôn, phần tài sản của vợ chồng được trích ra từ khối tài sản chung đó để chia theo quy định tại Điều 59 của Luật này. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
-      "spoken_citation": "Thông tin theo 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình.",
+      "answer_text": "Dạ văn bản văn bản cũ đã hết hiệu lực. Hiện áp dụng văn bản mới ạ. 91-2015-QH13 Bộ luật Dân sự",
+      "spoken_citation": "Thông tin theo 91-2015-QH13 Bộ luật Dân sự.",
       "source_ids": [
         "luat121_2025",
         "luat52_2014",
@@ -501,7 +501,7 @@
         "boluat91_2015",
         "luat121_2025"
       ],
-      "latency_ms": 147.6,
+      "latency_ms": 576.6,
       "error": ""
     },
     {
@@ -520,7 +520,7 @@
         "luat36_2024",
         "luat90_2026"
       ],
-      "latency_ms": 124.0,
+      "latency_ms": 329.2,
       "error": ""
     },
     {
@@ -539,7 +539,7 @@
         "luat52_2014",
         "luat121_2025"
       ],
-      "latency_ms": 113.9,
+      "latency_ms": 315.09999999999997,
       "error": ""
     },
     {
@@ -561,7 +561,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 351.7,
+      "latency_ms": 695.5,
       "error": ""
     },
     {
@@ -583,7 +583,7 @@
         "nd123_2015",
         "nd120_2025"
       ],
-      "latency_ms": 958.9,
+      "latency_ms": 557.1,
       "error": ""
     }
   ]

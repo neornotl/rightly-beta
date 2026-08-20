@@ -1,0 +1,26 @@
+# Rightly - offline one-click deploy dependencies.
+# Install via start.bat (or: pip install -r requirements-deploy.txt)
+# Everything here runs locally; no cloud API is required.
+
+# Web server (HTML UI at http://localhost:8010)
+fastapi>=0.111
+uvicorn>=0.30
+python-dotenv>=1.0
+python-multipart>=0.0.9
+
+# Local LLM (Ollama, OpenAI-compatible endpoint)
+openai>=1.40
+
+# Local Whisper ASR (Vietnamese speech -> text, fully offline)
+faster-whisper>=1.0
+av>=12.0
+tqdm>=4.66
+huggingface_hub>=0.23
+
+# Retrieval
+numpy>=1.26
+
+# TTS fallbacks (browser speech is used by default; these are backups)
+requests>=2.31
+edge-tts>=6.1.0
+gTTS>=2.5.0

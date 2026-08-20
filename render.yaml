@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rightly-web
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8010
+      - key: APP_MODE
+        value: local
+      - key: ASR_BACKEND
+        value: mock
+      - key: RETRIEVAL_BACKEND
+        value: bm25
+      - key: LLM_BACKEND
+        value: mock
+      - key: TTS_BACKEND
+        value: mock

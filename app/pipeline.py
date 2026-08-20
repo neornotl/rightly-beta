@@ -13,6 +13,7 @@ Privacy guarantees implemented here:
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 import time
@@ -26,6 +27,14 @@ from app.asr.mock_asr import MockASR
 from app.config import Settings
 from app.dialogue.state_machine import State
 from app.llm.base import BaseLLM
+from app.llm.prompts import (
+    ANSWER_REVIEW_SYSTEM,
+    ANSWER_REVISE_SYSTEM,
+    GENERAL_ASSISTANT_SYSTEM,
+    HYBRID_ROUTER_SYSTEM,
+    LEGAL_INTAKE_SYSTEM,
+    LEGAL_SUFFICIENCY_SYSTEM,
+)
 from app.llm.mock_llm import MockLLM
 from app.logging_utils import JsonlLogger, SessionStore, utc_now_iso
 from app.metrics_logger import log_pipeline_result
@@ -37,7 +46,16 @@ from app.faq import _strip_diacritics
 from app.safety.policy import Policy
 from app.safety.router import SafetyRouter
 from app.safety.rules import normalize_query
-from app.schemas import GroundedAnswer, PipelineResult, RetrievedChunk, UserQuery, Zone, Action
+from app.schemas import (
+    Action,
+    GroundedAnswer,
+    HybridSessionContext,
+    PipelineResult,
+    ProfileFact,
+    RetrievedChunk,
+    UserQuery,
+    Zone,
+)
 from app.tts.base import BaseTTS
 from app.tts.mock_tts import MockTTS
 
@@ -358,7 +376,19 @@ def make_asr(settings: Settings) -> BaseASR:
     if settings.asr_backend == "phowhisper":
         from app.asr.phowhisper_asr import PhoWhisperASR
 
-        return PhoWhisperASR()
+        return PhoWhisperASR(
+            model_id=settings.phowhisper_model,
+            device="cpu",
+            language="vi",
+        )
+    if settings.asr_backend == "whisper":
+        from app.asr.whisper_asr import WhisperASR
+
+        return WhisperASR(
+            model_size=settings.whisper_model,
+            device=settings.whisper_device,
+            language="vi",
+        )
     return MockASR()
 
 
@@ -395,10 +425,10 @@ def make_retriever(settings: Settings) -> Retriever:
                 bm25_gate=settings.bm25_gate,
                 dense_gate=settings.dense_gate,
             )
-        except (ImportError, ModuleNotFoundError) as exc:
-            # Council R20: sentence_transformers/torch (~2GB) cannot install on
-            # Streamlit Cloud free tier -> degrade gracefully to BM25 instead
-            # of crashing the app at boot.
+        except Exception as exc:
+            # A web deploy must still boot when the embedding package, cache,
+            # model download, or native runtime is unavailable. BM25 remains a
+            # deterministic, fully local retrieval path.
             logger.warning("Hybrid retrieval unavailable (%s); falling back to BM25.", exc)
             return BM25Retriever.from_jsonl(chunks_file)
     if settings.retrieval_backend != "bm25":
@@ -471,11 +501,13 @@ def _build_llm(settings: Settings, backend: str) -> BaseLLM:
             backoff_seconds=settings.llm_retry_backoff_seconds,
         )
         if not llm.available:
-            raise RuntimeError(
-                "LLM_BACKEND=local but no local server at "
-                f"{settings.ollama_base_url}. Start Ollama ('ollama serve') and "
-                f"pull the model first ('ollama pull {settings.ollama_model}')."
+            logger.warning(
+                "Local LLM unavailable at %s; using deterministic MockLLM until "
+                "Ollama is started and %s is pulled.",
+                settings.ollama_base_url,
+                settings.ollama_model,
             )
+            return MockLLM()
         return llm
     return MockLLM()
 
@@ -516,6 +548,9 @@ class Pipeline:
     #: (user says "kết thúc"/"thoát" in CLI/UI). Each entry:
     #: {"user": str, "assistant": str, "chunks": list[RetrievedChunk]}.
     _memory: dict[str, list[dict]] = field(default_factory=dict, repr=False)
+    #: General-chat profile and history. This is RAM-only, never persisted, and
+    #: is destroyed with delete_session().
+    _hybrid_sessions: dict[str, HybridSessionContext] = field(default_factory=dict, repr=False)
 
     _MEMORY_MAX_TURNS = 3
 
@@ -587,17 +622,435 @@ class Pipeline:
         context. The memory is RAM-only and never written to disk; after this
         call the session is gone for good (privacy deletion policy)."""
         self._memory.pop(session_id, None)
+        self._hybrid_sessions.pop(session_id, None)
         return self.store.delete_session(session_id)
+
+    def has_pending_profile_consent(self, session_id: str) -> bool:
+        """Expose only consent state to the UI; never expose raw profile facts."""
+        context = self._hybrid_sessions.get(session_id)
+        return bool(context and context.pending_profile_facts)
 
     # ---------- core ----------
 
-    def process_text(self, session_id: str, text: str) -> PipelineResult:
+    def process_text(self, session_id: str, text: str, progress_callback=None) -> PipelineResult:
         """Full pipeline for a text query (no audio involved)."""
-        if self.settings.save_transcripts:
-            self.store.record(session_id, "transcript_saved", transcript=text)
+        # Hybrid contexts can contain personal facts. Do not write raw messages
+        # to disk here; this remains true even when legacy transcript logging is
+        # enabled, because consent only covers RAM-only consultation context.
+        context = self._hybrid_sessions.setdefault(session_id, HybridSessionContext())
+        def progress(stage: str, percent: int, detail: str) -> None:
+            if progress_callback:
+                progress_callback({"stage": stage, "percent": percent, "detail": detail})
+
+        progress("received", 8, "Đã nhận câu hỏi")
+        # Greetings and short social messages do not need router/RAG/LLM calls.
+        # Keeping this local also prevents a transient gateway outage from
+        # turning a simple hello into a misleading connection error.
+        social = _strip_diacritics(normalize_query(text)).strip()
+        if social in {"xin chao", "chao", "hello", "hi", "hey", "he lo", "he lu", "hula", "ey", "hu"}:
+            message = "Xin chào! Hôm nay bạn thế nào?"
+            self._append_hybrid_turn(context, text, message)
+            return self._simple_result(session_id, text, message)
+        progress("safety", 18, "Đang kiểm tra an toàn và phạm vi câu hỏi")
+        # Emergency/criminal hard gates always run before the conversational
+        # router. General chat must never weaken these protections.
+        preflight, _ = self.router.route(text, [], require_evidence=False)
+        # The legacy router labels normal conversational topics as
+        # OUT_OF_SCOPE. In hybrid mode those go to general chat, while every
+        # other hard safety/legal gate remains non-bypassable.
+        if preflight.zone == Zone.RED or (
+            preflight.zone == Zone.ORANGE and "OUT_OF_SCOPE" not in preflight.reason_codes
+        ):
+            query = UserQuery(text=text, session_id=session_id, timestamp=utc_now_iso())
+            return self._run(
+                session_id,
+                query,
+                progress_callback=lambda event: progress(
+                    event["stage"], event["percent"], event["detail"]
+                ),
+            )
+        progress("classify", 30, "Đang xác định cách hỗ trợ phù hợp")
+        turn = self._classify_hybrid_turn(text, context)
+        intent = turn.get("intent", "legal")
+        facts = self._profile_facts(turn.get("profile_facts", []))
+
+        if intent == "reset":
+            self.delete_session(session_id)
+            return self._simple_result(session_id, text, "Đã xóa toàn bộ hội thoại và thông tin nhớ trong phiên này.")
+        # Profile memory is silent and RAM-only. It is never persisted or
+        # announced as a conversational response; reset/delete_session clears it.
+        if facts:
+            context.profile_consent = True
+            context.pending_profile_facts = []
+            for fact in facts:
+                context.profile[fact.field] = fact
+
+        if intent == "general":
+            # Short acknowledgements after a grounded legal answer are legal
+            # continuations, not standalone social chat.
+            if self._memory.get(session_id) and _is_followup_continuation(
+                text, self._memory[session_id][-1]
+            ):
+                intent = "legal"
+            else:
+                progress("answer", 72, "Đang soạn câu trả lời")
+                return self._general_result(session_id, text, "", context)
+
+        # Legal intake (feature-flagged, off by default): before answering a
+        # personalized legal question, the assistant asks for the missing key
+        # facts one at a time, until enough is known to answer. It is skipped
+        # for impersonal rule questions and any LLM failure degrades to ready.
+        if intent == "legal" and self.settings.legal_intake:
+            intake_question = self._legal_intake_check(text, context)
+            if intake_question:
+                decision = self.router.policy.clarify_decision(intake_question)
+                self._append_hybrid_turn(context, text, intake_question)
+                progress("done", 100, "Đã hoàn tất câu hỏi")
+                return self._simple_decision_result(
+                    session_id, text, decision, intake_question
+                )
+
+        relevant = [str(field) for field in turn.get("relevant_profile_fields", [])]
+        selected = {field: fact.value for field, fact in context.profile.items() if field in relevant}
+        selected.update({fact.field: fact.value for fact in facts if fact.field in relevant})
         contextual_text = self._contextualize_followup(session_id, text)
+        if selected:
+            contextual_text = f"{contextual_text}\n\nThông tin người dùng đã cho phép dùng cho tư vấn: {json.dumps(selected, ensure_ascii=False)}"
         query = UserQuery(text=contextual_text, session_id=session_id, timestamp=utc_now_iso())
-        return self._run(session_id, query)
+        progress("retrieve", 48, "Đang tìm thông tin phù hợp")
+        result = self._run(
+            session_id,
+            query,
+            progress_callback=lambda event: progress(
+                event["stage"], event["percent"], event["detail"]
+            ),
+        )
+        progress("done", 100, "Đã hoàn tất câu trả lời")
+        self._append_hybrid_turn(context, text, result.answer.answer_text if result.answer else result.decision.user_message)
+        return result
+
+    def _classify_hybrid_turn(self, text: str, context: HybridSessionContext) -> dict:
+        """Use the LLM router; fallback stays deliberately conservative/legal."""
+        outbound_text = text
+        outbound_history = context.turns[-8:]
+        if self.settings.pii_scrub_outbound and self.settings.llm_backend in {"gemini", "groq", "pateway"}:
+            from app.privacy.scrubber import scrub_outbound
+
+            outbound_text = scrub_outbound(text)
+            outbound_history = [
+                {"user": scrub_outbound(turn["user"]), "assistant": scrub_outbound(turn["assistant"])}
+                for turn in outbound_history
+            ]
+        try:
+            response = self.llm.generate_answer(
+                outbound_text,
+                [],
+                history=outbound_history,
+                system_prompt=HYBRID_ROUTER_SYSTEM,
+            )
+            if isinstance(response, dict) and isinstance(response.get("answer_text"), str):
+                response = json.loads(response["answer_text"])
+            if isinstance(response, dict) and response.get("intent") in {
+                "general", "legal", "consent_yes", "consent_no", "reset"
+            }:
+                return response
+        except Exception:
+            pass
+        plain = _strip_diacritics(normalize_query(text))
+        if plain in {"dong y", "duoc", "ok"}:
+            return {"intent": "consent_yes", "profile_facts": [], "relevant_profile_fields": []}
+        if plain in {"khong", "khong dong y"}:
+            return {"intent": "consent_no", "profile_facts": [], "relevant_profile_fields": []}
+        return {"intent": "legal", "profile_facts": [], "relevant_profile_fields": []}
+
+    _INTAKE_PRONOUNS = re.compile(
+        r"\b(tôi|mình|em|anh|chị|chú|bác|cô|con|tui)\b",
+        re.IGNORECASE,
+    )
+
+    def _legal_intake_check(
+        self, text: str, context: HybridSessionContext
+    ) -> Optional[str]:
+        """Best-effort intake: returns a follow-up question to ask, or None=ready.
+
+        Only personalized questions go through intake. Any failure (LLM error,
+        bad JSON, impersonal query) falls through to ready so the user is never
+        blocked from an answer.
+        """
+        if not re.search(self._INTAKE_PRONOUNS, text) and not context.pending_intake:
+            return None
+        try:
+            profile_text = ""
+            if context.profile:
+                profile_text = (
+                    "\n\nThông tin người dùng đã cung cấp: "
+                    + json.dumps(
+                        {f: v.value for f, v in context.profile.items()},
+                        ensure_ascii=False,
+                    )
+                )
+            outbound_text = text
+            outbound_history = context.turns[-8:]
+            if self.settings.pii_scrub_outbound and self.settings.llm_backend in {
+                "gemini", "groq", "pateway"
+            }:
+                from app.privacy.scrubber import scrub_outbound
+
+                outbound_text = scrub_outbound(text)
+                outbound_history = [
+                    {
+                        "user": scrub_outbound(turn["user"]),
+                        "assistant": scrub_outbound(turn["assistant"]),
+                    }
+                    for turn in outbound_history
+                ]
+            response = self.llm.generate_answer(
+                outbound_text + profile_text,
+                [],
+                history=outbound_history,
+                system_prompt=LEGAL_INTAKE_SYSTEM,
+            )
+            if isinstance(response, dict) and isinstance(response.get("answer_text"), str):
+                response = json.loads(response["answer_text"])
+            if isinstance(response, dict):
+                if response.get("ready") is True:
+                    context.pending_intake = None
+                    return None
+                question = str(response.get("question", "")).strip()
+                if question:
+                    context.pending_intake = question
+                    return question
+        except Exception:
+            logger.exception("Legal intake check failed; proceeding to answer")
+            context.pending_intake = None
+        return None
+
+    def _simple_decision_result(
+        self, session_id: str, text: str, decision: SafetyDecision, message: str
+    ) -> PipelineResult:
+        answer = GroundedAnswer(answer_text=message)
+        return PipelineResult(
+            session_id=session_id,
+            query=text,
+            decision=decision,
+            answer=answer,
+            app_mode=self.settings.app_mode,
+        )
+
+    def _review_answer(
+        self,
+        session_id: str,
+        query_text: str,
+        answer: GroundedAnswer,
+        chunks: list[RetrievedChunk],
+    ) -> GroundedAnswer:
+        """Self-review then self-correct loop on the final answer.
+
+        The LLM reviews the question against the answer (no human in the loop).
+        If it judges the answer unfit, it is allowed to rewrite the answer and
+        redo the answer process, still grounded in the retrieved evidence. The
+        loop is bounded by ``answer_review_max_revisions`` so it cannot run
+        forever; grounding validation runs on every revision.
+        """
+        if not answer.answer_text:
+            return answer
+        outbound_query = query_text
+        if self.settings.pii_scrub_outbound and self.settings.llm_backend in {
+            "gemini", "groq", "pateway"
+        }:
+            from app.privacy.scrubber import scrub_outbound
+
+            outbound_query = scrub_outbound(query_text)
+
+        current = answer
+        summary = ""
+        appropriate: Optional[bool] = None
+        note = ""
+        revised = False
+        revisions_left = max(0, int(self.settings.answer_review_max_revisions))
+        try:
+            while True:
+                review_payload = (
+                    f"CÂU HỎI: {outbound_query}\n\nCÂU TRẢ LỜI: {current.answer_text}\n\n"
+                    f"NGUỒN: {', '.join(current.source_ids) or '(không có)'}"
+                )
+                response = self.llm.generate_answer(
+                    review_payload, [], system_prompt=ANSWER_REVIEW_SYSTEM
+                )
+                if isinstance(response, dict) and isinstance(
+                    response.get("answer_text"), str
+                ):
+                    response = json.loads(response["answer_text"])
+                if not isinstance(response, dict):
+                    break
+                summary = str(response.get("summary", "")).strip()
+                appropriate_raw = response.get("appropriate")
+                appropriate = (
+                    bool(appropriate_raw) if isinstance(appropriate_raw, bool) else None
+                )
+                note = str(response.get("note", "")).strip()
+                self.store.record(
+                    session_id,
+                    "answer_reviewed",
+                    appropriate=appropriate,
+                    note=note[:300],
+                    revised=revised,
+                )
+                if appropriate is not False or revisions_left <= 0:
+                    break
+                # Not appropriate and budget left -> let the model fix itself.
+                revised_answer = self._revise_answer(
+                    session_id,
+                    outbound_query,
+                    current,
+                    note,
+                    chunks,
+                )
+                if revised_answer is None:
+                    break
+                current = self._validate_revision(session_id, revised_answer, chunks) or current
+                revised = True
+                revisions_left -= 1
+            return replace(
+                current,
+                summary=summary,
+                appropriate=appropriate,
+                review_note=note,
+            )
+        except Exception:
+            logger.exception("Answer review failed; keeping original answer")
+            return answer
+
+    def _revise_answer(
+        self,
+        session_id: str,
+        outbound_query: str,
+        answer: GroundedAnswer,
+        note: str,
+        chunks: list[RetrievedChunk],
+    ) -> Optional[GroundedAnswer]:
+        """Ask the model to rewrite the unfit answer, grounded in the evidence."""
+        try:
+            evidence_text = build_context(chunks, self.settings.max_context_chars)[0]
+            payload = (
+                f"CÂU HỎI: {outbound_query}\n\n"
+                f"NHẬN XÉT CỦA NGƯỜI KIỂM DUYỆT: {note or '(câu trả lời chưa đúng trọng tâm)'}\n\n"
+                f"CÂU TRẢ LỜI CŨ: {answer.answer_text}\n\n"
+                f"EVIDENCE:\n{evidence_text}"
+            )
+            doc = self.llm.generate_answer(
+                payload,
+                chunks,
+                max_chars=self.settings.max_response_chars,
+                system_prompt=ANSWER_REVISE_SYSTEM,
+            )
+            revised = GroundedAnswer(
+                answer_text=str(doc.get("answer_text", "")).strip(),
+                spoken_citation=str(doc.get("spoken_citation", "")).strip(),
+                source_ids=list(
+                    dict.fromkeys(str(s) for s in (doc.get("source_ids") or []))
+                ),
+                limitations=[str(s) for s in (doc.get("limitations") or [])],
+                next_step=str(doc.get("next_step", "")).strip(),
+            )
+            if not revised.answer_text:
+                return None
+            return revised
+        except Exception:
+            logger.exception("Answer revision failed")
+            return None
+
+    def _validate_revision(
+        self,
+        session_id: str,
+        revised: GroundedAnswer,
+        chunks: list[RetrievedChunk],
+    ) -> Optional[GroundedAnswer]:
+        """Re-run grounding checks on a rewritten answer (citations must match)."""
+        try:
+            if not revised.source_ids:
+                self.store.record(session_id, "revision_rejected", reason="no_citation")
+                return None
+            if self.validator is not None:
+                retrieved = {c.source_id for c in chunks}
+                verdict = self.validator.validate(revised, retrieved)
+                if not verdict.ok:
+                    self.store.record(
+                        session_id,
+                        "revision_rejected",
+                        issues=[vars(i) for i in verdict.issues],
+                    )
+                    return None
+            from app.validation.response_validator import detect_issues, sanitize_answer
+
+            if detect_issues(revised, revised.answer_text):
+                revised = sanitize_answer(revised, revised.answer_text)
+            return revised
+        except Exception:
+            logger.exception("Revision validation failed")
+            return None
+
+    @staticmethod
+    def _profile_facts(raw_facts: object) -> list[ProfileFact]:
+        facts: list[ProfileFact] = []
+        if not isinstance(raw_facts, list):
+            return facts
+        for item in raw_facts:
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("field", "")).strip()
+            value = str(item.get("value", "")).strip()
+            if field and value:
+                facts.append(ProfileFact(field=field, value=value, sensitive=bool(item.get("sensitive", True))))
+        return facts
+
+    def _append_hybrid_turn(self, context: HybridSessionContext, user: str, assistant: str) -> None:
+        context.turns.append({"user": user, "assistant": assistant})
+        if len(context.turns) > 20:
+            del context.turns[:-20]
+
+    def _simple_result(self, session_id: str, text: str, message: str) -> PipelineResult:
+        decision = self.router.policy.safe_decision()
+        answer = GroundedAnswer(answer_text=message)
+        return PipelineResult(session_id=session_id, query=text, decision=decision, answer=answer, app_mode=self.settings.app_mode)
+
+    def _general_result(self, session_id: str, text: str, fixed_message: str, context: HybridSessionContext) -> PipelineResult:
+        message = fixed_message
+        if not message:
+            outbound_text = text
+            outbound_history = context.turns[-8:]
+            if self.settings.pii_scrub_outbound and self.settings.llm_backend in {"gemini", "groq", "pateway"}:
+                from app.privacy.scrubber import scrub_outbound
+
+                outbound_text = scrub_outbound(text)
+                outbound_history = [
+                    {"user": scrub_outbound(turn["user"]), "assistant": scrub_outbound(turn["assistant"])}
+                    for turn in outbound_history
+                ]
+            try:
+                for attempt in range(2):
+                    try:
+                        response = self.llm.generate_answer(
+                            outbound_text,
+                            [],
+                            history=outbound_history,
+                            system_prompt=GENERAL_ASSISTANT_SYSTEM,
+                        )
+                        message = str(response.get("answer_text", "")).strip() if isinstance(response, dict) else ""
+                        if message:
+                            break
+                        raise ValueError("general LLM returned an empty answer_text")
+                    except Exception:
+                        if attempt:
+                            raise
+                        logger.warning("General LLM response failed; retrying once", exc_info=True)
+            except Exception:
+                logger.exception("General LLM response failed after recovery attempt")
+                message = "Mình đang gặp lỗi kết nối với mô hình AI. Bạn thử gửi lại tin nhắn này giúp mình nhé."
+        if not message:
+            message = "Mình đang gặp lỗi kết nối với mô hình AI. Bạn thử gửi lại tin nhắn này giúp mình nhé."
+        self._append_hybrid_turn(context, text, message)
+        return self._simple_result(session_id, text, message)
 
     def _contextualize_followup(self, session_id: str, text: str) -> str:
         """Attach short answers to the previous clarification in this session."""
@@ -646,6 +1099,60 @@ class Pipeline:
             # F13 fix: raw audio is deleted even when ASR or the pipeline
             # raises, so privacy deletion cannot be skipped by failures.
             self._apply_audio_privacy(audio)
+
+    def process_audio_bytes(
+        self, session_id: str, audio_bytes: bytes, extension: str = ".webm"
+    ) -> PipelineResult:
+        """Transcribe in-memory audio (from the browser mic) then run the pipeline.
+
+        The bytes are written to a temp file under the OS temp dir, transcribed
+        with the configured local ASR, and the file is removed immediately so no
+        raw recording ever persists.
+        """
+        import tempfile
+
+        suffix = extension if extension.startswith(".") else f".{extension}"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = Path(tmp.name)
+        try:
+            start = time.perf_counter()
+            asr_result = self.asr.transcribe(tmp_path)
+            asr_ms = (time.perf_counter() - start) * 1000.0
+            query = UserQuery(
+                text=asr_result.transcript,
+                session_id=session_id,
+                timestamp=utc_now_iso(),
+            )
+            return self._run(session_id, query, precomputed_asr_ms=asr_ms)
+        finally:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    def transcribe_audio_bytes(
+        self, audio_bytes: bytes, extension: str = ".webm"
+    ) -> str:
+        """ASR only: return the transcript text for in-memory audio bytes.
+
+        Used by the web UI to show "what was heard" as the user's message right
+        away, before the answer pipeline runs. The temp audio file is deleted
+        immediately; nothing is persisted.
+        """
+        import tempfile
+
+        suffix = extension if extension.startswith(".") else f".{extension}"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = Path(tmp.name)
+        try:
+            return self.asr.transcribe(tmp_path).transcript
+        finally:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     def _apply_audio_privacy(self, audio: Path) -> None:
         """Delete raw audio only when it lives inside the project data dir."""
@@ -707,24 +1214,87 @@ class Pipeline:
             self.store.record(session_id, "retriever_failure", reason=str(exc)[:500])
             return []
 
+    def _multi_hop_retrieve(
+        self,
+        query: str,
+        session_id: str,
+        initial_chunks: list[RetrievedChunk],
+    ) -> list[RetrievedChunk]:
+        """Let the LLM request more legal evidence, bounded to three rounds.
+
+        The model only returns search strings. Python remains the tool owner,
+        so every result still comes exclusively from the configured legal
+        corpus and every call is bounded/deduplicated.
+        """
+        chunks = list(initial_chunks)
+        seen_queries = {normalize_query(query)}
+        seen_chunks = {(chunk.source_id, chunk.chunk_id) for chunk in chunks}
+        for _hop in range(1, 3):  # Initial retrieval is hop 1; at most 3 total.
+            evidence = "\n\n".join(
+                f"[source_id={chunk.source_id}|chunk_id={chunk.chunk_id}]\n{chunk.text}"
+                for chunk in chunks[: self.top_k * 3]
+            )
+            plan_prompt = (
+                f"CÂU HỎI: {query}\n\nEVIDENCE HIỆN CÓ:\n{evidence}\n\n"
+                "Đánh giá evidence hiện có theo schema."
+            )
+            try:
+                response = self.llm.generate_answer(
+                    plan_prompt,
+                    chunks,
+                    max_chars=1200,
+                    system_prompt=LEGAL_SUFFICIENCY_SYSTEM,
+                )
+                if isinstance(response, dict) and isinstance(response.get("answer_text"), str):
+                    response = json.loads(response["answer_text"])
+                if not isinstance(response, dict) or bool(response.get("sufficient", False)):
+                    break
+                next_queries = response.get("next_queries", [])
+                if not isinstance(next_queries, list):
+                    break
+            except Exception:
+                break
+            requested = []
+            for candidate in next_queries:
+                candidate = str(candidate).strip()
+                normalized = normalize_query(candidate)
+                if candidate and normalized not in seen_queries:
+                    seen_queries.add(normalized)
+                    requested.append(candidate)
+            if not requested:
+                break
+            for candidate in requested[:3]:
+                for chunk in self._retrieve(candidate, session_id, self.top_k):
+                    key = (chunk.source_id, chunk.chunk_id)
+                    if key not in seen_chunks:
+                        seen_chunks.add(key)
+                        chunks.append(chunk)
+        return chunks
+
     def _run(
         self,
         session_id: str,
         query: UserQuery,
         precomputed_asr_ms: float = 0.0,
+        progress_callback=None,
     ) -> PipelineResult:
+        def progress(stage: str, percent: int, detail: str) -> None:
+            if progress_callback:
+                progress_callback({"stage": stage, "percent": percent, "detail": detail})
         lat: dict[str, float] = {}
         if precomputed_asr_ms:
             lat["asr_ms"] = round(precomputed_asr_ms, 1)
 
         t0 = time.perf_counter()
         normalized = normalize_query(query.text)
+        progress("normalize", 12, "Đang chuẩn hóa câu hỏi")
         lat["normalize_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
         # Safety preflight runs before any LLM call. It checks hard rules but
         # intentionally does not require evidence yet.
         decision, normalized = self.router.route(query.text, [], require_evidence=False)
+        progress("safety", 22, "Đã kiểm tra an toàn")
         if decision.zone in (Zone.RED, Zone.ORANGE):
             chunks: list[RetrievedChunk] = []
             query_analysis = None
@@ -734,16 +1304,19 @@ class Pipeline:
             self.agentic_retriever.last_analysis = query_analysis
             t_retrieval = time.perf_counter()
             try:
+                progress("retrieve", 45, "Đang tìm các nguồn liên quan")
                 # Keep the agentic retriever in sync with the pipeline's
                 # current retriever (tests swap it to inject faults), then
                 # degrade gracefully if a retriever fault surfaces (gate 7).
                 self.agentic_retriever.retriever = self.retriever
                 chunks = self.agentic_retriever.retrieve(query.text, analysis=query_analysis)
+                chunks = self._multi_hop_retrieve(query.text, session_id, chunks)
             except Exception as exc:  # noqa: BLE001 - retriever fault must not crash a session
                 self.store.record(session_id, "retriever_failure", reason=str(exc)[:500])
                 chunks = []
             lat["retrieval_ms"] = round((time.perf_counter() - t_retrieval) * 1000.0, 1)
             decision, normalized = self.router.route(query.text, chunks)
+            progress("evidence", 68, f"Đã tìm thấy {len(chunks)} đoạn thông tin")
             lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 
         t0 = time.perf_counter()
@@ -843,62 +1416,46 @@ class Pipeline:
                 )
                 faq_hit = None
 
-        if faq_hit is not None:
-            # Check if router decision is a hard gate that FAQ cannot override
-            if decision.zone in (Zone.RED, Zone.ORANGE):
-                # Log and fall through to normal pipeline
-                self.store.record(
-                    session_id,
-                    "faq_blocked_by_safety_gate",
-                    faq_id=faq_hit.faq_id,
-                    router_zone=decision.zone.value,
-                    router_action=decision.action.value,
-                )
-                faq_hit = None  # Treat as no FAQ hit
-            else:
-                # FAQ hit: verify evidence matches curated answer
-                faq_chunks = self._retrieve(faq_hit.retrieval_query, session_id, self.top_k) or chunks
-                if not faq_chunks:
-                    # No evidence for FAQ answer - fall through
+            if faq_hit is not None:
+                # Check if router decision is a hard gate that FAQ cannot override
+                if decision.zone in (Zone.RED, Zone.ORANGE):
+                    # Log and fall through to normal pipeline
                     self.store.record(
                         session_id,
-                        "faq_evidence_missing",
+                        "faq_blocked_by_safety_gate",
                         faq_id=faq_hit.faq_id,
+                        router_zone=decision.zone.value,
+                        router_action=decision.action.value,
                     )
-                    faq_hit = None
+                    faq_hit = None  # Treat as no FAQ hit
                 else:
-                    faq_source_list = (
-                        list(faq_hit.source_ids)
-                        if faq_hit.source_ids
-                        else [
-                            c.source_id
-                            for c in faq_chunks
-                            if c.score >= self.settings.min_retrieval_score
-                        ]
-                        or [c.source_id for c in faq_chunks[:3]]
-                    )
-                    faq_sources = tuple(dict.fromkeys(faq_source_list))
-                    faq_hit = replace(faq_hit, source_ids=faq_sources)
-                    # Validate FAQ citations
-                    if self.validator is not None:
-                        verdict = self.validator.validate(faq_hit.to_grounded_answer(), {c.source_id for c in faq_chunks})
-                        if not verdict.ok:
-                            self.store.record(
-                                session_id,
-                                "faq_citation_rejected",
-                                faq_id=faq_hit.faq_id,
-                                issues=[vars(i) for i in verdict.issues],
-                            )
-                            faq_hit = None
-                    
-                    if faq_hit is not None:
-                        answer = faq_hit.to_grounded_answer()
-                        chunks = faq_chunks
-                        faq_answered = faq_hit.faq_id
-                        decision = self.router.policy.safe_decision()
-                        lat["faq_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
-                        self.store.record(session_id, "faq_hit", faq_id=faq_hit.faq_id, score=faq_hit.score)
-        elif self.router.would_answer(decision):
+                    # FAQ hit: verify evidence matches curated answer
+                    faq_chunks = self._retrieve(faq_hit.retrieval_query, session_id, self.top_k) or chunks
+                    if not faq_chunks:
+                        self.store.record(session_id, "faq_evidence_missing", faq_id=faq_hit.faq_id)
+                        faq_hit = None
+                    else:
+                        faq_source_list = (
+                            list(faq_hit.source_ids)
+                            if faq_hit.source_ids
+                            else [c.source_id for c in faq_chunks if c.score >= self.settings.min_retrieval_score]
+                            or [c.source_id for c in faq_chunks[:3]]
+                        )
+                        faq_sources = tuple(dict.fromkeys(faq_source_list))
+                        faq_hit = replace(faq_hit, source_ids=faq_sources)
+                        if self.validator is not None:
+                            verdict = self.validator.validate(faq_hit.to_grounded_answer(), {c.source_id for c in faq_chunks})
+                            if not verdict.ok:
+                                self.store.record(session_id, "faq_citation_rejected", faq_id=faq_hit.faq_id, issues=[vars(i) for i in verdict.issues])
+                                faq_hit = None
+                        if faq_hit is not None:
+                            answer = faq_hit.to_grounded_answer()
+                            chunks = faq_chunks
+                            faq_answered = faq_hit.faq_id
+                            decision = self.router.policy.safe_decision()
+                            lat["faq_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+                            self.store.record(session_id, "faq_hit", faq_id=faq_hit.faq_id, score=faq_hit.score)
+        if faq_hit is None and self.router.would_answer(decision):
             t0 = time.perf_counter()
 
             # Guard: if no chunks retrieved or all scores too low, refuse early
@@ -910,6 +1467,7 @@ class Pipeline:
             else:
                 t0 = time.perf_counter()
                 try:
+                    progress("answer", 82, "Đang tạo câu trả lời dựa trên thông tin đã tìm thấy")
                     # Agentic retrieval: LLM analyzes query -> generates search queries -> retrieves
                     agentic_chunks = chunks
                     self.agentic_reasoner.query_analysis = query_analysis
@@ -1101,6 +1659,12 @@ class Pipeline:
 
         spoken = ""
         if answer is not None:
+            # Answer review (feature-flagged): the model reviews the question
+            # against the answer; if it finds the answer unfit it rewrites it
+            # (self-correction loop) and re-runs the answer process, still
+            # grounded in the retrieved evidence.
+            if self.settings.answer_review:
+                answer = self._review_answer(session_id, query.text, answer, chunks)
             from app.validation.response_validator import detect_issues, sanitize_answer
 
             issues = detect_issues(answer, query.text)

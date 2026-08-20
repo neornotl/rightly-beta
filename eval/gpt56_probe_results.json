@@ -1,0 +1,281 @@
+[
+  {
+    "label": "nghỉ hưu",
+    "q": "tôi sinh tháng 3/1964, là nam, đóng bảo hiểm 30 năm, khi nào tôi được nghỉ hưu?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY",
+      "LLM_CLASSIFICATION"
+    ],
+    "missing": [],
+    "facts": [
+      {
+        "field": "birth_date",
+        "value": "03/1964",
+        "source": "user"
+      },
+      {
+        "field": "gender",
+        "value": "nam",
+        "source": "user"
+      },
+      {
+        "field": "insurance_years",
+        "value": "30",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ, anh có thể nghỉ hưu khi đạt tuổi 61 năm 3 tháng, tức khoảng tháng 6 năm 2025, vì đã đủ 30 năm đóng bảo hiểm."
+  },
+  {
+    "label": "nghỉ hưu nữ",
+    "q": "tôi là nữ sinh năm 1970, làm việc trong hầm mỏ 10 năm, tôi nghỉ hưu lúc nào?",
+    "action": "CLARIFY",
+    "zone": "YELLOW",
+    "codes": [
+      "AMBIGUOUS_QUERY"
+    ],
+    "missing": [
+      "số năm đóng bảo hiểm xã hội"
+    ],
+    "facts": [
+      {
+        "field": "gender",
+        "value": "nữ",
+        "source": "user"
+      },
+      {
+        "field": "birth_year",
+        "value": "1970",
+        "source": "user"
+      },
+      {
+        "field": "work_years",
+        "value": "10",
+        "source": "user"
+      }
+    ],
+    "answer": ""
+  },
+  {
+    "label": "vượt đèn đỏ",
+    "q": "vượt đèn đỏ bằng xe máy bị phạt bao nhiêu tiền năm 2026?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [],
+    "facts": [
+      {
+        "field": "vehicle_type",
+        "value": "xe máy",
+        "source": "user"
+      },
+      {
+        "field": "violation",
+        "value": "vượt đèn đỏ/không chấp hành hiệu lệnh của đèn tín hiệu giao thông",
+        "source": "user"
+      },
+      {
+        "field": "year",
+        "value": "2026",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ thưa anh/chị ạ. Theo Nghị định 168/2024/NĐ-CP, hành vi không chấp hành hiệu lệnh của đèn tín hiệu giao thông (vượt đèn đỏ) bị xử phạt như sau:\n- Người điều khiển xe ô tô: phạt tiền từ 18 triệu đến 20 triệu đồng.\n- Người điều khiển xe mô tô, xe gắn máy: phạt tiền từ 4 triệu đến 6 triệu đồng.\n- Ngoài ra còn bị áp dụng hình thức xử phạt bổ sung, bi"
+  },
+  {
+    "label": "không đội mũ bảo hiểm",
+    "q": "không đội mũ bảo hiểm khi đi xe máy bị phạt bao nhiêu?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY",
+      "LLM_CLASSIFICATION"
+    ],
+    "missing": [],
+    "facts": [
+      {
+        "field": "vehicle_type",
+        "value": "xe máy",
+        "source": "user"
+      },
+      {
+        "field": "violation",
+        "value": "không đội mũ bảo hiểm",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ, theo quy định hiện hành, vi phạm không đội mũ bảo hiểm khi tham gia giao thông bằng xe máy sẽ bị phạt tiền từ 400.000 đồng đến 600.000 đồng.\nCăn cứ và giải thích:\n- Nghị định 100/2019/NĐ-CP quy định mức phạt tiền từ 400.000 đồng đến 600.000 đồng đối với người được chở trên xe mô tô, xe gắn máy (xe máy) khi không đội mũ bảo hiểm hoặc không cài q"
+  },
+  {
+    "label": "khai sinh",
+    "q": "đăng ký khai sinh cho con cần những giấy tờ gì?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [],
+    "facts": [],
+    "answer": "Dạ thưa anh/chị ạ. Theo Luật Hộ tịch năm 2014 và Nghị định 123/2015/NĐ-CP, việc đăng ký khai sinh được thực hiện như sau:\n- Đăng ký trong 60 ngày kể từ khi trẻ được sinh ra, tại Ủy ban nhân dân cấp xã nơi cư trú của người mẹ hoặc người cha.\n- Cần tờ khai đăng ký khai sinh theo mẫu, giấy chứng sinh và xuất trình giấy tờ tùy thân (căn cước công dân) "
+  },
+  {
+    "label": "kết hôn",
+    "q": "điều kiện kết hôn là gì? bao nhiêu tuổi được kết hôn?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY",
+      "LLM_CLASSIFICATION"
+    ],
+    "missing": [
+      "tuổi của các bên muốn kết hôn"
+    ],
+    "facts": [],
+    "answer": ""
+  },
+  {
+    "label": "ly hôn",
+    "q": "ly hôn thuận tình cần hồ sơ gì và nộp ở đâu?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [],
+    "facts": [
+      {
+        "field": "divorce_type",
+        "value": "thuận tình",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ thưa anh/chị ạ. Ly hôn do Tòa án nhân dân giải quyết, gồm hai trường hợp:\n- Ly hôn thuận tình: vợ chồng cùng yêu cầu, tự nguyện và đã thỏa thuận về con, tài sản; Tòa án hòa giải rồi ra quyết định công nhận thuận tình ly hôn. Hồ sơ gồm đơn yêu cầu công nhận thuận tình ly hôn, Giấy chứng nhận kết hôn, thỏa thuận về con, tài sản (nếu có) và giấy tờ"
+  },
+  {
+    "label": "lương hưu",
+    "q": "tôi nam 60 tuổi, đóng bảo hiểm 25 năm, có được hưởng lương hưu không?",
+    "action": "REFUSE",
+    "zone": "ORANGE",
+    "codes": [
+      "INSUFFICIENT_SOURCE"
+    ],
+    "missing": [],
+    "facts": [
+      {
+        "field": "gender",
+        "value": "nam",
+        "source": "user"
+      },
+      {
+        "field": "age",
+        "value": "60",
+        "source": "user"
+      },
+      {
+        "field": "years_contributed",
+        "value": "25",
+        "source": "user"
+      }
+    ],
+    "answer": ""
+  },
+  {
+    "label": "nghỉ hưu sớm",
+    "q": "điều kiện nghỉ hưu trước tuổi là gì?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [
+      "giới tính",
+      "năm sinh hoặc tuổi",
+      "số năm đóng bảo hiểm xã hội"
+    ],
+    "facts": [],
+    "answer": "Dạ thưa anh/chị ạ. Theo Nghị định số 12/CP ngày 26/01/1995 quy định trong Luật Bảo hiểm xã hội, người lao động muốn nghỉ hưu trước tuổi phải có ít nhất 15 năm đóng bảo hiểm xã hội và phải có văn bản xác nhận của cơ quan bảo hiểm xã hội về việc chờ đủ điều kiện tuổi. - Trường hợp tham gia bảo hiểm tự nguyện trước 01/01/2021 và đủ 20 năm đóng cũng đư"
+  },
+  {
+    "label": "quốc tịch",
+    "q": "con tôi sinh ra ở nước ngoài có được quốc tịch Việt Nam không?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY",
+      "LLM_CLASSIFICATION"
+    ],
+    "missing": [
+      "quốc tịch của cha/mẹ",
+      "ngày sinh của con"
+    ],
+    "facts": [
+      {
+        "field": "birth_place",
+        "value": "nước ngoài",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ, con của bạn có thể được cấp quốc tịch Việt Nam nếu đáp ứng các điều kiện quy định.\nCăn cứ và giải thích:\n- Điều 9 khoản 1 Điều 9 Luật Quốc tịch Việt Nam (nd191_2025) quy định: Trẻ em sinh ra ở nước ngoài có cha hoặc mẹ là công dân Việt Nam, còn người kia là công dân nước ngoài, sẽ được công nhận quốc tịch Việt Nam khi cha mẹ thỏa thuận lựa chọn"
+  },
+  {
+    "label": "bảo hiểm y tế",
+    "q": "trẻ em dưới 6 tuổi có phải đóng bảo hiểm y tế không?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [
+      "quan hệ phụ thuộc (có phải là người phụ thuộc của người đóng BHYT)"
+    ],
+    "facts": [
+      {
+        "field": "age",
+        "value": "<6",
+        "source": "user"
+      }
+    ],
+    "answer": "Dạ thưa anh/chị ạ. Theo Nghị định 188/2025/NĐ-CP, khám chữa bệnh cho trẻ em dưới 6 tuổi như sau:\n- Trẻ em dưới 6 tuổi được quỹ bảo hiểm y tế thanh toán chi phí khám, chữa bệnh trong phạm vi được hưởng và mức hưởng theo quy định; phần chi phí ngoài phạm vi, vượt mức hưởng thì người bệnh tự thanh toán.\n- Khi đi khám, xuất trình thẻ bảo hiểm y tế bản "
+  },
+  {
+    "label": "thất nghiệp",
+    "q": "điều kiện hưởng bảo hiểm thất nghiệp là gì?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY",
+      "LLM_CLASSIFICATION"
+    ],
+    "missing": [],
+    "facts": [],
+    "answer": ""
+  },
+  {
+    "label": "khuyết tật",
+    "q": "người khuyết tật nặng được hưởng chế độ gì?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [],
+    "facts": [],
+    "answer": "Dạ thưa anh/chị ạ, được ạ. Theo Nghị định 20/2021/NĐ-CP, trợ cấp xã hội hằng tháng cho người khuyết tật như sau:\n- Người khuyết tật nặng, người khuyết tật đặc biệt nặng là đối tượng bảo trợ xã hội được hưởng trợ cấp xã hội hằng tháng.\n- Mức trợ cấp tính bằng mức chuẩn trợ giúp xã hội nhân với hệ số: hệ số 1,5 đối với người khuyết tật nặng, hệ số 2,"
+  },
+  {
+    "label": "căn cước",
+    "q": "làm căn cước công dân ở đâu, cần giấy tờ gì?",
+    "action": "ANSWER",
+    "zone": "YELLOW",
+    "codes": [
+      "SAFE_GROUNDED_QUERY"
+    ],
+    "missing": [],
+    "facts": [],
+    "answer": "Dạ thưa anh/chị ạ. Theo Luật Căn cước năm 2023, việc cấp thẻ căn cước như sau:\n- Từ ngày 1 tháng 7 năm 2024, người từ 14 tuổi trở lên được cấp thẻ căn cước, miễn lệ phí khi cấp lần đầu.\n- Làm tại cơ quan quản lý căn cước (công an cấp huyện) hoặc qua cổng dịch vụ công; một số nơi công an cấp xã tiếp nhận hồ sơ.\n- Xuất trình căn cước cũ (nếu đổi) và "
+  }
+]

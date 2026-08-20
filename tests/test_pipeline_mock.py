@@ -55,12 +55,13 @@ def test_pipeline_safe_query_cites_demo_only(tmp_path):
     assert set(result.answer.source_ids) == {"demo_binhminh_procedures"}
 
 
-def test_pipeline_refuses_when_no_source(tmp_path):
+def test_pipeline_answers_general_query_without_legal_source(tmp_path):
     pipeline = _pipeline(tmp_path)
     session_id = pipeline.create_session()
     result = pipeline.process_text(session_id, "Tổng thống Mỹ tên là gì?")
-    assert result.decision.action == Action.REFUSE
-    assert result.answer is None
+    assert result.decision.action == Action.ANSWER
+    assert result.answer is not None
+    assert result.answer.source_ids == []
 
 
 def test_pipeline_emergency_never_generates_answer(tmp_path):

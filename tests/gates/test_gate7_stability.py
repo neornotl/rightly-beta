@@ -83,7 +83,7 @@ def test_gate7_empty_retrieval_refused_gracefully(offline_pipeline):
 
     offline_pipeline.retriever = EmptyRetriever()  # type: ignore[assignment]
     session_id = offline_pipeline.create_session()
-    result = offline_pipeline.process_text(session_id, "Tổng thống Mỹ tên là gì?")
+    result = offline_pipeline.process_text(session_id, "Thủ tục cấp hộ khẩu cần giấy tờ gì?")
     offline_pipeline.delete_session(session_id)
     assert result.answer is None
     assert result.decision.action == Action.REFUSE

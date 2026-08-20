@@ -41,6 +41,31 @@ class ReasonCode(str, Enum):
     CITATION_OUTDATED = "CITATION_OUTDATED"
 
 
+@dataclass
+class ProfileFact:
+    """A fact the user explicitly shared during this RAM-only session."""
+
+    field: str
+    value: str
+    sensitive: bool = True
+    source: str = "user"
+
+
+@dataclass
+class HybridSessionContext:
+    """Private, RAM-only conversational context for the hybrid assistant.
+
+    This object is deliberately not persisted or written to audit logs. It is
+    destroyed with ``Pipeline.delete_session`` or when the process stops.
+    """
+
+    profile: dict[str, ProfileFact] = field(default_factory=dict)
+    pending_profile_facts: list[ProfileFact] = field(default_factory=list)
+    profile_consent: Optional[bool] = None
+    turns: list[dict[str, str]] = field(default_factory=list)
+    pending_intake: Optional[str] = None
+
+
 @dataclass(frozen=True)
 class SourceMetadata:
     source_id: str
@@ -107,6 +132,9 @@ class GroundedAnswer:
     source_ids: list[str] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     next_step: str = ""
+    summary: str = ""
+    appropriate: Optional[bool] = None
+    review_note: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -115,6 +143,9 @@ class GroundedAnswer:
             "source_ids": list(self.source_ids),
             "limitations": list(self.limitations),
             "next_step": self.next_step,
+            "summary": self.summary,
+            "appropriate": self.appropriate,
+            "review_note": self.review_note,
         }
 
 

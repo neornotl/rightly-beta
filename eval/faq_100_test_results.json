@@ -111,7 +111,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 599.1,
+      "latency_ms": 447.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -138,7 +138,7 @@
         "luat68_2020",
         "luat101_2026"
       ],
-      "latency_ms": 851.6999999999999,
+      "latency_ms": 647.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -166,7 +166,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 798.6,
+      "latency_ms": 822.1999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -193,7 +193,7 @@
         "nd351_2025",
         "nd20_2021"
       ],
-      "latency_ms": 264.09999999999997,
+      "latency_ms": 604.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -220,7 +220,7 @@
         "luat09_2026",
         "luat26_2023"
       ],
-      "latency_ms": 331.0,
+      "latency_ms": 722.3000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -247,7 +247,7 @@
         "luat41_2024",
         "nd158_2025"
       ],
-      "latency_ms": 689.2,
+      "latency_ms": 1318.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -274,7 +274,7 @@
         "luat25_2008",
         "luat51_2024"
       ],
-      "latency_ms": 612.1,
+      "latency_ms": 805.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -302,7 +302,7 @@
         "luat41_2024",
         "luat51_2024"
       ],
-      "latency_ms": 723.7,
+      "latency_ms": 717.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -329,7 +329,7 @@
         "nd168_2024",
         "tt79_2024"
       ],
-      "latency_ms": 675.7,
+      "latency_ms": 604.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -357,7 +357,7 @@
         "luat133_2025",
         "luat31_2024"
       ],
-      "latency_ms": 756.8,
+      "latency_ms": 819.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -384,7 +384,7 @@
         "luat133_2025",
         "luat31_2024"
       ],
-      "latency_ms": 961.7,
+      "latency_ms": 906.7,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -412,7 +412,7 @@
         "nd126_2014",
         "nd123_2015"
       ],
-      "latency_ms": 753.0,
+      "latency_ms": 605.7,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -440,7 +440,7 @@
         "luat25_2008",
         "luat40_2026"
       ],
-      "latency_ms": 1437.1000000000001,
+      "latency_ms": 1095.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -468,7 +468,7 @@
         "boluat92_2015",
         "boluat99_2025"
       ],
-      "latency_ms": 589.6,
+      "latency_ms": 698.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -496,7 +496,7 @@
         "nd123_2015",
         "nd120_2025"
       ],
-      "latency_ms": 539.1,
+      "latency_ms": 729.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -523,7 +523,7 @@
         "luat08_2017",
         "nd151_2025"
       ],
-      "latency_ms": 403.79999999999995,
+      "latency_ms": 583.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -551,7 +551,7 @@
         "nd07_2025",
         "nd62_2021"
       ],
-      "latency_ms": 487.59999999999997,
+      "latency_ms": 574.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -578,7 +578,7 @@
         "luat11_2017",
         "luat138_2025"
       ],
-      "latency_ms": 804.8000000000001,
+      "latency_ms": 597.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -605,7 +605,7 @@
         "luat11_2017",
         "luat203_2025"
       ],
-      "latency_ms": 772.0,
+      "latency_ms": 605.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -632,7 +632,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 1244.9,
+      "latency_ms": 1006.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -659,7 +659,7 @@
         "luat78_2015",
         "luat28_2026"
       ],
-      "latency_ms": 1166.4,
+      "latency_ms": 943.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -686,7 +686,7 @@
         "luat49_2019",
         "luat62_2026"
       ],
-      "latency_ms": 673.0,
+      "latency_ms": 678.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -713,7 +713,7 @@
         "boluat45_2019",
         "boluat18_2026"
       ],
-      "latency_ms": 437.6,
+      "latency_ms": 977.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -740,7 +740,7 @@
         "luat72_2020",
         "luat85_2026"
       ],
-      "latency_ms": 597.1,
+      "latency_ms": 945.3000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -767,7 +767,7 @@
         "luat55_2010",
         "luat61_2025"
       ],
-      "latency_ms": 819.1999999999999,
+      "latency_ms": 1036.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -794,7 +794,7 @@
         "boluat95_2015",
         "luat14_2024"
       ],
-      "latency_ms": 893.1,
+      "latency_ms": 853.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -821,7 +821,7 @@
         "luat19_2023",
         "luat47_2026"
       ],
-      "latency_ms": 785.0999999999999,
+      "latency_ms": 800.5999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -848,7 +848,7 @@
         "luat51_2010",
         "luat24_2026"
       ],
-      "latency_ms": 772.5,
+      "latency_ms": 778.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -875,7 +875,7 @@
         "nd145_2020",
         "nd145_2020"
       ],
-      "latency_ms": 970.8,
+      "latency_ms": 814.5999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -902,7 +902,7 @@
         "luat117_2025",
         "luat73_2021"
       ],
-      "latency_ms": 646.0,
+      "latency_ms": 568.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -929,7 +929,7 @@
         "luat19_2023",
         "luat47_2026"
       ],
-      "latency_ms": 432.8,
+      "latency_ms": 663.7,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -957,7 +957,7 @@
         "luat52_2014",
         "nd126_2014"
       ],
-      "latency_ms": 465.9,
+      "latency_ms": 644.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -984,7 +984,7 @@
         "nd20_2021",
         "nd20_2021"
       ],
-      "latency_ms": 457.90000000000003,
+      "latency_ms": 668.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1011,7 +1011,7 @@
         "nd188_2025",
         "nd188_2025"
       ],
-      "latency_ms": 765.0999999999999,
+      "latency_ms": 624.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1038,7 +1038,7 @@
         "luat46_2024",
         "luat121_2025"
       ],
-      "latency_ms": 1060.4,
+      "latency_ms": 834.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1065,7 +1065,7 @@
         "luat41_2024",
         "nd159_2025"
       ],
-      "latency_ms": 1052.2,
+      "latency_ms": 847.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1093,7 +1093,7 @@
         "nd154_2024",
         "luat06_2026"
       ],
-      "latency_ms": 907.7,
+      "latency_ms": 726.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1120,7 +1120,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 777.3,
+      "latency_ms": 627.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1147,7 +1147,7 @@
         "boluat91_2015",
         "luat60_2014"
       ],
-      "latency_ms": 403.4,
+      "latency_ms": 560.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1174,7 +1174,7 @@
         "luat26_2008",
         "luat98_2026"
       ],
-      "latency_ms": 549.3,
+      "latency_ms": 848.8000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1201,7 +1201,7 @@
         "luat20_2023",
         "luat36_2026"
       ],
-      "latency_ms": 881.8,
+      "latency_ms": 1326.8999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1228,7 +1228,7 @@
         "nd188_2025",
         "nd188_2025"
       ],
-      "latency_ms": 930.0,
+      "latency_ms": 821.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1255,7 +1255,7 @@
         "luat17_2023",
         "luat101_2026"
       ],
-      "latency_ms": 1120.3,
+      "latency_ms": 1090.1000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1282,7 +1282,7 @@
         "boluat100_2015",
         "boluat135_2025"
       ],
-      "latency_ms": 983.5,
+      "latency_ms": 1203.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1309,7 +1309,7 @@
         "boluat45_2019",
         "luat19_2026"
       ],
-      "latency_ms": 401.70000000000005,
+      "latency_ms": 800.9000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1336,7 +1336,7 @@
         "nd126_2014",
         "nd126_2014"
       ],
-      "latency_ms": 798.1999999999999,
+      "latency_ms": 1468.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1363,7 +1363,7 @@
         "luat24_2008",
         "luat53_2025"
       ],
-      "latency_ms": 1419.6000000000001,
+      "latency_ms": 1285.3999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1390,7 +1390,7 @@
         "luat41_2024",
         "nd158_2025"
       ],
-      "latency_ms": 1130.5,
+      "latency_ms": 766.9,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1417,7 +1417,7 @@
         "boluat100_2015",
         "boluat135_2025"
       ],
-      "latency_ms": 1148.7,
+      "latency_ms": 1066.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1445,7 +1445,7 @@
         "luat74_2025",
         "nd374_2025"
       ],
-      "latency_ms": 1244.8,
+      "latency_ms": 933.0999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1473,7 +1473,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 566.2,
+      "latency_ms": 428.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1501,7 +1501,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 541.7,
+      "latency_ms": 389.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1529,7 +1529,7 @@
         "luat60_2014",
         "nd123_2015"
       ],
-      "latency_ms": 385.59999999999997,
+      "latency_ms": 396.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1557,7 +1557,7 @@
         "nd123_2015",
         "nd120_2025"
       ],
-      "latency_ms": 498.5,
+      "latency_ms": 673.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1585,7 +1585,7 @@
         "nd123_2015",
         "nd120_2025"
       ],
-      "latency_ms": 471.1,
+      "latency_ms": 651.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1613,7 +1613,7 @@
         "nd126_2014",
         "nd123_2015"
       ],
-      "latency_ms": 533.9,
+      "latency_ms": 571.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1641,7 +1641,7 @@
         "nd123_2015",
         "nd120_2025"
       ],
-      "latency_ms": 1060.9,
+      "latency_ms": 778.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1669,7 +1669,7 @@
         "boluat92_2015",
         "boluat99_2025"
       ],
-      "latency_ms": 779.1999999999999,
+      "latency_ms": 564.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1697,7 +1697,7 @@
         "boluat92_2015",
         "boluat99_2025"
       ],
-      "latency_ms": 789.1,
+      "latency_ms": 806.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1725,7 +1725,7 @@
         "nd126_2014",
         "nd123_2015"
       ],
-      "latency_ms": 817.0,
+      "latency_ms": 704.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1752,7 +1752,7 @@
         "nd126_2014",
         "nd126_2014"
       ],
-      "latency_ms": 1259.0,
+      "latency_ms": 1639.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1780,7 +1780,7 @@
         "nd07_2025",
         "nd62_2021"
       ],
-      "latency_ms": 397.7,
+      "latency_ms": 771.4000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1807,7 +1807,7 @@
         "luat68_2020",
         "luat101_2026"
       ],
-      "latency_ms": 455.7,
+      "latency_ms": 871.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1835,7 +1835,7 @@
         "luat68_2020",
         "luat06_2026"
       ],
-      "latency_ms": 286.6,
+      "latency_ms": 539.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1849,7 +1849,7 @@
       "category": "cu-tru",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Chuyển chỗ ở sang quận khác, theo quy định hiện hành thì 4. 5. ạ. 06-VBHN-VPQH 2026 Luật Cư trú ạ.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Chuyển chỗ ở sang quận khác, theo quy định hiện hành thì Điều 22. Thủ tục đăng ký thường trú \n1. ạ. 06-VBHN-VPQH 2026 Luật Cư trú ạ.",
       "spoken_citation": "Thông tin theo 06-VBHN-VPQH 2026 Luật Cư trú.",
       "source_ids": [
         "nd154_2024",
@@ -1864,7 +1864,7 @@
         "nd154_2024",
         "luat06_2026"
       ],
-      "latency_ms": 567.7,
+      "latency_ms": 579.0999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1892,7 +1892,7 @@
         "nd154_2024",
         "luat06_2026"
       ],
-      "latency_ms": 1008.6,
+      "latency_ms": 747.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1920,7 +1920,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 866.3,
+      "latency_ms": 650.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1948,7 +1948,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 602.3000000000001,
+      "latency_ms": 432.9,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -1975,7 +1975,7 @@
         "luat08_2017",
         "nd151_2025"
       ],
-      "latency_ms": 710.1,
+      "latency_ms": 502.49999999999994,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2003,7 +2003,7 @@
         "luat133_2025",
         "luat31_2024"
       ],
-      "latency_ms": 763.8,
+      "latency_ms": 588.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2031,7 +2031,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 448.4,
+      "latency_ms": 728.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2059,7 +2059,7 @@
         "luat31_2024",
         "luat133_2025"
       ],
-      "latency_ms": 466.5,
+      "latency_ms": 676.0999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2086,7 +2086,7 @@
         "nd188_2025",
         "nd188_2025"
       ],
-      "latency_ms": 463.2,
+      "latency_ms": 806.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2113,7 +2113,7 @@
         "luat25_2008",
         "luat51_2024"
       ],
-      "latency_ms": 485.2,
+      "latency_ms": 597.9,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2127,7 +2127,7 @@
       "category": "bhyt",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ chủ đề này nằm ngoài phạm vi hỗ trợ của em. Anh/chị liên hệ cơ quan có thẩm quyền để được tư vấn ạ. Nghị định quy định chi tiết và hướng dẫn thi hành một số điều của.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Người 65 tuổi khám đúng tuyến, theo quy định hiện hành thì năm 20... ĐẠI DIỆN CƠ SỞ\n(Ký, ghi rõ họ, tên và đóng dấu)\nMẫu số 8\nTÊN CQ, TC CHỦ QUẢN\nTÊN CƠ SỞ KHÁM BỆNH, CHỮA BỆNH\n_____________\nCỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\nĐộc lập - Tự do - Hạnh phúc\n..., ngày... ạ. Nghị định quy định chi tiết và hướng dẫn thi hành một số điều của. ạ.",
       "spoken_citation": "Thông tin theo Nghị định quy định chi tiết và hướng dẫn thi hành một số điều của..",
       "source_ids": [
         "luat23_2026",
@@ -2143,7 +2143,7 @@
         "luat51_2024",
         "luat23_2026"
       ],
-      "latency_ms": 581.5,
+      "latency_ms": 463.20000000000005,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2157,22 +2157,22 @@
       "category": "bhyt",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về bảo hiểm xã hội, theo quy định hiện hành thì 2.[93] Tổ chức để đối tượng quy định tại khoản 5 Điều 12 của Luật này đóng bảo hiểm y tế theo hộ gia đình thuận lợi tại đại lý bảo hiểm y tế. Trách nhiệm của cơ quan bảo hiểm xã hội[92]\n1. ạ. 40-VBHN-VPQH 2026 Luật Bảo hiểm Y tế ạ.",
-      "spoken_citation": "Thông tin theo 40-VBHN-VPQH 2026 Luật Bảo hiểm Y tế.",
+      "answer_text": "Dạ vâng ạ. Về bảo hiểm y tế, theo quy định hiện hành thì của hộ gia đình\ntrực tiếp nộp tiền đóng bảo hiểm y tế phần thuộc trách nhiệm đóng theo quy định tại\nkhoản 2 Điều 8 Nghị định này cho cơ quan bảo hiểm xã hội;\nb) Định kỳ 03 tháng, 06 tháng hoặc 12 tháng, cơ quan bảo hiểm xã hội tổng\nhợp số thẻ bảo hiểm y tế đã ph át hành, số tiền thu của người tham gia và số tiền\nngân sách nhà nước hỗ trợ đ óng theo M ẫu số 1 Phụ lục ban hành kèm theo Nghị\nđịnh này, gửi Sở Tài chính đ ể chuyển kinh phí vào quỹ bảo hi ểm y t ế theo quy\nđịnh tại khoản 10 Điều này. Đối với đối tượng tham gia bảo hiểm y tế theo hộ gia đình quy định tại\nkhoản 5 Điều 12 của Luật Bảo hiểm y tế: định kỳ 03 tháng, 06 tháng hoặc 12\ntháng, người đại diện hộ gia đình hoặc thành viên h ộ gia đình tham gia bảo hi ểm y\ntế nộp tiền đóng bảo hiểm y tế theo quy định tại khoản 3 Điều 8 Nghị định này cho\ncơ quan bảo hiểm xã hội. ạ. Nghị định quy định chi tiết và hướng dẫn thi hành một số điều của. ạ.",
+      "spoken_citation": "Thông tin theo Nghị định quy định chi tiết và hướng dẫn thi hành một số điều của..",
       "source_ids": [
         "nd188_2025",
-        "luat40_2026",
-        "luat25_2008"
+        "luat25_2008",
+        "luat40_2026"
       ],
       "retrieval_count": 5,
       "retrieval_sources": [
         "nd188_2025",
         "nd188_2025",
-        "luat40_2026",
         "luat25_2008",
+        "luat40_2026",
         "luat40_2026"
       ],
-      "latency_ms": 974.4,
+      "latency_ms": 672.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2199,7 +2199,7 @@
         "luat41_2024",
         "nd158_2025"
       ],
-      "latency_ms": 1249.5,
+      "latency_ms": 906.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2213,8 +2213,8 @@
       "category": "bhxh",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về tuổi nghỉ hưu theo lộ trình tăng dần, theo quy định hiện hành thì 3a.[6] Mức lương hưu hằng tháng của đối tượng quy định tại khoản 2 Điều 26 của Luật Nhà giáo được tính như quy định tại khoản 1 Điều này, thời gian nghỉ hưu ở tuổi thấp hơn thì không giảm tỷ lệ phần trăm hưởng lương hưu theo quy định tại khoản 3 Điều này. Trường hợp thời gian nghỉ hưu trước tuổi dưới 06 tháng thì không giảm tỷ lệ phần trăm hưởng lương hưu, từ đủ 06 tháng đến dưới 12 tháng thì giảm 1%. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
-      "spoken_citation": "Thông tin theo 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội.",
+      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì Từ ngày 01 tháng 01 năm 2021, các quy định của chế độ hưu trí gắn với điều kiện về tuổi hưởng lương hưu theo Điều 54, Điều 55, khoản 1 Điều 73 của Luật Bảo hiểm xã hội được thực hiện theo tuổi nghỉ hưu và điều kiện về tuổi hưởng lương hưu tại Điều 169, khoản 1 Điều 219 của Bộ luật Lao động và quy định tại Nghị định này. Đối với lao động nam sinh tháng 12 năm 1960 và lao động nữ sinh tháng 12 năm 1965 làm việc trong điều kiện lao động bình thường thì thời điểm nghỉ hưu là kết thúc ngày 31 tháng 12 năm 2020, thời điểm hưởng lương hưu là bắt đầu ngày 01 tháng 01 năm 2021. ạ. Nghị định quy định về tuổi nghỉ hưu ạ.",
+      "spoken_citation": "Thông tin theo Nghị định quy định về tuổi nghỉ hưu.",
       "source_ids": [
         "boluat18_2026",
         "boluat45_2019",
@@ -2230,7 +2230,7 @@
         "luat19_2026",
         "luat41_2024"
       ],
-      "latency_ms": 843.7,
+      "latency_ms": 609.5999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2257,7 +2257,7 @@
         "nd145_2020",
         "nd145_2020"
       ],
-      "latency_ms": 826.9,
+      "latency_ms": 968.5999999999999,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2284,7 +2284,7 @@
         "luat41_2024",
         "nd159_2025"
       ],
-      "latency_ms": 531.6,
+      "latency_ms": 899.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2311,7 +2311,7 @@
         "nd351_2025",
         "nd20_2021"
       ],
-      "latency_ms": 287.7,
+      "latency_ms": 547.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2338,7 +2338,7 @@
         "nd351_2025",
         "nd20_2021"
       ],
-      "latency_ms": 268.9,
+      "latency_ms": 542.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2366,7 +2366,7 @@
         "luat41_2024",
         "luat51_2024"
       ],
-      "latency_ms": 477.0,
+      "latency_ms": 710.9,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2393,7 +2393,7 @@
         "luat51_2010",
         "luat24_2026"
       ],
-      "latency_ms": 776.0,
+      "latency_ms": 780.0,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2421,7 +2421,7 @@
         "luat41_2024",
         "luat51_2024"
       ],
-      "latency_ms": 708.8,
+      "latency_ms": 733.7,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2435,7 +2435,7 @@
       "category": "hon-nhan",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về quy định về kết hôn, theo quy định hiện hành thì Tài sản chung của vợ chồng gồm tài sản do vợ, chồng tạo ra, thu nhập do lao động, hoạt động sản xuất, kinh doanh, hoa lợi, lợi tức phát sinh từ tài sản riêng và thu nhập hợp pháp khác trong thời kỳ hôn nhân, trừ trường hợp được quy định tại khoản 1 Điều 40 của Luật này; tài sản mà vợ chồng được thừa kế chung hoặc được tặng cho chung và tài sản khác mà vợ chồng thỏa thuận là tài sản chung. Điều 33. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Nhà đất mua sau khi cưới, theo quy định hiện hành thì Tài sản chung của vợ chồng gồm tài sản do vợ, chồng tạo ra, thu nhập do lao động, hoạt động sản xuất, kinh doanh, hoa lợi, lợi tức phát sinh từ tài sản riêng và thu nhập hợp pháp khác trong thời kỳ hôn nhân, trừ trường hợp được quy định tại khoản 1 Điều 40 của Luật này; tài sản mà vợ chồng được thừa kế chung hoặc được tặng cho chung và tài sản khác mà vợ chồng thỏa thuận là tài sản chung. Điều 33. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
       "spoken_citation": "Thông tin theo 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình.",
       "source_ids": [
         "luat121_2025",
@@ -2452,7 +2452,7 @@
         "luat91_2015",
         "boluat91_2015"
       ],
-      "latency_ms": 837.1999999999999,
+      "latency_ms": 677.3,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2466,8 +2466,8 @@
       "category": "hon-nhan",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về quy định về kết hôn, theo quy định hiện hành thì 4. 5. ạ. 99-VBHN-VPQH 2025 Bộ luật Tố tụng dân sự ạ.",
-      "spoken_citation": "Thông tin theo 99-VBHN-VPQH 2025 Bộ luật Tố tụng dân sự.",
+      "answer_text": "Dạ vâng ạ. Về quy định về ly hôn, theo quy định hiện hành thì Điều 82. Nghĩa vụ, quyền của cha, mẹ không trực tiếp nuôi con sau khi ly hôn\n1. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
+      "spoken_citation": "Thông tin theo 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình.",
       "source_ids": [
         "luat121_2025",
         "luat52_2014",
@@ -2481,7 +2481,7 @@
         "luat52_2014",
         "boluat99_2025"
       ],
-      "latency_ms": 811.0,
+      "latency_ms": 689.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2509,7 +2509,7 @@
         "luat52_2014",
         "nd126_2014"
       ],
-      "latency_ms": 934.7,
+      "latency_ms": 670.9,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2523,8 +2523,8 @@
       "category": "hon-nhan",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về quy định về kết hôn, theo quy định hiện hành thì Tài sản của vợ chồng trong kinh doanh được giải quyết theo quy định tại các khoản 1, 2 và 3 Điều này, trừ trường hợp pháp luật về kinh doanh có quy định khác. Trong trường hợp có quyết định cho ly hôn của Tòa án theo quy định tại khoản 2 Điều 56 của Luật này thì quyết định cho ly hôn vẫn có hiệu lực pháp luật. ạ. 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình ạ.",
-      "spoken_citation": "Thông tin theo 121-VBHN-VPQH 2025 Luật Hôn nhân và Gia đình.",
+      "answer_text": "Dạ vâng ạ. Về quy định về kết hôn, theo quy định hiện hành thì , người con rể buộc phải ờ rể để trả công cho bố, mẹ vợ- 6. Quan hệ gia đình theo chế độ phụ hệ hoặc mẫu hệ, không bảo đảm quyền binh dẳng giữa vợ và chồng; giữa con trai và con gái. ạ. chi tiết một số điều và biện pháp thi hành Luật Hôn nhân và gia. ạ.",
+      "spoken_citation": "Thông tin theo chi tiết một số điều và biện pháp thi hành Luật Hôn nhân và gia..",
       "source_ids": [
         "nd126_2014",
         "luat121_2025",
@@ -2538,7 +2538,7 @@
         "luat121_2025",
         "luat52_2014"
       ],
-      "latency_ms": 860.4,
+      "latency_ms": 617.8000000000001,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2565,7 +2565,7 @@
         "boluat45_2019",
         "boluat18_2026"
       ],
-      "latency_ms": 849.6,
+      "latency_ms": 662.2,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2579,7 +2579,7 @@
       "category": "lao-dong",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Người lao động làm bao nhiêu, theo quy định hiện hành thì Người lao động làm việc theo thời giờ làm việc quy định tại Điều 105 của Bộ luật này từ 06 giờ trở lên trong một ngày thì được nghỉ giữa giờ ít nhất 30 phút liên tục, làm việc ban đêm thì được nghỉ giữa giờ ít nhất 45 phút liên tục. Mục 2. ạ. 18-VBHN-VPQH 2026 Bộ luật Lao động ạ.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Người lao động làm bao nhiêu, theo quy định hiện hành thì Người sử dụng lao động được sử dụng người lao động làm thêm giờ khi đáp ứng đầy đủ các yêu cầu sau đây:\na) Phải được sự đồng ý của người lao động;\nb) Bảo đảm số giờ làm thêm của người lao động không quá 50% số giờ làm việc bình thường trong 01 ngày; trường hợp áp dụng quy định thời giờ làm việc bình thường theo tuần thì tổng số giờ làm việc bình thường và số giờ làm thêm không quá 12 giờ trong 01 ngày; không quá 40 giờ trong 01 tháng;\nc) Bảo đảm số giờ làm thêm của người lao động không quá 200 giờ trong 01 năm, trừ trường hợp quy định tại khoản 3 Điều này. Người sử dụng lao động được sử dụng người lao động làm thêm không quá 300 giờ trong 01 năm trong một số ngành, nghề, công việc hoặc trường hợp sau đây:\na) Sản xuất, gia công xuất khẩu sản phẩm hàng dệt, may, da, giày, đ ạ. 18-VBHN-VPQH 2026 Bộ luật Lao động ạ.",
       "spoken_citation": "Thông tin theo 18-VBHN-VPQH 2026 Bộ luật Lao động.",
       "source_ids": [
         "boluat18_2026",
@@ -2594,7 +2594,7 @@
         "boluat45_2019",
         "nd293_2025"
       ],
-      "latency_ms": 704.7,
+      "latency_ms": 549.1,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2621,7 +2621,7 @@
         "boluat45_2019",
         "luat19_2026"
       ],
-      "latency_ms": 748.7,
+      "latency_ms": 538.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2635,7 +2635,7 @@
       "category": "lao-dong",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về chế độ lương hưu, theo quy định hiện hành thì iểm a, b, c, d và i khoản 1 và khoản 2 Điều 2 của Luật này mà không hưởng tiền lương từ 14 ngày làm việc trở lên trong tháng thì người lao động không phải đóng bảo hiểm xã hội tháng đó, trừ trường hợp người sử dụng lao động và người lao động có thỏa thuận về việc có đóng bảo hiểm xã hội cho người lao động tháng đó với căn cứ đóng bằng căn cứ đóng bảo hiểm xã hội tháng gần nhất. Đối tượng quy định tại các điểm đ, e và k khoản 1 Điều 2 của Luật này mà không làm việc từ 14 ngày làm việc trở lên trong tháng thì thực hiện theo quy định của Chính phủ. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
+      "answer_text": "Dạ vâng ạ. Về bảo hiểm xã hội, theo quy định hiện hành thì iểm a, b, c, d và i khoản 1 và khoản 2 Điều 2 của Luật này mà không hưởng tiền lương từ 14 ngày làm việc trở lên trong tháng thì người lao động không phải đóng bảo hiểm xã hội tháng đó, trừ trường hợp người sử dụng lao động và người lao động có thỏa thuận về việc có đóng bảo hiểm xã hội cho người lao động tháng đó với căn cứ đóng bằng căn cứ đóng bảo hiểm xã hội tháng gần nhất. Đối tượng quy định tại các điểm đ, e và k khoản 1 Điều 2 của Luật này mà không làm việc từ 14 ngày làm việc trở lên trong tháng thì thực hiện theo quy định của Chính phủ. ạ. 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội ạ.",
       "spoken_citation": "Thông tin theo 19-VBHN-VPQH 2026 Luật Bảo hiểm xã hội.",
       "source_ids": [
         "luat19_2026",
@@ -2650,7 +2650,7 @@
         "luat41_2024",
         "nd158_2025"
       ],
-      "latency_ms": 915.8,
+      "latency_ms": 827.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2679,7 +2679,7 @@
         "boluat18_2026",
         "boluat45_2019"
       ],
-      "latency_ms": 553.0,
+      "latency_ms": 451.4,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2706,7 +2706,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 1287.6000000000001,
+      "latency_ms": 966.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2733,7 +2733,7 @@
         "nd168_2024",
         "nd168_2024"
       ],
-      "latency_ms": 649.5,
+      "latency_ms": 627.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2760,7 +2760,7 @@
         "nd168_2024",
         "tt79_2024"
       ],
-      "latency_ms": 385.09999999999997,
+      "latency_ms": 488.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2774,8 +2774,8 @@
       "category": "giao-thong",
       "zone": "YELLOW",
       "action": "ANSWER",
-      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Mất bằng lái xe thì có, theo quy định hiện hành thì b) Giấy phép lái xe hạng A2 được tiếp tục điều khiển xe mô tô hai bánh có dung tích xi-lanh từ 175 cm3 trở lên hoặc có công suất động cơ điện từ 14 kW trở lên và các loại xe quy định cho giấy phép lái xe hạng A1 quy định tại điểm a khoản này;\nc) Giấy phép lái xe hạng A3 được tiếp tục điều khiển xe mô tô ba bánh, các loại xe quy định cho giấy phép lái xe hạng A1 quy định tại điểm a khoản này và các xe tương tự;\nd) Giấy phép lái xe hạng A4 được tiếp tục điều khiển máy kéo có trọng tải đến 1.000 kg;\nđ) Giấy phép lái xe hạng B1 số tự động cấp cho người không hành nghề lái xe được tiếp tục điều khiển xe ô tô số tự động chở người đến 08 chỗ (không kể chỗ của người lái xe); xe ô tô tải, kể cả ô tô tải chuyên dùng số tự động có trọng tải dưới 3.500 kg;\ne) Giấy phép lái xe hạng B1 cấp cho người không hành nghề lái xe được tiếp tục điều khiển xe ô tô chở người đến 08 chỗ (không kể chỗ của người l ạ. 55-VBHN-VPQH 2026 Luật Trật tự, an toàn giao thông đường bộ ạ.",
-      "spoken_citation": "Thông tin theo 55-VBHN-VPQH 2026 Luật Trật tự, an toàn giao thông đường bộ.",
+      "answer_text": "Dạ vâng ạ. Về CÂU HỎI: Mất bằng lái xe thì có, theo quy định hiện hành thì 10. Trường hợp đơn vị kinh doanh vận tải sử dụng xe ô tô chở người từ 08 chỗ trở lên (không kể chỗ của người lái xe) phải có hợp đồng vận tải bằng văn bản giữa đơn vị kinh doanh vận tải hành khách với người thuê vận tải thuê cả chuyến xe, bao gồm cả người lái xe. ạ. 49-VBHN-VPQH 2026 Luật Đường bộ ạ.",
+      "spoken_citation": "Thông tin theo 49-VBHN-VPQH 2026 Luật Đường bộ.",
       "source_ids": [
         "luat49_2026",
         "luat35_2024",
@@ -2790,7 +2790,7 @@
         "luat36_2024",
         "luat55_2026"
       ],
-      "latency_ms": 308.3,
+      "latency_ms": 405.8,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2817,7 +2817,7 @@
         "luat133_2025",
         "luat31_2024"
       ],
-      "latency_ms": 545.1,
+      "latency_ms": 731.6,
       "error": "",
       "zone_correct": true,
       "action_correct": true,
@@ -2844,7 +2844,7 @@
         "luat133_2025",
         "luat31_2024"
       ],
-      "latency_ms": 814.0,
+      "latency_ms": 787.5,
       "error": "",
       "zone_correct": true,
       "action_correct": true,

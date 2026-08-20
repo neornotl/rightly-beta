@@ -18,12 +18,17 @@ import os
 import sys
 import time
 import logging
+import json
+import queue
+import threading
+import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Request, HTTPException, Header
-from fastapi.responses import JSONResponse, RedirectResponse
-from pydantic import BaseModel
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
+from pydantic import BaseModel, Field
 
 # Add project root to path
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -96,6 +101,15 @@ class ZaloMessage(BaseModel):
     event_name: Optional[str] = None
 
 
+class ChatRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=100)
+    text: str = Field(min_length=1, max_length=1000)
+
+
+class TTSRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=4000)
+
+
 # FastAPI lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -118,6 +132,214 @@ app = FastAPI(title="Rightly Webhook Server", lifespan=lifespan)
 @app.get("/health")
 async def health():
     return {"status": "ok", "circuit_open": _circuit_open, "pipeline": "ready"}
+
+
+@app.get("/")
+async def local_chat_ui():
+    return FileResponse(os.path.join(ROOT, "web", "index.html"))
+
+
+@app.post("/api/chat")
+async def local_chat(body: ChatRequest, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    if not _limiter.allow(f"web|{client_ip}"):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _check_circuit():
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+    try:
+        result = get_pipeline().process_text(body.session_id, body.text.strip())
+        _record_success()
+    except Exception as exc:
+        _record_failure()
+        logger.exception("Local chat pipeline error")
+        raise HTTPException(status_code=502, detail="Chat backend unavailable") from exc
+    answer = result.answer
+    return {
+        "reply": answer.answer_text if answer else result.decision.user_message,
+        "sources": list(answer.source_ids) if answer else [],
+        "decision": result.decision.zone.value,
+        "summary": answer.summary if answer else "",
+        "appropriate": answer.appropriate if answer else None,
+    }
+
+
+@app.post("/api/chat/stream")
+async def local_chat_stream(body: ChatRequest, request: Request):
+    """Stream real pipeline milestones as Server-Sent Events."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not _limiter.allow(f"web|{client_ip}"):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _check_circuit():
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+    events: queue.Queue = queue.Queue()
+    finished = object()
+
+    def run() -> None:
+        try:
+            def on_progress(event: dict) -> None:
+                events.put({"type": "progress", **event})
+
+            result = get_pipeline().process_text(
+                body.session_id, body.text.strip(), progress_callback=on_progress
+            )
+            answer = result.answer
+            events.put({
+                "type": "answer",
+                "reply": answer.answer_text if answer else result.decision.user_message,
+                "sources": list(answer.source_ids) if answer else [],
+                "decision": result.decision.zone.value,
+                "summary": answer.summary if answer else "",
+                "appropriate": answer.appropriate if answer else None,
+            })
+            _record_success()
+        except Exception:
+            _record_failure()
+            logger.exception("Local streaming chat pipeline error")
+            events.put({"type": "error", "detail": "Chat backend unavailable"})
+        finally:
+            events.put(finished)
+
+    threading.Thread(target=run, daemon=True).start()
+
+    def stream():
+        while True:
+            event = events.get()
+            if event is finished:
+                break
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.post("/api/voice/transcribe")
+async def voice_transcribe(request: Request):
+    """ASR only: return the text heard from a browser-recorded clip.
+
+    Fast enough for the UI to show "what was heard" as the user's chat message
+    immediately, before the answer pipeline runs. Audio bytes are not stored.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    if not _limiter.allow(f"web|{client_ip}"):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _check_circuit():
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+    if request.headers.get("content-length", "0").isdigit() and int(request.headers["content-length"]) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio too large")
+    try:
+        audio = await request.body()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not read audio body")
+    if not audio:
+        raise HTTPException(status_code=400, detail="Empty audio body")
+    logger.info(
+        "VOICE_TRANSCRIBE received session=%s ext=%s bytes=%d ctype=%s",
+        request.query_params.get("session_id", ""),
+        request.query_params.get("ext", ".webm"),
+        len(audio),
+        request.headers.get("content-type", ""),
+    )
+    try:
+        transcript = get_pipeline().transcribe_audio_bytes(
+            audio, extension=request.query_params.get("ext", ".webm")
+        )
+        _record_success()
+        logger.info("VOICE_TRANSCRIBE OK bytes=%d transcript=%r", len(audio), transcript)
+    except Exception as exc:
+        _record_failure()
+        logger.exception("VOICE_TRANSCRIBE FAILED bytes=%d", len(audio))
+        raise HTTPException(status_code=502, detail="ASR unavailable") from exc
+    return {"transcript": transcript}
+
+
+@app.post("/api/voice")
+async def local_voice(request: Request):
+    """Transcribe a browser-recorded clip (webm/ogg/wav) and answer by voice.
+
+    The audio is sent as raw bytes (Content-Type: application/octet-stream).
+    Session is passed as ?session_id=... . Nothing is persisted: the temp
+    audio file is deleted immediately after transcription.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    if not _limiter.allow(f"web|{client_ip}"):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if not _check_circuit():
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+    session_id = request.query_params.get("session_id", "")
+    if not session_id or len(session_id) > 100:
+        raise HTTPException(status_code=400, detail="Missing session_id")
+    if request.headers.get("content-length", "0").isdigit() and int(request.headers["content-length"]) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio too large")
+    try:
+        audio = await request.body()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not read audio body")
+    if not audio:
+        raise HTTPException(status_code=400, detail="Empty audio body")
+    try:
+        result = get_pipeline().process_audio_bytes(
+            session_id, audio, extension=request.query_params.get("ext", ".webm")
+        )
+        _record_success()
+    except Exception as exc:
+        _record_failure()
+        logger.exception("Voice pipeline error")
+        raise HTTPException(status_code=502, detail="Voice backend unavailable") from exc
+    answer = result.answer
+    return {
+        "transcript": result.query,
+        "reply": answer.answer_text if answer else result.decision.user_message,
+        "sources": list(answer.source_ids) if answer else [],
+        "decision": result.decision.zone.value,
+        "summary": answer.summary if answer else "",
+        "appropriate": answer.appropriate if answer else None,
+    }
+
+
+@app.delete("/api/session/{session_id}")
+async def delete_local_session(session_id: str):
+    get_pipeline().delete_session(session_id)
+    return {"status": "ok"}
+
+
+@app.post("/api/tts")
+def local_tts(body: TTSRequest, request: Request):
+    """Synthesize Vietnamese speech via Edge-TTS (vi-VN-HoaiMyNeural).
+
+    The browser's built-in speechSynthesis often has no Vietnamese voice and
+    falls back to an English voice that mispronounces Vietnamese text. This
+    endpoint always produces a real Vietnamese neural voice. The audio file is
+    written to the project TTS cache and reused for identical text.
+
+    Note: sync def on purpose — EdgeTTS calls asyncio.run() internally, which
+    cannot run inside the FastAPI event loop (FastAPI executes sync defs in a
+    threadpool).
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    if not _limiter.allow(f"web|{client_ip}"):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Empty text")
+    try:
+        from app.tts.fallback import TTSFallback
+
+        tts = TTSFallback(
+            cache_dir=settings.resolved_results_dir() / "tts_cache",
+            output_format="mp3",
+        )
+        out = Path(settings.resolved_results_dir()) / "tts_cache" / f"live_{uuid.uuid4().hex}.mp3"
+        path = tts.synthesize(text, out)
+        if not Path(path).suffix.lower() in {".mp3", ".wav", ".ogg"}:
+            raise RuntimeError("TTS fallback returned no audio file")
+    except Exception as exc:
+        logger.exception("TTS synthesis failed")
+        raise HTTPException(status_code=502, detail="TTS unavailable") from exc
+    return FileResponse(path, media_type="audio/mpeg")
 
 
 @app.post("/zalo/webhook")

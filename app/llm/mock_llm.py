@@ -45,6 +45,63 @@ class MockLLM(BaseLLM):
         history: Optional[list[dict]] = None,
         system_prompt: Optional[str] = None,
     ) -> dict:
+        # Hybrid router/general calls have no retrieved chunks. Keep them
+        # deterministic so privacy and session tests never require a network.
+        if not chunks and system_prompt and "router cho trợ lý hội thoại" in system_prompt:
+            lower = query.casefold()
+            if lower.strip() in {"đồng ý", "dong y", "ok", "được", "duoc"}:
+                intent = "consent_yes"
+            elif lower.strip() in {"không", "khong", "không đồng ý", "khong dong y"}:
+                intent = "consent_no"
+            elif any(word in lower for word in (
+                "luật", "nghị định", "thông tư", "thủ tục", "quyền lợi", "quyen loi",
+                "bhxh", "bhyt", "nghỉ hưu", "vượt đèn đỏ", "vuot den do", "giao thông",
+                "phạt", "khai sinh", "ly hôn", "đất", "hộ tịch", "bảo hiểm", "căn cước",
+                "người cao tuổi", "nguoi cao tuoi", "dạy thêm", "day them", "pháp luật", "phap luat", "quy định",
+            )):
+                intent = "legal"
+            else:
+                intent = "general"
+            facts = self._extract_facts(query)
+            return {"intent": intent, "profile_facts": facts, "relevant_profile_fields": [f["field"] for f in facts]}
+        if not chunks and system_prompt and "trợ lý hội thoại tiếng Việt" in system_prompt:
+            lower = query.strip().casefold()
+            if lower in {"xin chào", "chào", "hello", "hi"}:
+                answer = "Xin chào! Hôm nay bạn thế nào?"
+            elif "bạn là ai" in lower or "ban la ai" in lower:
+                answer = "Mình là Rightly, một trợ lý AI có thể trò chuyện, giải đáp các câu hỏi thường ngày và hỗ trợ bạn tra cứu pháp luật khi cần."
+            elif "khỏe" in lower or "khoe" in lower:
+                answer = "Mình khỏe, cảm ơn bạn nhé. Còn bạn hôm nay thế nào?"
+            elif re.fullmatch(r"\s*1\s*\+\s*1\s*\??\s*", lower):
+                answer = "1 + 1 = 2."
+            else:
+                answer = "Mình có thể giúp bạn giải đáp, viết, giải thích hoặc trò chuyện."
+            return {"answer_text": answer, "spoken_citation": "", "source_ids": [], "limitations": [], "next_step": ""}
+        if system_prompt and "bộ đánh giá bằng chứng" in system_prompt:
+            return {"sufficient": True, "missing_points": [], "next_queries": []}
+        if not chunks and system_prompt and "tiếp nhận hồ sơ pháp lý" in system_prompt:
+            has_birth = bool(re.search(r"\bsinh\s+(?:năm\s+)?(?:\d{4}|\d{1,2}k\d{1,2})\b", query, re.IGNORECASE))
+            has_gender = bool(re.search(r"\b(?:nam|nữ|nu)\b", query, re.IGNORECASE))
+            if has_birth and has_gender:
+                return {"ready": True}
+            if not has_birth:
+                return {"ready": False, "question": "Bạn sinh năm bao nhiêu để mình xác định điều kiện cho bạn nhé?"}
+            return {"ready": False, "question": "Bạn cho mình biết giới tính của bạn để mình tra cứu đúng quy định nhé?"}
+        if not chunks and system_prompt and "kiểm duyệt cuối cùng" in system_prompt:
+            question = query.split("CÂU TRẢ LỜI:", 1)[1].split("\n\nNGUỒN:", 1)[0].strip() if "CÂU TRẢ LỜI:" in query else query
+            first = re.split(r"(?<=[.!?])\s+", question)[0][:160] if question else ""
+            return {
+                "answer_text": json.dumps(
+                    {"summary": first, "appropriate": True, "note": ""},
+                    ensure_ascii=False,
+                )
+            }
+        if system_prompt and "viết lại một câu trả lời" in system_prompt:
+            question = query.split("\n\nEVIDENCE:", 1)[0] if "\n\nEVIDENCE:" in query else query
+            doc = self.generate_answer(question, chunks=chunks, max_chars=max_chars)
+            doc["next_step"] = "Đã chỉnh sửa lại câu trả lời cho đúng trọng tâm."
+            return doc
+
         # Keep the mock backend compatible with the two-step Agentic RAG
         # contract. This makes tests exercise parsing/grounding metadata
         # instead of silently falling back when analysis has no chunks.
@@ -226,14 +283,14 @@ class MockLLM(BaseLLM):
                     elif year and year.group(3):
                         value = year.group(3)
                 facts.append({"field": label, "value": value, "source": "user"})
-        gender = re.search(r"\b(nam|nữ|nu)\b", question, re.IGNORECASE)
+        gender = re.search(r"\b(?:tôi|em|anh|chị|mình)\s+(?:là\s+)?(nam|nữ|nu)\b", question, re.IGNORECASE)
         if gender:
             facts.append({"field": "gender", "value": "nữ" if gender.group(1).lower() in {"nữ", "nu"} else "nam", "source": "user"})
         return facts
 
     @staticmethod
     def _has_gender(question: str) -> bool:
-        return bool(re.search(r"\b(nam|nữ|nu)\b", question, re.IGNORECASE))
+        return bool(re.search(r"\b(?:tôi|em|anh|chị|mình)\s+(?:là\s+)?(nam|nữ|nu)\b", question, re.IGNORECASE))
 
     def _classify_situation(self, query: str, chunks: list[RetrievedChunk]) -> str:
         """Simple heuristic to pick template."""
