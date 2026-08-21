@@ -400,16 +400,33 @@
       container.append(row); container.scrollTop=container.scrollHeight; return row;
     }
 
-    function stopSpeak(){ if(synth) synth.cancel(); }
+    let currentAudio = null;
+    let speakSeq = 0;
+
+    function stopSpeak(){
+      speakSeq++;
+      if (synth) {
+        try { synth.cancel(); } catch(e){}
+      }
+      if (currentAudio) {
+        try {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        } catch(e){}
+        currentAudio = null;
+      }
+    }
+
     function detectLang(text){
       if(!text) return 'vi';
       const viMarks=/[ăâđêôơưĂÂĐÊÔƠƯáàảãạằẳẵặắấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/;
       if(viMarks.test(text)) return 'vi';
-      const asciiLetters=(text.match(/[A-Za-z]/g)||[]).join('');
-      const words=asciiLetters.split(/\s+/).filter(Boolean);
-      if(words.length>=2) return 'en';
+      const words = text.trim().split(/\s+/).filter(Boolean);
+      const latinWords = words.filter(w => /^[A-Za-z0-9.,!?;:'"()-]+$/.test(w));
+      if(latinWords.length >= 2) return 'en';
       return 'vi';
     }
+
     function pickVoice(lang){
       if(!synth) return null;
       const voices=synth.getVoices();
@@ -424,25 +441,52 @@
         || voices.find(v=>/vietnam/i.test(v.name))
         || null;
     }
+
     async function speak(text, lang){
+      if (!text || !text.trim()) return;
       stopSpeak();
+      const mySeq = ++speakSeq;
       const useLang = lang || detectLang(text);
-      // 1) Server-side TTS: only useful when local mode has a real provider.
+
+      // Clean text for speech
+      const cleanText = text.replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').trim();
+      if (!cleanText) return;
+
+      // 1) Server-side TTS (Edge-TTS or Google TTS mp3)
       try {
-        const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text, lang: useLang})});
-        if(r.ok){
-          const blob=await r.blob();
-          const au=new Audio(URL.createObjectURL(blob));
-          au.play(); return;
+        const r = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text: cleanText.slice(0, 300), lang: useLang})
+        });
+        if (mySeq !== speakSeq) return;
+        if (r.ok) {
+          const blob = await r.blob();
+          if (blob.size > 200) {
+            const url = URL.createObjectURL(blob);
+            const au = new Audio(url);
+            currentAudio = au;
+            au.onended = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); };
+            au.onerror = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); };
+            await au.play();
+            return;
+          }
         }
-      } catch(e){}
-      // 2) Fallback: browser TTS with a voice matching the reply language.
-      if(!synth) return;
-      const v = pickVoice(useLang);
-      const u=new SpeechSynthesisUtterance(text);
-      if(v){ u.voice=v; u.lang=v.lang; }
-      else { u.lang = useLang==='en' ? 'en-US' : 'vi-VN'; }
-      u.rate=1; u.pitch=1; synth.speak(u);
+      } catch(e) {}
+
+      if (mySeq !== speakSeq) return;
+      // 2) Fallback: Browser Web Speech Synthesis
+      if (!synth) return;
+      try {
+        synth.cancel();
+        const v = pickVoice(useLang);
+        const u = new SpeechSynthesisUtterance(cleanText);
+        if (v) { u.voice = v; u.lang = v.lang; }
+        else { u.lang = useLang === 'en' ? 'en-US' : 'vi-VN'; }
+        u.rate = 0.92;
+        u.pitch = 1.0;
+        synth.speak(u);
+      } catch(e) {}
     }
 
     async function streamAnswer(text, target, onAnswer){
@@ -465,8 +509,8 @@
               const replyLang = data.lang || detectLang(reply);
               const render = target ? addCall : add;
               render('assistant',reply,{summary:data.summary,appropriate:data.appropriate,sources:data.sources,speakable:!target});
-              if(onAnswer){ onAnswer(reply); }
-              else if(!target && speakBox.checked) speak(reply, replyLang);
+              if(onAnswer){ onAnswer(reply, replyLang); }
+              if(!target && speakBox.checked) speak(reply, replyLang);
               else if(target && speakerOn) speak(reply, replyLang);
               setStatus('sẵn sàng'); }
             else if(data.type==='error') throw new Error(data.detail);

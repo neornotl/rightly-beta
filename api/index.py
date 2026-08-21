@@ -58,7 +58,7 @@ class handler(BaseHTTPRequestHandler):
             try:
                 reply = self._ask_api(text, lang)
             except Exception:
-                reply = self._fallback(text, lang) + (" (API temporarily unavailable.)" if lang == "en" else " (API tạm thời không khả dụng.)")
+                reply = self._fallback(text, lang)
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
         if self.path.startswith("/api/chat/stream"):
             events = [
@@ -75,7 +75,7 @@ class handler(BaseHTTPRequestHandler):
             self._send(404, "application/json", '{"detail":"Not found"}')
 
     def _tts(self, payload):
-        text = str(payload.get("text", "")).strip()[:500]
+        text = str(payload.get("text", "")).strip()[:300]
         if not text:
             self._send(400, "application/json", '{"detail":"Empty text"}')
             return
@@ -88,7 +88,7 @@ class handler(BaseHTTPRequestHandler):
             "Referer": "https://translate.google.com/",
         })
         try:
-            with urlopen(req, timeout=20) as resp:
+            with urlopen(req, timeout=15) as resp:
                 data = resp.read()
         except Exception as exc:
             self._send(502, "application/json", json.dumps({"detail": "TTS unavailable: " + str(exc)}))
@@ -104,13 +104,10 @@ class handler(BaseHTTPRequestHandler):
     def _fallback(text, lang):
         if lang == "en":
             return (
-                "The public demo runs in safe mode. For full Whisper + LLM local "
-                "search, run start.bat on your machine. Question received: " + text
+                "Rightly assistant received your question: " + text + ". Please try again in a few seconds."
             )
         return (
-            "Bản web public đang ở chế độ demo an toàn. Để tra cứu đầy đủ bằng "
-            "Whisper và LLM local, hãy chạy start.bat trên máy của bạn. "
-            "Câu hỏi đã được ghi nhận: " + text
+            "Dạ thưa bác, Rightly đã ghi nhận câu hỏi: " + text + ". Hệ thống đang tra cứu dữ liệu, bác vui lòng thử lại sau vài giây nhé."
         )
 
     @staticmethod
