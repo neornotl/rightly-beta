@@ -136,10 +136,11 @@ python process listening on port 8010.
 #### Vercel public demo
 
 Vercel runs the separate lightweight handler at `api/index.py`, not the local
-FastAPI pipeline. Configure `GROQ_API_KEY` (primary) and optionally
-`PATEWAY_API_KEY` (fallback) in **Project Settings → Environment Variables**;
-never put those keys in source code or commit a real `.env`. Redeploy after an
-environment-variable change. `GET /health` reports whether a provider is
+FastAPI pipeline. Configure `GROQ_API_KEY` (primary, default model
+`openai/gpt-oss-120b`) and optionally `PATEWAY_API_KEY` (fallback) in
+**Project Settings → Environment Variables**; never put those keys in source
+code or commit a real `.env`. Redeploy after an environment-variable change.
+`GET /health` reports whether a provider is
 configured, while a provider outage returns `503` with `LLM_UNAVAILABLE`
 instead of silently substituting a canned legal answer.
 

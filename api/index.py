@@ -23,7 +23,8 @@ PATEWAY_MODEL = os.getenv("PATEWAY_MODEL", "gpt-5.6-luna")
 
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# `llama-3.3-70b-versatile` was retired by Groq on 2026-08-16.
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 
 class LLMUnavailableError(RuntimeError):
