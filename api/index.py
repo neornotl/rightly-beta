@@ -108,7 +108,22 @@ class handler(BaseHTTPRequestHandler):
     def _fallback(text, lang):
         if not text:
             return "Dạ thưa bác, Rightly có thể giúp bác giải đáp thắc mắc về luật và thủ tục hành chính nào ạ?"
-        t_low = text.lower()
+        t_low = text.lower().strip()
+
+        # 1. Chào hỏi & Giao tiếp thông thường (Greetings & Smalltalk)
+        greetings = ("hello", "helo", "hi", "xin chào", "chào", "chao", "alo", "rightly ơi", "ơi", "hey", "good morning", "good evening")
+        if any(t_low == g or t_low.startswith(g + " ") or t_low.endswith(" " + g) for g in greetings) or t_low in ("bạn là ai", "ai đó", "tro ly gi", "bạn tên gì", "la ai"):
+            if lang == "en":
+                return "Hello! I am Rightly, your dedicated Vietnamese legal and administrative assistant. How can I help you today?"
+            return "Dạ, Rightly xin chào bác! Rightly là trợ lý tư vấn pháp luật và thủ tục hành chính cho người dân. Bác đang cần tìm hiểu về luật hay thủ tục nào, cứ nói cho Rightly biết nhé!"
+
+        # 2. Cảm ơn & Tạm biệt (Thanks & Goodbye)
+        if any(w in t_low for w in ("cảm ơn", "cam on", "thank", "tks", "tạm biệt", "tam biet", "bye", "ok", "oke")):
+            if lang == "en":
+                return "You're very welcome! Feel free to ask whenever you need legal guidance. Wishing you a great day!"
+            return "Dạ không có gì ạ! Giúp được bác là niềm vui của Rightly. Bác giữ gìn sức khỏe nhé!"
+
+        # 3. Pháp luật phổ biến (Common Legal FAQs)
         if "vượt đèn đỏ" in t_low or "den do" in t_low or "đèn đỏ" in t_low:
             if "ô tô" in t_low or "oto" in t_low:
                 return "Phạt tiền từ 4.000.000 đồng đến 6.000.000 đồng đối với người điều khiển ô tô vượt đèn đỏ, đồng thời bị tước quyền sử dụng Giấy phép lái xe từ 01 tháng đến 03 tháng theo Nghị định 100/2019/NĐ-CP (sửa đổi bởi Nghị định 123/2021/NĐ-CP)."
@@ -145,19 +160,19 @@ class handler(BaseHTTPRequestHandler):
         else:
             system_prompt = (
                 "Bạn là trợ lý Rightly (Tiếng Làng) hỗ trợ người dân và người cao tuổi Việt Nam về pháp luật và thủ tục hành chính. "
-                "Hãy trả lời bằng tiếng Việt lễ phép, ân cần, đưa kết luận ĐƯỢC/KHÔNG ĐƯỢC/MỨC PHẠT lên ngay đầu câu (Luật 5 từ đầu), "
+                "Hãy trả lời bằng tiếng Việt lễ phép, ân cần. Nếu là câu chào hỏi, hãy chào lại thân mật. "
+                "Nếu là câu hỏi pháp luật, hãy đưa kết luận ĐƯỢC/KHÔNG ĐƯỢC/MỨC PHẠT lên ngay đầu câu (Luật 5 từ đầu), "
                 "ngắn gọn súc tích dưới 80 từ, nếu hỏi về mức phạt giao thông hãy nêu rõ số tiền phạt và hình phạt bổ sung (nếu có), "
                 "kèm trích dẫn tên văn bản (Nghị định 100/2019/NĐ-CP hoặc Nghị định 123/2021/NĐ-CP...)."
             )
 
-        # 1) Try Pateway (gpt-5.6-luna)
+        # 1) Try Pateway (gpt-5.6-luna) with robust unified prompt
         if PATEWAY_KEY:
             try:
                 payload = {
                     "model": PATEWAY_MODEL,
                     "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": text},
+                        {"role": "user", "content": f"{system_prompt}\n\nNgười dân nhắn: {text}\nTrả lời:"},
                     ],
                 }
                 req = Request(
