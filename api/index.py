@@ -133,16 +133,16 @@ class handler(BaseHTTPRequestHandler):
                 "Hãy trả lời bằng tiếng Việt lễ phép, ân cần, đưa kết luận ĐƯỢC/KHÔNG ĐƯỢC lên ngay đầu câu, "
                 "ngắn gọn súc tích dưới 80 từ, dễ nghe qua giọng đọc, và cảnh báo gọi 1 1 3 nếu có dấu hiệu lừa đảo/khẩn cấp."
             )
+        payload = {
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text},
+            ],
+        }
         request = Request(
             API_BASE_URL.rstrip("/") + "/chat/completions",
-            data=json.dumps({
-                "model": MODEL,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": text},
-                ],
-                "temperature": 0.2,
-            }).encode("utf-8"),
+            data=json.dumps(payload).encode("utf-8"),
             headers={"Authorization": "Bearer " + API_KEY, "Content-Type": "application/json"},
             method="POST",
         )
