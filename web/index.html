@@ -449,15 +449,17 @@
       const useLang = lang || detectLang(text);
 
       // Clean text for speech
-      const cleanText = text.replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').trim();
+      const cleanText = text.replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').replace(/Trích dẫn:.*$/i, '').trim();
       if (!cleanText) return;
+      const spokenChunk = cleanText.slice(0, 140);
 
-      // 1) Server-side TTS (Edge-TTS or Google TTS mp3)
+      // 1) Primary: Server-side TTS endpoint (works on Vercel or local)
+      const ttsEndpoint = (window.location.protocol === 'file:' ? 'https://intel-demo-topaz.vercel.app' : '') + '/api/tts';
       try {
-        const r = await fetch('/api/tts', {
+        const r = await fetch(ttsEndpoint, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({text: cleanText.slice(0, 300), lang: useLang})
+          body: JSON.stringify({text: spokenChunk, lang: useLang})
         });
         if (mySeq !== speakSeq) return;
         if (r.ok) {
@@ -475,7 +477,20 @@
       } catch(e) {}
 
       if (mySeq !== speakSeq) return;
-      // 2) Fallback: Browser Web Speech Synthesis
+      // 2) Secondary: Direct Google Translate TTS Audio (100% natural Vietnamese voice)
+      try {
+        const tl = useLang === 'en' ? 'en' : 'vi';
+        const directUrl = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + tl + '&q=' + encodeURIComponent(spokenChunk);
+        const directAu = new Audio(directUrl);
+        currentAudio = directAu;
+        directAu.onended = () => { if (currentAudio === directAu) currentAudio = null; };
+        directAu.onerror = () => { if (currentAudio === directAu) currentAudio = null; };
+        await directAu.play();
+        return;
+      } catch(e) {}
+
+      if (mySeq !== speakSeq) return;
+      // 3) Tertiary Fallback: Browser Web Speech Synthesis
       if (!synth) return;
       try {
         synth.cancel();
