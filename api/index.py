@@ -12,7 +12,11 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
-API_KEY = os.getenv("PATEWAY_API_KEY") or os.getenv("AI_API_KEY", "")
+API_KEY = (
+    os.getenv("PATEWAY_API_KEY")
+    or os.getenv("AI_API_KEY")
+    or "[REDACTED]"
+)
 API_BASE_URL = os.getenv("PATEWAY_BASE_URL", "https://api.pateway.ai/v1")
 MODEL = os.getenv("PATEWAY_MODEL", "gpt-5.6-luna")
 
@@ -124,7 +128,11 @@ class handler(BaseHTTPRequestHandler):
         if lang == "en":
             system_prompt = "You are Rightly, a concise and helpful Vietnamese legal/administrative assistant. Reply in English when the user writes in English."
         else:
-            system_prompt = "Bạn là trợ lý Rightly. Trả lời bằng tiếng Việt, ngắn gọn và hữu ích."
+            system_prompt = (
+                "Bạn là trợ lý Rightly (Tiếng Làng) hỗ trợ người dân và người cao tuổi Việt Nam về pháp luật và thủ tục hành chính. "
+                "Hãy trả lời bằng tiếng Việt lễ phép, ân cần, đưa kết luận ĐƯỢC/KHÔNG ĐƯỢC lên ngay đầu câu, "
+                "ngắn gọn súc tích dưới 80 từ, dễ nghe qua giọng đọc, và cảnh báo gọi 1 1 3 nếu có dấu hiệu lừa đảo/khẩn cấp."
+            )
         request = Request(
             API_BASE_URL.rstrip("/") + "/chat/completions",
             data=json.dumps({
