@@ -7,23 +7,52 @@ serverless build cannot fail on ML or web-framework dependencies.
 
 import json
 import os
-import base64
+import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
-PATEWAY_KEY = (
-    os.getenv("PATEWAY_API_KEY")
-    or os.getenv("AI_API_KEY")
-    or "[REDACTED]"
-)
+
+# Secrets must be configured in Vercel Environment Variables.  Do not add a
+# source-code fallback: it would be public in Git and impossible to rotate
+# safely after a leak.
+PATEWAY_KEY = os.getenv("PATEWAY_API_KEY") or os.getenv("AI_API_KEY")
 PATEWAY_BASE_URL = os.getenv("PATEWAY_BASE_URL", "https://api.pateway.ai/v1")
 PATEWAY_MODEL = os.getenv("PATEWAY_MODEL", "gpt-5.6-luna")
 
-GROQ_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
+
+
+class LLMUnavailableError(RuntimeError):
+    """Raised when no configured provider can produce an answer."""
+
+    def __init__(self, failures: list[dict[str, str]]):
+        self.failures = failures
+        super().__init__("No LLM provider is available")
+
+
+def _failure_code(exc: Exception) -> str:
+    """Return a safe, compact error category for logs and diagnostics."""
+    status = getattr(exc, "code", None)
+    if isinstance(status, int):
+        return f"http_{status}"
+    if isinstance(exc, TimeoutError):
+        return "timeout"
+    return type(exc).__name__.lower()
+
+
+def _log_provider_failure(provider: str, exc: Exception) -> None:
+    """Emit a secret-free structured log that can be inspected in Vercel."""
+    print(
+        json.dumps(
+            {"event": "llm_provider_failure", "provider": provider, "code": _failure_code(exc)}
+        ),
+        file=sys.stderr,
+        flush=True,
+    )
 
 
 class handler(BaseHTTPRequestHandler):
@@ -39,40 +68,72 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.split("?", 1)[0] == "/health":
+            providers = []
+            if GROQ_KEY:
+                providers.append("groq")
+            if PATEWAY_KEY:
+                providers.append("pateway")
             self._send(200, "application/json", json.dumps({
-                "status": "ok", "runtime": "public-api", "models": PATEWAY_MODEL if PATEWAY_KEY else "groq-fallback"
+                "status": "ok",
+                "runtime": "public-api",
+                "llm_configured": bool(providers),
+                "providers": providers,
             }))
             return
         page = (ROOT / "web" / "index.html").read_bytes()
         self._send(200, "text/html; charset=utf-8", page)
 
     def do_POST(self):
-        length = int(self.headers.get("Content-Length", "0"))
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
+            return
         raw = self.rfile.read(length) if length else b"{}"
         try:
             payload = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._send(400, "application/json", '{"detail":"Invalid JSON"}')
             return
+        path = self.path.split("?", 1)[0]
+        if path == "/api/tts":
+            self._tts(payload)
+            return
+        if path not in {"/api/chat", "/api/chat/stream"}:
+            self._send(404, "application/json", '{"detail":"Not found"}')
+            return
         text = str(payload.get("text", "")).strip()[:300]
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
-        reply = self._ask_api(text, lang) if text else self._fallback(text, lang)
+        if text:
+            try:
+                reply = self._ask_api(text, lang)
+            except LLMUnavailableError:
+                self._send(
+                    503,
+                    "application/json",
+                    json.dumps(
+                        {
+                            "code": "LLM_UNAVAILABLE",
+                            "detail": "Dịch vụ trả lời AI đang tạm thời bận. Vui lòng thử lại sau ít phút.",
+                        },
+                        ensure_ascii=False,
+                    ),
+                )
+                return
+        else:
+            reply = self._fallback(text, lang)
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
-        if self.path.startswith("/api/chat/stream"):
+        if path == "/api/chat/stream":
             events = [
                 {"type": "progress", "percent": 100, "detail": "Rightly AI"},
                 {"type": "answer", "reply": reply, "sources": ["Văn bản pháp luật"], "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
             ]
             body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
             self._send(200, "text/event-stream", body)
-        elif self.path.startswith("/api/chat"):
+        elif path == "/api/chat":
             self._send(200, "application/json", json.dumps({"reply": reply, "sources": ["Văn bản pháp luật"], "lang": reply_lang}, ensure_ascii=False))
-        elif self.path.startswith("/api/tts"):
-            self._tts(payload)
-        else:
-            self._send(404, "application/json", '{"detail":"Not found"}')
 
     def _tts(self, payload):
         text = str(payload.get("text", "")).strip()
@@ -166,35 +227,9 @@ class handler(BaseHTTPRequestHandler):
                 "kèm trích dẫn tên văn bản (Nghị định 100/2019/NĐ-CP hoặc Nghị định 123/2021/NĐ-CP...)."
             )
 
-        # 1) Try Pateway (gpt-5.6-luna) with robust unified prompt
-        if PATEWAY_KEY:
-            try:
-                payload = {
-                    "model": PATEWAY_MODEL,
-                    "messages": [
-                        {"role": "user", "content": f"{system_prompt}\n\nNgười dân nhắn: {text}\nTrả lời:"},
-                    ],
-                }
-                req = Request(
-                    PATEWAY_BASE_URL.rstrip("/") + "/chat/completions",
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers={
-                        "Authorization": "Bearer " + PATEWAY_KEY,
-                        "Content-Type": "application/json",
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Rightly/1.0",
-                        "Accept": "application/json",
-                    },
-                    method="POST",
-                )
-                with urlopen(req, timeout=12) as response:
-                    data = json.loads(response.read().decode("utf-8"))
-                content = data["choices"][0]["message"]["content"]
-                if isinstance(content, str) and content.strip():
-                    return content.strip()
-            except Exception:
-                pass
+        failures: list[dict[str, str]] = []
 
-        # 2) High-speed fallback to Groq (llama-3.3-70b-versatile)
+        # 1) Try Groq (llama-3.3-70b-versatile) - primary provider.
         if GROQ_KEY:
             try:
                 payload = {
@@ -210,19 +245,55 @@ class handler(BaseHTTPRequestHandler):
                     GROQ_BASE_URL.rstrip("/") + "/chat/completions",
                     data=json.dumps(payload).encode("utf-8"),
                     headers={
-                        "Authorization": "Bearer " + GROQ_KEY,
+                        "Authorization": "Bearer " + str(GROQ_KEY).strip(),
                         "Content-Type": "application/json",
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Rightly/1.0",
                         "Accept": "application/json",
                     },
                     method="POST",
                 )
-                with urlopen(req, timeout=10) as response:
+                with urlopen(req, timeout=6) as response:
                     data = json.loads(response.read().decode("utf-8"))
                 content = data["choices"][0]["message"]["content"]
                 if isinstance(content, str) and content.strip():
                     return content.strip()
-            except Exception:
-                pass
+                failures.append({"provider": "groq", "code": "empty_response"})
+            except Exception as exc:
+                _log_provider_failure("groq", exc)
+                failures.append({"provider": "groq", "code": _failure_code(exc)})
+        else:
+            failures.append({"provider": "groq", "code": "not_configured"})
 
-        return cls._fallback(text, lang)
+        # 2) Fallback to Pateway (gpt-5.6-luna)
+        if PATEWAY_KEY:
+            try:
+                payload = {
+                    "model": PATEWAY_MODEL,
+                    "messages": [
+                        {"role": "user", "content": f"{system_prompt}\n\nNgười dân nhắn: {text}\nTrả lời:"},
+                    ],
+                }
+                req = Request(
+                    PATEWAY_BASE_URL.rstrip("/") + "/chat/completions",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={
+                        "Authorization": "Bearer " + str(PATEWAY_KEY).strip(),
+                        "Content-Type": "application/json",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Rightly/1.0",
+                        "Accept": "application/json",
+                    },
+                    method="POST",
+                )
+                with urlopen(req, timeout=6) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+                content = data["choices"][0]["message"]["content"]
+                if isinstance(content, str) and content.strip():
+                    return content.strip()
+                failures.append({"provider": "pateway", "code": "empty_response"})
+            except Exception as exc:
+                _log_provider_failure("pateway", exc)
+                failures.append({"provider": "pateway", "code": _failure_code(exc)})
+        else:
+            failures.append({"provider": "pateway", "code": "not_configured"})
+
+        raise LLMUnavailableError(failures)

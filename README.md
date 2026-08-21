@@ -133,6 +133,16 @@ service; set the service health check to `/health`.
 To stop the server: close the window that runs `webhook_server.py`, or kill the
 python process listening on port 8010.
 
+#### Vercel public demo
+
+Vercel runs the separate lightweight handler at `api/index.py`, not the local
+FastAPI pipeline. Configure `GROQ_API_KEY` (primary) and optionally
+`PATEWAY_API_KEY` (fallback) in **Project Settings → Environment Variables**;
+never put those keys in source code or commit a real `.env`. Redeploy after an
+environment-variable change. `GET /health` reports whether a provider is
+configured, while a provider outage returns `503` with `LLM_UNAVAILABLE`
+instead of silently substituting a canned legal answer.
+
 ## Data structure
 
 ```
