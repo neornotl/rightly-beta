@@ -673,7 +673,11 @@
           } catch(err) {
             listening.remove();
             console.error('[Rightly] voice error:', err);
-            render('assistant','Mình chưa xử lý được đoạn ghi âm ('+(err&&err.message?err.message:'lỗi không rõ')+'). Bạn thử lại hoặc gõ tin nhắn nhé.');
+            const isAsrUnavailable = err && String(err.message || '').includes('Transcribe HTTP 502');
+            const voiceHelp = isAsrUnavailable
+              ? 'Nhận dạng giọng nói chưa sẵn sàng trên trình duyệt này. Bác hãy mở Rightly bằng Chrome hoặc Edge mới, cho phép Microphone, rồi thử lại nhé.'
+              : 'Mình chưa xử lý được đoạn ghi âm. Bạn thử lại hoặc gõ tin nhắn nhé.';
+            render('assistant', voiceHelp);
             setStatus('có lỗi');
           }
         };
