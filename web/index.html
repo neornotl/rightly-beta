@@ -381,7 +381,7 @@
     const chatHistory = [];
     const emptyChatTemplate = messages.innerHTML;
     const synth = window.speechSynthesis;
-    let mediaRec = null, chunks = [];
+    let mediaRec = null, speechRec = null, chunks = [];
     let callActive = false, callStart = 0, callTimerInt = null, speakerOn = true;
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }
@@ -600,10 +600,49 @@
 
     function startMicFlow(target){
       const btn = target ? callMic : mic;
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { alert('Trình duyệt này không hỗ trợ ghi âm. Hãy dùng Chrome/Edge mới.'); return; }
       const render = target ? addCall : add;
       const listening = render('assistant', '🎙 Đang nghe... bạn nói đi nhé.');
       listening.querySelector('.bubble').style.fontStyle='italic';
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        let settled = false;
+        recognition.lang = currentLang === 'en' ? 'en-US' : 'vi-VN';
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        const reset = () => {
+          if (speechRec === recognition) speechRec = null;
+          btn.classList.remove('rec'); btn.textContent='🎙';
+        };
+        recognition.onstart = () => { btn.classList.add('rec'); btn.textContent='⏹'; setStatus('đang nghe...'); };
+        recognition.onresult = async event => {
+          if (settled) return;
+          settled = true; reset(); listening.remove();
+          const heard = (event.results[0][0].transcript || '').trim();
+          if (!heard) { render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng'); return; }
+          render('user', heard);
+          await streamAnswer(heard, target);
+        };
+        recognition.onerror = event => {
+          if (settled) return;
+          settled = true; reset(); listening.remove();
+          const message = event.error === 'no-speech'
+            ? 'Mình chưa nghe thấy tiếng nói. Bác thử nói gần micro hơn rồi bấm lại nhé.'
+            : 'Chưa nhận dạng được giọng nói. Kiểm tra quyền Microphone cho trình duyệt rồi thử lại nhé.';
+          render('assistant', message); setStatus('có lỗi');
+        };
+        recognition.onend = () => {
+          reset();
+          if (!settled) {
+            settled = true; listening.remove();
+            render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng');
+          }
+        };
+        speechRec = recognition;
+        try { recognition.start(); } catch(err) { recognition.onerror({error:'start_failed'}); }
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { listening.remove(); alert('Trình duyệt này chưa hỗ trợ nhận dạng giọng nói. Hãy dùng Chrome hoặc Edge mới.'); return; }
       const doRecord = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({audio:true});
         btn.classList.add('rec'); btn.textContent='⏹'; setStatus('đang nghe...');
@@ -649,10 +688,12 @@
     }
 
     mic.addEventListener('click', () => {
+      if (speechRec) { speechRec.stop(); return; }
       if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
       startMicFlow(null);
     });
     callMic.addEventListener('click', () => {
+      if (speechRec) { speechRec.stop(); return; }
       if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
       startMicFlow(callMessages);
     });
@@ -664,6 +705,7 @@
 
     callEnd.addEventListener('click', () => {
       stopSpeak();
+      if (speechRec) { speechRec.stop(); }
       if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); }
       exitCall();
     });
