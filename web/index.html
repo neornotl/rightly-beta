@@ -370,6 +370,8 @@
     const callState = document.querySelector('#callState'), callStatus = document.querySelector('#callStatus');
     const modeChat = document.querySelector('#modeChat'), modeCall = document.querySelector('#modeCall');
     let sessionId = crypto.randomUUID();
+    const chatHistory = [];
+    const emptyChatTemplate = messages.innerHTML;
     const synth = window.speechSynthesis;
     let mediaRec = null, chunks = [];
     let callActive = false, callStart = 0, callTimerInt = null, speakerOn = true;
@@ -512,7 +514,7 @@
       const reqLang = currentLang === 'auto' ? detectLang(text) : currentLang;
       const box=progressBox(container);
       try {
-        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang})});
+        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-6)})});
         if(!r.ok) throw new Error('Không thể kết nối');
         const reader=r.body.getReader(), decoder=new TextDecoder(); let buffer='';
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
@@ -524,6 +526,8 @@
               const replyLang = data.lang || detectLang(reply);
               const render = target ? addCall : add;
               render('assistant',reply,{summary:data.summary,appropriate:data.appropriate,sources:data.sources,speakable:!target});
+              chatHistory.push({role:'user',content:text},{role:'assistant',content:reply});
+              if(chatHistory.length>6) chatHistory.splice(0,chatHistory.length-6);
               if(onAnswer){ onAnswer(reply, replyLang); }
               if(!target && speakBox.checked) speak(reply, replyLang);
               else if(target && speakerOn) speak(reply, replyLang);
@@ -546,6 +550,15 @@
     }
 
     document.querySelector('#form').addEventListener('submit', async e => { e.preventDefault(); const text=input.value.trim(); if(!text || send.disabled) return; stopSpeak(); await sendText(text); });
+
+    document.querySelector('#clear').addEventListener('click', () => {
+      stopSpeak();
+      chatHistory.length = 0;
+      sessionId = crypto.randomUUID();
+      messages.innerHTML = emptyChatTemplate;
+      setStatus('sẵn sàng');
+      input.focus();
+    });
 
     messages.addEventListener('click', e => { const chip = e.target.closest('.chip'); if(!chip) return; const q = chip.dataset.q; if(!q) return; stopSpeak(); sendText(q); });
 

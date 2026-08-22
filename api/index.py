@@ -56,6 +56,22 @@ def _log_provider_failure(provider: str, exc: Exception) -> None:
     )
 
 
+def _normalise_history(raw_history: object) -> list[dict[str, str]]:
+    """Keep a small, user-supplied conversation window for stateless functions."""
+    if not isinstance(raw_history, list):
+        return []
+    history: list[dict[str, str]] = []
+    for turn in raw_history[-6:]:
+        if not isinstance(turn, dict):
+            continue
+        role = str(turn.get("role", "")).lower()
+        content = str(turn.get("content", "")).strip()
+        if role not in {"user", "assistant"} or not content:
+            continue
+        history.append({"role": role, "content": content[:500]})
+    return history
+
+
 class handler(BaseHTTPRequestHandler):
     def _send(self, status, content_type, body):
         if isinstance(body, str):
@@ -104,12 +120,13 @@ class handler(BaseHTTPRequestHandler):
             self._send(404, "application/json", '{"detail":"Not found"}')
             return
         text = str(payload.get("text", "")).strip()[:300]
+        history = _normalise_history(payload.get("history"))
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
         if text:
             try:
-                reply = self._ask_api(text, lang)
+                reply = self._ask_api(text, lang, history)
             except LLMUnavailableError:
                 self._send(
                     503,
@@ -213,7 +230,7 @@ class handler(BaseHTTPRequestHandler):
         return "en" if letters >= 4 else "vi"
 
     @classmethod
-    def _ask_api(cls, text, lang):
+    def _ask_api(cls, text, lang, history=None):
         if lang == "en":
             system_prompt = (
                 "You are Rightly, a concise Vietnamese legal & administrative assistant. "
@@ -246,6 +263,7 @@ class handler(BaseHTTPRequestHandler):
                     "model": GROQ_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
+                        *(history or []),
                         {"role": "user", "content": text},
                     ],
                     "temperature": 0.2,
@@ -277,10 +295,21 @@ class handler(BaseHTTPRequestHandler):
         # 2) Fallback to Pateway (gpt-5.6-luna)
         if PATEWAY_KEY:
             try:
+                history_text = "\n".join(
+                    f"{'Người dân' if turn['role'] == 'user' else 'Rightly'}: {turn['content']}"
+                    for turn in (history or [])
+                )
                 payload = {
                     "model": PATEWAY_MODEL,
                     "messages": [
-                        {"role": "user", "content": f"{system_prompt}\n\nNgười dân nhắn: {text}\nTrả lời:"},
+                        {
+                            "role": "user",
+                            "content": (
+                                f"{system_prompt}\n\n"
+                                + (f"Hội thoại trước đó:\n{history_text}\n\n" if history_text else "")
+                                + f"Người dân nhắn: {text}\nTrả lời:"
+                            ),
+                        },
                     ],
                 }
                 req = Request(

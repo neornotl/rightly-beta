@@ -69,6 +69,27 @@ def test_vercel_handler_requires_clarification_for_broad_age_benefit_question(mo
     assert "Chỉ hỏi lại đúng MỘT câu" in system_prompt
 
 
+def test_vercel_handler_passes_recent_history_to_the_llm(monkeypatch):
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "PATEWAY_KEY", None)
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "BHYT answer"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    history = [
+        {"role": "user", "content": "Tôi 70 tuổi có quyền lợi gì?"},
+        {"role": "assistant", "content": "Bác muốn hỏi mảng nào?"},
+    ]
+
+    index.handler._ask_api("BHYT", "vi", history)
+
+    assert captured["messages"][1:3] == history
+    assert captured["messages"][-1] == {"role": "user", "content": "BHYT"}
+
+
 def test_vercel_handler_never_substitutes_canned_answer_when_providers_fail(monkeypatch):
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
