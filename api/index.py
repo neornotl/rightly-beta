@@ -8,8 +8,10 @@ serverless build cannot fail on ML or web-framework dependencies.
 import json
 import os
 import sys
+import uuid
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -101,18 +103,21 @@ class handler(BaseHTTPRequestHandler):
         self._send(200, "text/html; charset=utf-8", page)
 
     def do_POST(self):
+        path = self.path.split("?", 1)[0]
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
             return
         raw = self.rfile.read(length) if length else b"{}"
+        if path == "/api/voice/transcribe":
+            self._transcribe_audio(raw)
+            return
         try:
             payload = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._send(400, "application/json", '{"detail":"Invalid JSON"}')
             return
-        path = self.path.split("?", 1)[0]
         if path == "/api/tts":
             self._tts(payload)
             return
@@ -152,6 +157,56 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, "text/event-stream", body)
         elif path == "/api/chat":
             self._send(200, "application/json", json.dumps({"reply": reply, "sources": ["Văn bản pháp luật"], "lang": reply_lang}, ensure_ascii=False))
+
+    def _transcribe_audio(self, audio: bytes):
+        """Use Groq Whisper for browser audio in the lightweight Vercel app."""
+        if not audio:
+            self._send(400, "application/json", '{"detail":"Empty audio body"}')
+            return
+        if len(audio) > 20 * 1024 * 1024:
+            self._send(413, "application/json", '{"detail":"Audio too large"}')
+            return
+        if not GROQ_KEY:
+            self._send(503, "application/json", '{"detail":"Speech recognition is not configured"}')
+            return
+
+        query = parse_qs(urlparse(self.path).query)
+        ext = query.get("ext", [".webm"])[0].lower()
+        if ext not in {".webm", ".ogg", ".m4a", ".mp3", ".wav"}:
+            ext = ".webm"
+        content_type = self.headers.get("Content-Type", "application/octet-stream").split(";", 1)[0]
+        if not content_type.startswith("audio/"):
+            content_type = "audio/webm" if ext == ".webm" else "application/octet-stream"
+        boundary = f"----Rightly{uuid.uuid4().hex}"
+        body = b"".join(
+            [
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3-turbo\r\n".encode(),
+                (
+                    f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
+                    f"filename=\"recording{ext}\"\r\nContent-Type: {content_type}\r\n\r\n"
+                ).encode(),
+                audio,
+                f"\r\n--{boundary}--\r\n".encode(),
+            ]
+        )
+        try:
+            request = Request(
+                GROQ_BASE_URL.rstrip("/") + "/audio/transcriptions",
+                data=body,
+                headers={
+                    "Authorization": "Bearer " + str(GROQ_KEY).strip(),
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                    "Accept": "application/json",
+                },
+                method="POST",
+            )
+            with urlopen(request, timeout=20) as response:
+                transcript = str(json.loads(response.read().decode("utf-8")).get("text", "")).strip()
+        except Exception as exc:
+            _log_provider_failure("groq_asr", exc)
+            self._send(502, "application/json", '{"detail":"Speech recognition is temporarily unavailable"}')
+            return
+        self._send(200, "application/json", json.dumps({"transcript": transcript}, ensure_ascii=False))
 
     def _tts(self, payload):
         text = str(payload.get("text", "")).strip()
@@ -233,13 +288,15 @@ class handler(BaseHTTPRequestHandler):
     def _ask_api(cls, text, lang, history=None):
         if lang == "en":
             system_prompt = (
-                "You are Rightly, a concise Vietnamese legal & administrative assistant. "
-                "Reply in English, conclude first, under 80 words. "
+                "You are Rightly, a Vietnamese legal & administrative assistant. Reply in English. "
                 "Mandatory clarification rule: when a user asks broadly about age-based rights, "
                 "benefits, policies, or support but does not name a topic, do NOT list or assume "
                 "benefits. Ask exactly one short follow-up question that offers relevant choices "
                 "such as pension/social assistance, health insurance and care, transport benefits, "
-                "or another administrative procedure. Wait for the answer before advising."
+                "or another administrative procedure. Wait for the answer before advising. "
+                "For a specific question asking for explanation, rights, or a procedure, give a useful "
+                "Markdown answer of about 120-220 words: a bold conclusion, eligibility/important conditions, "
+                "benefits or steps, and a practical next action. Do not invent legal citations, amounts, or eligibility."
             )
         else:
             system_prompt = (
@@ -249,9 +306,10 @@ class handler(BaseHTTPRequestHandler):
                 "(ví dụ 'tôi 70 tuổi có quyền lợi gì') mà chưa nói muốn biết mảng nào, KHÔNG được tự liệt kê hoặc suy đoán quyền lợi. "
                 "Chỉ hỏi lại đúng MỘT câu ngắn để làm rõ, gợi ý các lựa chọn: lương hưu/trợ cấp xã hội, BHYT và khám chữa bệnh, "
                 "ưu đãi giao thông, hoặc thủ tục khác. Chờ người dùng trả lời rồi mới tư vấn. "
-                "Nếu là câu hỏi pháp luật, hãy đưa kết luận ĐƯỢC/KHÔNG ĐƯỢC/MỨC PHẠT lên ngay đầu câu (Luật 5 từ đầu), "
-                "ngắn gọn súc tích dưới 80 từ, nếu hỏi về mức phạt giao thông hãy nêu rõ số tiền phạt và hình phạt bổ sung (nếu có), "
-                "kèm trích dẫn tên văn bản (Nghị định 100/2019/NĐ-CP hoặc Nghị định 123/2021/NĐ-CP...)."
+                "Với câu hỏi CỤ THỂ cần giải thích quyền lợi, thủ tục hoặc quy định, trả lời bằng Markdown chi tiết vừa phải, khoảng 120-220 từ: "
+                "mở đầu bằng kết luận in đậm; sau đó dùng các mục '### Điều kiện', '### Quyền lợi hoặc cách thực hiện', và '### Việc nên làm'. "
+                "Nêu rõ điều gì còn phụ thuộc hoàn cảnh; KHÔNG bịa số tiền, mức hưởng, điều kiện, tên luật hoặc nghị định. "
+                "Nếu hỏi mức phạt giao thông và chắc chắn về dữ kiện, nêu rõ tiền phạt và hình phạt bổ sung."
             )
 
         failures: list[dict[str, str]] = []
@@ -267,7 +325,7 @@ class handler(BaseHTTPRequestHandler):
                         {"role": "user", "content": text},
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 300,
+                    "max_tokens": 500,
                 }
                 req = Request(
                     GROQ_BASE_URL.rstrip("/") + "/chat/completions",

@@ -119,12 +119,20 @@
     .row.user .who { text-align: right; }
 
     .wrap { max-width: 86%; min-width: 0; }
-    .bubble { white-space: pre-wrap; word-wrap: break-word; }
+    .bubble { word-wrap: break-word; }
     .assistant .bubble { font-size: 16.5px; line-height: 1.75; color: var(--ink); }
     .assistant .bubble::first-letter { font-family: var(--serif); font-size: 1.5em; color: var(--verm); }
+    .assistant .bubble h2, .assistant .bubble h3 { font-family: var(--serif); color: var(--verm-d); line-height: 1.3; margin: 1.1em 0 .4em; }
+    .assistant .bubble h2 { font-size: 1.2em; }
+    .assistant .bubble h3 { font-size: 1.05em; }
+    .assistant .bubble p { margin: 0 0 .8em; }
+    .assistant .bubble ul, .assistant .bubble ol { margin: .25em 0 .9em; padding-left: 1.35em; }
+    .assistant .bubble li { margin: .25em 0; padding-left: .15em; }
+    .assistant .bubble code { background: #f1eee7; border-radius: 2px; padding: .05em .25em; font: .9em var(--sans); }
+    .assistant .bubble > :last-child { margin-bottom: 0; }
     .user .bubble {
       background: var(--ink); color: #fbfaf6; padding: 13px 18px; border-radius: 3px;
-      font-size: 15.5px; line-height: 1.6;
+      font-size: 15.5px; line-height: 1.6; white-space: pre-wrap;
     }
     .source {
       font-size: 11px; letter-spacing: .04em; color: var(--muted);
@@ -378,12 +386,40 @@
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }
 
+    function renderInlineMarkdown(text){
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function renderMarkdown(text){
+      const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+      const blocks = [];
+      let listType = '';
+      const closeList = () => { if(listType){ blocks.push(`</${listType}>`); listType=''; } };
+      for(const raw of lines){
+        const line = raw.trim();
+        if(!line){ closeList(); continue; }
+        const heading = line.match(/^(#{1,3})\s+(.+)$/);
+        const unordered = line.match(/^[-*]\s+(.+)$/);
+        const ordered = line.match(/^\d+[.)]\s+(.+)$/);
+        if(heading){ closeList(); const level = heading[1].length === 1 ? 2 : 3; blocks.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`); }
+        else if(unordered){ if(listType !== 'ul'){ closeList(); listType='ul'; blocks.push('<ul>'); } blocks.push(`<li>${renderInlineMarkdown(unordered[1])}</li>`); }
+        else if(ordered){ if(listType !== 'ol'){ closeList(); listType='ol'; blocks.push('<ol>'); } blocks.push(`<li>${renderInlineMarkdown(ordered[1])}</li>`); }
+        else { closeList(); blocks.push(`<p>${renderInlineMarkdown(line)}</p>`); }
+      }
+      closeList();
+      return blocks.join('') || '<p>Mình chưa có câu trả lời.</p>';
+    }
+
     function renderBubble(role, text, opts, container){
       const row=document.createElement('div'); row.className='row '+role;
       const av=document.createElement('div'); av.className='av'; av.textContent = role==='user' ? 'B' : '⚖';
       const wrap=document.createElement('div'); wrap.className='wrap';
       const who=document.createElement('div'); who.className='who'; who.textContent = role==='user' ? 'Bạn' : 'Rightly';
-      const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=text;
+      const bubble=document.createElement('div'); bubble.className='bubble';
+      if(role === 'assistant') bubble.innerHTML=renderMarkdown(text); else bubble.textContent=text;
       wrap.append(who, bubble);
       if (opts.summary) { const s=document.createElement('div'); s.className='summary'; s.innerHTML='<b>Tóm tắt</b>'+opts.summary.replace(/</g,'&lt;'); wrap.append(s); }
       if (opts.appropriate === false) { const f=document.createElement('div'); f.className='fit warn'; f.textContent='⚠ Câu trả lời có thể chưa khớp hoàn toàn với câu hỏi.'; wrap.append(f); }
@@ -586,7 +622,7 @@
           const blob = new Blob(chunks, {type:mime});
           console.log('[Rightly] recording blob:', blob.size, 'bytes, mime:', mime);
           try {
-            const tr=await fetch('/api/voice/transcribe?ext='+ext,{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:blob});
+            const tr=await fetch('/api/voice/transcribe?ext='+ext,{method:'POST',headers:{'Content-Type':mime},body:blob});
             if(!tr.ok){ const err=await tr.json().catch(()=>({})); throw new Error('Transcribe HTTP '+tr.status+' '+JSON.stringify(err)); }
             const tx=await tr.json();
             const heard=(tx.transcript||'').trim();

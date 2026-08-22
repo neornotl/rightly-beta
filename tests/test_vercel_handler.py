@@ -38,6 +38,18 @@ def _post_handler(path: str, payload: dict):
     return request, sent
 
 
+def _raw_post_handler(path: str, body: bytes, content_type: str = "application/octet-stream"):
+    request = object.__new__(index.handler)
+    request.path = path
+    request.headers = {"Content-Length": str(len(body)), "Content-Type": content_type}
+    request.rfile = BytesIO(body)
+    sent = {}
+    request._send = lambda status, content_type, response_body: sent.update(
+        status=status, content_type=content_type, body=response_body
+    )
+    return request, sent
+
+
 def test_vercel_handler_uses_configured_primary_provider(monkeypatch):
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     monkeypatch.setattr(index, "PATEWAY_KEY", None)
@@ -67,6 +79,7 @@ def test_vercel_handler_requires_clarification_for_broad_age_benefit_question(mo
     assert "CÂU HỎI QUÁ RỘNG" in system_prompt
     assert "KHÔNG được tự liệt kê" in system_prompt
     assert "Chỉ hỏi lại đúng MỘT câu" in system_prompt
+    assert "Markdown chi tiết vừa phải" in system_prompt
 
 
 def test_vercel_handler_passes_recent_history_to_the_llm(monkeypatch):
@@ -88,6 +101,27 @@ def test_vercel_handler_passes_recent_history_to_the_llm(monkeypatch):
 
     assert captured["messages"][1:3] == history
     assert captured["messages"][-1] == {"role": "user", "content": "BHYT"}
+
+
+def test_vercel_handler_transcribes_raw_browser_audio_without_json_parsing(monkeypatch):
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured["url"] = request.full_url
+        captured["body"] = request.data
+        return _Response({"text": "Tôi cần hỏi về BHYT"})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    request, sent = _raw_post_handler("/api/voice/transcribe?ext=.webm", b"fake-webm-audio", "audio/webm")
+
+    request.do_POST()
+
+    assert sent["status"] == 200
+    assert json.loads(sent["body"]) == {"transcript": "Tôi cần hỏi về BHYT"}
+    assert captured["url"].endswith("/audio/transcriptions")
+    assert b"whisper-large-v3-turbo" in captured["body"]
+    assert b"fake-webm-audio" in captured["body"]
 
 
 def test_vercel_handler_never_substitutes_canned_answer_when_providers_fail(monkeypatch):
