@@ -50,6 +50,25 @@ def test_vercel_handler_uses_configured_primary_provider(monkeypatch):
     assert index.handler._ask_api("Xin chào", "vi") == "LLM answer"
 
 
+def test_vercel_handler_requires_clarification_for_broad_age_benefit_question(monkeypatch):
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "PATEWAY_KEY", None)
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "Dạ, bác quan tâm mảng nào ạ?"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+
+    index.handler._ask_api("Tôi năm nay 70 tuổi thì có những quyền lợi gì?", "vi")
+
+    system_prompt = captured["messages"][0]["content"]
+    assert "CÂU HỎI QUÁ RỘNG" in system_prompt
+    assert "KHÔNG được tự liệt kê" in system_prompt
+    assert "Chỉ hỏi lại đúng MỘT câu" in system_prompt
+
+
 def test_vercel_handler_never_substitutes_canned_answer_when_providers_fail(monkeypatch):
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
