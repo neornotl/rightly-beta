@@ -425,6 +425,21 @@ def make_retriever(settings: Settings) -> Retriever:
             sum(dropped.values()),
             dropped,
         )
+    # User-supplied documents (TaiLieuCuaToi) join the retrievable corpus.
+    try:
+        from app.user_docs import ingest_user_docs
+
+        summary = ingest_user_docs(settings.resolved_data_dir())
+        if summary.get("ingested"):
+            logger.info("User docs ingested: %s", summary["files"])
+    except Exception as exc:
+        logger.warning("User docs ingestion skipped: %s", exc)
+    user_chunks_file = settings.chunks_dir / "user_chunks.jsonl"
+    if user_chunks_file.exists():
+        user_records = DocumentLoader.load_chunks(user_chunks_file)
+        if user_records:
+            records = user_records + records
+            logger.info("Corpus includes %d user-doc chunk(s)", len(user_records))
 
     if settings.retrieval_backend == "hybrid":
         try:

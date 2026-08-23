@@ -1,0 +1,14 @@
+{
+  "sources": {
+    "noiquychungcuhoasen_ud": {
+      "ky_hieu": "NoiQuyChungCuHoaSen",
+      "loai": "Tài liệu người dùng",
+      "trich_yeu": "NoiQuyChungCuHoaSen",
+      "ngay_hieu_luc": "2026-08-24",
+      "expired_on": null,
+      "replaced_by": null,
+      "status": "active_verified",
+      "note": "Nguồn do người dùng cung cấp qua TaiLieuCuaToi"
+    }
+  }
+}

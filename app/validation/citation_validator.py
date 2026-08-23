@@ -63,6 +63,16 @@ class CitationValidator:
             raise FileNotFoundError(f"law status registry not found: {self.status_path}")
         data = json.loads(self.status_path.read_text(encoding="utf-8"))
         self.sources = data.get("sources", {})
+        # User-supplied documents are registered separately; accept them as
+        # valid citation targets without polluting the curated law registry.
+        user_registry = self.status_path.parent / "user_registry.json"
+        if user_registry.exists():
+            try:
+                udata = json.loads(user_registry.read_text(encoding="utf-8"))
+                for sid, info in (udata.get("sources") or {}).items():
+                    self.sources.setdefault(sid, info)
+            except (ValueError, OSError):
+                pass
 
     @staticmethod
     def _parse(value: str) -> Optional[date]:
