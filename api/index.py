@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import uuid
+import base64
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -409,15 +410,13 @@ class handler(BaseHTTPRequestHandler):
             self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
 
     def _transcribe_audio(self, audio: bytes):
-        """Use Groq Whisper for browser audio in the lightweight Vercel app."""
+        """Browser-audio transcription: Gemini (multimodal) first, Groq Whisper
+        as fallback. Both are remote; this handler stays stdlib-only."""
         if not audio:
             self._send(400, "application/json", '{"detail":"Empty audio body"}')
             return
         if len(audio) > 20 * 1024 * 1024:
             self._send(413, "application/json", '{"detail":"Audio too large"}')
-            return
-        if not GROQ_KEY:
-            self._send(503, "application/json", '{"detail":"Speech recognition is not configured"}')
             return
 
         query = parse_qs(urlparse(self.path).query)
@@ -427,36 +426,110 @@ class handler(BaseHTTPRequestHandler):
         content_type = self.headers.get("Content-Type", "application/octet-stream").split(";", 1)[0]
         if not content_type.startswith("audio/"):
             content_type = "audio/webm" if ext == ".webm" else "application/octet-stream"
-        boundary = f"----Rightly{uuid.uuid4().hex}"
-        body = b"".join(
-            [
-                f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3-turbo\r\n".encode(),
-                (
-                    f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
-                    f"filename=\"recording{ext}\"\r\nContent-Type: {content_type}\r\n\r\n"
-                ).encode(),
-                audio,
-                f"\r\n--{boundary}--\r\n".encode(),
-            ]
-        )
-        try:
-            request = Request(
-                GROQ_BASE_URL.rstrip("/") + "/audio/transcriptions",
-                data=body,
-                headers={
-                    "Authorization": "Bearer " + str(GROQ_KEY).strip(),
-                    "Content-Type": f"multipart/form-data; boundary={boundary}",
-                    "Accept": "application/json",
-                },
-                method="POST",
+
+        failures: list[dict[str, str]] = []
+
+        # 1) Gemini multimodal transcription (works with express keys).
+        if GEMINI_KEY:
+            try:
+                mime_map = {
+                    ".webm": "audio/webm",
+                    ".ogg": "audio/ogg",
+                    ".m4a": "audio/mp4",
+                    ".mp3": "audio/mpeg",
+                    ".wav": "audio/wav",
+                }
+                inline = {
+                    "mime_type": mime_map.get(ext, "audio/webm"),
+                    "data": base64.b64encode(audio).decode("ascii"),
+                }
+                payload = {
+                    "contents": [
+                        {
+                            "role": "user",
+                            "parts": [
+                                {
+                                    "text": (
+                                        "Transcribe this audio recording verbatim in its "
+                                        "spoken language. Output ONLY the transcript text, "
+                                        "no commentary."
+                                    )
+                                },
+                                {"inline_data": inline},
+                            ],
+                        }
+                    ],
+                    "generationConfig": {"temperature": 0.0, "maxOutputTokens": 300},
+                }
+                key = str(GEMINI_KEY).strip()
+                if key.startswith("AQ."):
+                    url = (
+                        "https://aiplatform.googleapis.com/v1beta1/publishers/google/models/"
+                        f"{GEMINI_MODEL}:generateContent"
+                    )
+                    headers = {"x-goog-api-key": key}
+                else:
+                    url = (
+                        "https://generativelanguage.googleapis.com/v1beta/models/"
+                        f"{GEMINI_MODEL}:generateContent?key={key}"
+                    )
+                    headers = {}
+                req = Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json", **headers},
+                    method="POST",
+                )
+                with urlopen(req, timeout=25) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+                cand = (data.get("candidates") or [{}])[0]
+                text = "".join(
+                    p.get("text", "")
+                    for p in ((cand.get("content") or {}).get("parts") or [])
+                ).strip()
+                if text:
+                    self._send(200, "application/json", json.dumps({"transcript": text}, ensure_ascii=False))
+                    return
+                failures.append({"provider": "gemini_asr", "code": "empty_response"})
+            except Exception as exc:
+                _log_provider_failure("gemini_asr", exc)
+                failures.append({"provider": "gemini_asr", "code": _failure_code(exc)})
+
+        # 2) Groq Whisper fallback.
+        if GROQ_KEY:
+            boundary = f"----Rightly{uuid.uuid4().hex}"
+            body = b"".join(
+                [
+                    f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3-turbo\r\n".encode(),
+                    (
+                        f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
+                        f"filename=\"recording{ext}\"\r\nContent-Type: {content_type}\r\n\r\n"
+                    ).encode(),
+                    audio,
+                    f"\r\n--{boundary}--\r\n".encode(),
+                ]
             )
-            with urlopen(request, timeout=20) as response:
-                transcript = str(json.loads(response.read().decode("utf-8")).get("text", "")).strip()
-        except Exception as exc:
-            _log_provider_failure("groq_asr", exc)
-            self._send(502, "application/json", '{"detail":"Speech recognition is temporarily unavailable"}')
-            return
-        self._send(200, "application/json", json.dumps({"transcript": transcript}, ensure_ascii=False))
+            try:
+                request = Request(
+                    GROQ_BASE_URL.rstrip("/") + "/audio/transcriptions",
+                    data=body,
+                    headers={
+                        "Authorization": "Bearer " + str(GROQ_KEY).strip(),
+                        "Content-Type": f"multipart/form-data; boundary={boundary}",
+                        "Accept": "application/json",
+                    },
+                    method="POST",
+                )
+                with urlopen(request, timeout=20) as response:
+                    transcript = str(json.loads(response.read().decode("utf-8")).get("text", "")).strip()
+                self._send(200, "application/json", json.dumps({"transcript": transcript}, ensure_ascii=False))
+                return
+            except Exception as exc:
+                _log_provider_failure("groq_asr", exc)
+                failures.append({"provider": "groq_asr", "code": _failure_code(exc)})
+
+        _log_provider_failure("asr_all", Exception(json.dumps(failures)))
+        self._send(502, "application/json", '{"detail":"Speech recognition is temporarily unavailable"}')
 
     def _tts(self, payload):
         text = str(payload.get("text", "")).strip()

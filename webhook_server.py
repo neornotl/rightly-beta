@@ -288,6 +288,42 @@ async def local_voice(request: Request):
     }
 
 
+@app.post("/api/voice/transcribe")
+async def voice_transcribe_only(request: Request):
+    """Transcribe-only endpoint matching the Vercel handler contract.
+
+    The web UI's MediaRecorder fallback posts here; browser
+    SpeechRecognition remains the primary input path.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    key = f"web|{client_ip}"
+    if _quota_denied(key):
+        raise HTTPException(
+            status_code=429,
+            detail="Anh/chị đã vượt số lượt tra cứu cho phép. Xin vui lòng quay lại sau ạ.",
+        )
+    if not _check_circuit():
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+    if request.headers.get("content-length", "0").isdigit() and int(request.headers["content-length"]) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio too large")
+    try:
+        audio = await request.body()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not read audio body")
+    if not audio:
+        raise HTTPException(status_code=400, detail="Empty audio body")
+    try:
+        transcript = get_pipeline().transcribe_audio_bytes(
+            audio, extension=request.query_params.get("ext", ".webm")
+        )
+        _record_success()
+    except Exception as exc:
+        _record_failure()
+        logger.exception("Voice transcribe failed")
+        raise HTTPException(status_code=502, detail="ASR unavailable") from exc
+    return {"transcript": transcript}
+
+
 @app.delete("/api/session/{session_id}")
 async def delete_local_session(session_id: str):
     get_pipeline().delete_session(session_id)
