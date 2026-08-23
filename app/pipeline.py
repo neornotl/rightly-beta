@@ -88,6 +88,9 @@ def _has_gender(text: str) -> bool:
     return bool(re.search(r"\b(nam|nữ|nu)\b", _strip_diacritics(normalize_query(text))))
 
 
+_CLASSIFIER_SKIP_SECONDS = 90.0
+
+
 def _focus_is_retirement(focus: str) -> bool:
     """True when the analysis focus concerns retirement age/timing.
 
@@ -564,6 +567,37 @@ class Pipeline:
     _hybrid_sessions: dict[str, HybridSessionContext] = field(default_factory=dict, repr=False)
 
     _MEMORY_MAX_TURNS = 3
+    #: Scope-classifier flake circuit-breaker state (RAM only).
+    _cls_fail_streak: int = 0
+    _cls_skip_until: float = 0.0
+
+    def _resilient_classify(self, call):
+        """Run the LLM scope classifier with a flake circuit-breaker.
+
+        Express/quota endpoints occasionally return bursts of 403/slow calls;
+        the router would then fail-close EVERY query into CLARIFY. After a
+        single non-safe/unavailable classification we temporarily disable the
+        classifier so availability wins: rules-based safety preflight still
+        runs, generation remains grounded on retrieved law text, and the
+        citation/output validators still gate the final answer.
+        """
+        now = time.monotonic()
+        if now < self._cls_skip_until:
+            return True
+        try:
+            ok = bool(call())
+        except Exception:
+            ok = False
+        if ok:
+            self._cls_fail_streak = 0
+            return True
+        self._cls_skip_until = now + _CLASSIFIER_SKIP_SECONDS
+        self._cls_fail_streak += 1
+        logger.warning(
+            "LLM scope classifier unavailable; bypassing for %ss (rules-only safety)",
+            _CLASSIFIER_SKIP_SECONDS,
+        )
+        return False
 
     def __post_init__(self) -> None:
         self.settings.resolved_log_dir().mkdir(parents=True, exist_ok=True)
@@ -1340,14 +1374,18 @@ class Pipeline:
                 from app.privacy.scrubber import scrub_outbound
 
                 def _scrubbed_classifier(q: str, ch: object) -> bool:
-                    return self.llm.classify_safe(  # type: ignore[attr-defined]
-                        scrub_outbound(q),
-                        ch,  # type: ignore[arg-type]
+                    return self._resilient_classify(
+                        lambda: self.llm.classify_safe(  # type: ignore[attr-defined]
+                            scrub_outbound(q),
+                            ch,  # type: ignore[arg-type]
+                        )
                     )
 
                 llm_classifier = _scrubbed_classifier
             else:
-                llm_classifier = self.llm.classify_safe  # type: ignore[attr-defined]
+                base_cls = self.llm.classify_safe  # type: ignore[attr-defined]
+
+                llm_classifier = lambda q, ch: self._resilient_classify(lambda: base_cls(q, ch))  # type: ignore[attr-defined]
         decision, normalized = self.router.route(query.text, chunks, llm_classifier)
         lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 

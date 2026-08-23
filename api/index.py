@@ -28,6 +28,99 @@ GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 # `llama-3.3-70b-versatile` was retired by Groq on 2026-08-16.
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
+# Google Gemini (primary). Keys starting with "AQ." are Vertex AI
+# express-mode credentials and must hit the aiplatform endpoint; classic
+# "AIza..." keys use the generativelanguage developer endpoint.
+GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+try:
+    GEMINI_THINKING = int(os.getenv("GEMINI_THINKING_BUDGET", "512"))
+except ValueError:
+    GEMINI_THINKING = 512
+
+# Per-IP abuse guard for the PUBLIC page (single warm instance, best-effort).
+RATE_LIMIT_PER_IP = int(os.getenv("RATE_LIMIT_PER_IP", "20"))
+RATE_LIMIT_WARN_AT = float(os.getenv("RATE_LIMIT_WARN_AT", "0.8"))
+_RL_HITS: dict[str, list[float]] = {}
+
+
+def _rate_check(ip: str) -> tuple[bool, int, str | None]:
+    """(allowed, remaining, warning). Records one hit."""
+    import time as _t
+
+    now = _t.monotonic()
+    hits = [t for t in _RL_HITS.get(ip, []) if now - t < 3600.0]
+    if RATE_LIMIT_PER_IP <= 0 or len(hits) >= RATE_LIMIT_PER_IP:
+        _RL_HITS[ip] = hits
+        return False, 0, None
+    hits.append(now)
+    _RL_HITS[ip] = hits
+    remaining = RATE_LIMIT_PER_IP - len(hits)
+    warn = None
+    if remaining <= max(1, int(RATE_LIMIT_PER_IP * (1 - RATE_LIMIT_WARN_AT))):
+        warn = (
+            f"Anh/chị còn khoảng {remaining} lượt tra cứu trong giờ này. "
+            "Vui lòng chỉ hỏi các câu cần thiết để mọi người cùng được phục vụ ạ."
+        )
+    return True, remaining, warn
+
+
+def _gemini_reply(system_prompt: str, text: str, history) -> str:
+    """One Gemini call through stdlib only; raises on any failure."""
+    key = str(GEMINI_KEY).strip()
+    model = GEMINI_MODEL
+    if key.startswith("AQ."):
+        url = (
+            "https://aiplatform.googleapis.com/v1beta1/publishers/google/models/"
+            f"{model}:generateContent"
+        )
+        headers = {"x-goog-api-key": key}
+    else:
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent?key={key}"
+        )
+        headers = {}
+    gen_cfg: dict = {
+        "temperature": 0.2,
+        "maxOutputTokens": 700,
+        "responseMimeType": "application/json",
+    }
+    if model.startswith("gemini-2.5") and GEMINI_THINKING >= 0:
+        gen_cfg["thinkingConfig"] = {"thinkingBudget": GEMINI_THINKING}
+    parts = [{"text": system_prompt}]
+    for turn in (history or [])[-4:]:
+        prefix = "Trả lời trước của Rightly: " if turn.get("role") == "assistant" else ""
+        parts.append({"text": (prefix + str(turn.get("content", "")))[:1500]})
+    parts.append({"text": text})
+    payload = {
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": gen_cfg,
+    }
+    req = Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", **headers},
+        method="POST",
+    )
+    with urlopen(req, timeout=14) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    cand = (data.get("candidates") or [{}])[0]
+    content = "".join(
+        p.get("text", "") for p in ((cand.get("content") or {}).get("parts") or [])
+    )
+    cleaned = content.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    try:
+        obj = json.loads(cleaned)
+        reply_text = str(obj.get("answer_text") or "").strip()
+        if reply_text:
+            return reply_text
+    except json.JSONDecodeError:
+        pass
+    if content.strip():
+        return content.strip()
+    raise RuntimeError("empty gemini response")
+
 
 class LLMUnavailableError(RuntimeError):
     """Raised when no configured provider can produce an answer."""
@@ -124,6 +217,22 @@ class handler(BaseHTTPRequestHandler):
         if path not in {"/api/chat", "/api/chat/stream"}:
             self._send(404, "application/json", '{"detail":"Not found"}')
             return
+        client_ip = self.headers.get("x-forwarded-for", "").split(",")[0].strip() or "anon"
+        allowed, _remaining, warn = _rate_check(client_ip)
+        if not allowed:
+            self._send(
+                429,
+                "application/json",
+                json.dumps(
+                    {
+                        "code": "RATE_LIMITED",
+                        "detail": "Anh/chị đã vượt số lượt tra cứu cho phép trong giờ này. "
+                        "Xin vui lòng quay lại sau ạ.",
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+            return
         text = str(payload.get("text", "")).strip()[:300]
         history = _normalise_history(payload.get("history"))
         lang = str(payload.get("lang", "auto")).lower()
@@ -156,7 +265,10 @@ class handler(BaseHTTPRequestHandler):
             body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
             self._send(200, "text/event-stream", body)
         elif path == "/api/chat":
-            self._send(200, "application/json", json.dumps({"reply": reply, "sources": ["Văn bản pháp luật"], "lang": reply_lang}, ensure_ascii=False))
+            body = {"reply": reply, "sources": ["Văn bản pháp luật"], "lang": reply_lang}
+            if warn:
+                body["rate_warning"] = warn
+            self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
 
     def _transcribe_audio(self, audio: bytes):
         """Use Groq Whisper for browser audio in the lightweight Vercel app."""
@@ -313,6 +425,19 @@ class handler(BaseHTTPRequestHandler):
             )
 
         failures: list[dict[str, str]] = []
+
+        # 0) Try Gemini (Google Cloud / AI Studio) - primary provider.
+        if GEMINI_KEY:
+            try:
+                reply_text = _gemini_reply(system_prompt, text, history)
+                if reply_text:
+                    return reply_text
+                failures.append({"provider": "gemini", "code": "empty_response"})
+            except Exception as exc:
+                _log_provider_failure("gemini", exc)
+                failures.append({"provider": "gemini", "code": _failure_code(exc)})
+        else:
+            failures.append({"provider": "gemini", "code": "not_configured"})
 
         # 1) Try Groq (llama-3.3-70b-versatile) - primary provider.
         if GROQ_KEY:

@@ -125,6 +125,7 @@ def test_vercel_handler_transcribes_raw_browser_audio_without_json_parsing(monke
 
 
 def test_vercel_handler_never_substitutes_canned_answer_when_providers_fail(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
 
@@ -137,6 +138,7 @@ def test_vercel_handler_never_substitutes_canned_answer_when_providers_fail(monk
         index.handler._ask_api("Viết một câu thơ", "vi")
 
     assert exc_info.value.failures == [
+        {"provider": "gemini", "code": "not_configured"},
         {"provider": "groq", "code": "http_401"},
         {"provider": "pateway", "code": "http_401"},
     ]
@@ -159,6 +161,7 @@ def test_vercel_chat_returns_503_instead_of_a_canned_answer_when_llm_fails(monke
 
 
 def test_vercel_tries_pateway_when_groq_fails(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
     calls = []
@@ -173,6 +176,47 @@ def test_vercel_tries_pateway_when_groq_fails(monkeypatch):
 
     assert index.handler._ask_api("Xin chào", "vi") == "Pateway answer"
     assert len(calls) == 2
+
+
+def test_vercel_tries_gemini_first_when_configured(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "AQ.test-express-key")
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "PATEWAY_KEY", None)
+    calls = []
+
+    def call_provider(request, **_kwargs):
+        calls.append(request.full_url)
+        if "aiplatform.googleapis.com" in request.full_url:
+            payload = {
+                "candidates": [
+                    {"content": {"parts": [{"text": '{"answer_text": "Gemini answer"}'}]}}
+                ]
+            }
+            return _Response(payload)
+        return _Response({"choices": [{"message": {"content": "Groq answer"}}]})
+
+    monkeypatch.setattr(index, "urlopen", call_provider)
+
+    assert index.handler._ask_api("Xin chào", "vi") == "Gemini answer"
+    assert len(calls) == 1
+    assert "gemini-2.5-flash" in calls[0]
+
+
+def test_vercel_rate_limit_blocks_after_cap(monkeypatch):
+    monkeypatch.setattr(index, "RATE_LIMIT_PER_IP", 2)
+    monkeypatch.setattr(index, "RATE_LIMIT_WARN_AT", 0.8)
+    monkeypatch.setattr(index.handler, "_ask_api", lambda *_args, **_kw: "ok")
+    index._RL_HITS.clear()
+    statuses = []
+    sent429 = None
+    for i in range(3):
+        request, sent = _post_handler("/api/chat", {"text": "xin chào"})
+        request.do_POST()
+        statuses.append(sent["status"])
+        if sent["status"] == 429:
+            sent429 = sent
+    assert statuses == [200, 200, 429]
+    assert "vượt số lượt" in json.loads(sent429["body"])["detail"]
 
 
 def test_vercel_handler_has_no_embedded_provider_key():

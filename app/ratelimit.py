@@ -45,6 +45,14 @@ class RateLimiter:
             self._hits[key] = hits
             return max(0, self.limit - len(hits))
 
+    def used(self, key: str, now: float | None = None) -> int:
+        """Number of recorded hits inside the window (no new hit recorded)."""
+        stamp = now if now is not None else time.monotonic()
+        with self._lock:
+            hits = [t for t in self._hits.get(key, []) if stamp - t < self.window_seconds]
+            self._hits[key] = hits
+            return len(hits)
+
     def sweep(self, now: float | None = None) -> int:
         """Drop expired entries; returns how many keys were removed."""
         stamp = now if now is not None else time.monotonic()

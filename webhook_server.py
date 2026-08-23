@@ -66,6 +66,41 @@ _limiter = RateLimiter(
     limit=settings.rate_limit_per_ip,
     window_seconds=settings.rate_limit_window_seconds,
 )
+# Daily per-IP cap (abuse guard; 0 = disabled)
+_daily_limiter = RateLimiter(
+    limit=getattr(settings, "rate_limit_per_ip_daily", 0),
+    window_seconds=86400,
+)
+# Off-topic/refusal counter: too many refused queries => likely abuse
+_offtopic_limiter = RateLimiter(limit=25, window_seconds=3600)
+_WARN_AT = getattr(settings, "rate_limit_warn_at", 0.8)
+
+
+def _quota_denied(key: str) -> bool:
+    """True when the hourly OR daily cap is exhausted."""
+    if not _limiter.allow(key):
+        return True
+    if _daily_limiter.limit > 0 and not _daily_limiter.allow(f"d|{key}"):
+        return True
+    return False
+
+
+def _quota_warning(key: str) -> Optional[str]:
+    """Friendly heads-up when the client nears their hourly cap."""
+    remaining = _limiter.remaining(key)
+    if _limiter.limit <= 0 or remaining > max(1, int(_limiter.limit * (1 - _WARN_AT))):
+        return None
+    if remaining <= 0:
+        return "Anh/chị đã dùng hết lượt tra cứu trong giờ này, xin quay lại sau ạ."
+    return (
+        f"Anh/chị còn khoảng {remaining} lượt tra cứu trong giờ này. "
+        "Vui lòng chỉ hỏi các câu cần thiết để mọi người cùng được phục vụ ạ."
+    )
+
+
+def _offtopic_blocked(key: str) -> bool:
+    # remaining() peeks WITHOUT recording; hits are recorded only on REFUSE.
+    return _offtopic_limiter.remaining(f"o|{key}") <= 0
 
 # Circuit breaker state
 _circuit_open = False
@@ -138,6 +173,15 @@ async def lifespan(app: FastAPI):
         logger.info("Pipeline ready")
     except Exception as e:
         logger.error(f"Pipeline init failed: {e}")
+    # Warm the LLM scope classifier so a flaky express endpoint trips the
+    # breaker at boot instead of on the first real user question.
+    try:
+        p = get_pipeline()
+        if hasattr(p.llm, "classify_safe"):
+            p._resilient_classify(lambda: p.llm.classify_safe("khởi động hệ thống", []))
+            logger.info("Classifier warmup done (skip_until=%s)", p._cls_skip_until > 0)
+    except Exception as e:
+        logger.warning(f"Classifier warmup skipped: {e}")
     yield
     # Shutdown
     logger.info("Shutting down...")
@@ -159,8 +203,17 @@ async def local_chat_ui():
 @app.post("/api/chat")
 async def local_chat(body: ChatRequest, request: Request):
     client_ip = request.client.host if request.client else "unknown"
-    if not _limiter.allow(f"web|{client_ip}"):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    key = f"web|{client_ip}"
+    if _offtopic_blocked(key):
+        raise HTTPException(
+            status_code=429,
+            detail="Bạn đã gửi quá nhiều câu ngoài phạm vi. Vui lòng thử lại sau ạ.",
+        )
+    if _quota_denied(key):
+        raise HTTPException(
+            status_code=429,
+            detail="Anh/chị đã vượt số lượt tra cứu cho phép. Xin vui lòng quay lại sau ạ.",
+        )
     if not _check_circuit():
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
     try:
@@ -171,38 +224,20 @@ async def local_chat(body: ChatRequest, request: Request):
         logger.exception("Local chat pipeline error")
         raise HTTPException(status_code=502, detail="Chat backend unavailable") from exc
     answer = result.answer
-    """
-    client_ip = request.client.host if request.client else "unknown"
-    if not _limiter.allow(f"web|{client_ip}"):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    if not _check_circuit():
-        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
-    if request.headers.get("content-length", "0").isdigit() and int(request.headers["content-length"]) > 20 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Audio too large")
-    try:
-        audio = await request.body()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Could not read audio body")
-    if not audio:
-        raise HTTPException(status_code=400, detail="Empty audio body")
-    logger.info(
-        "VOICE_TRANSCRIBE received session=%s ext=%s bytes=%d ctype=%s",
-        request.query_params.get("session_id", ""),
-        request.query_params.get("ext", ".webm"),
-        len(audio),
-        request.headers.get("content-type", ""),
-    )
-    try:
-        transcript = get_pipeline().transcribe_audio_bytes(
-            audio, extension=request.query_params.get("ext", ".webm")
-        )
-        _record_success()
-        logger.info("VOICE_TRANSCRIBE OK bytes=%d transcript=%r", len(audio), transcript)
-    except Exception as exc:
-        _record_failure()
-        logger.exception("VOICE_TRANSCRIBE FAILED bytes=%d", len(audio))
-        raise HTTPException(status_code=502, detail="ASR unavailable") from exc
-    return {"transcript": transcript}
+    warning = _quota_warning(key)
+    if answer is not None:
+        action_value = getattr(getattr(result.decision, "action", None), "value", "")
+        if action_value == "REFUSE":
+            _offtopic_limiter.allow(f"o|{key}")
+    return {
+        "transcript": body.text.strip(),
+        "reply": answer.answer_text if answer else result.decision.user_message,
+        "sources": list(answer.source_ids) if answer else [],
+        "decision": result.decision.zone.value,
+        "summary": answer.summary if answer else "",
+        "appropriate": answer.appropriate if answer else None,
+        "rate_warning": warning,
+    }
 
 
 @app.post("/api/voice")
@@ -214,8 +249,12 @@ async def local_voice(request: Request):
     audio file is deleted immediately after transcription.
     """
     client_ip = request.client.host if request.client else "unknown"
-    if not _limiter.allow(f"web|{client_ip}"):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    key = f"web|{client_ip}"
+    if _quota_denied(key):
+        raise HTTPException(
+            status_code=429,
+            detail="Anh/chị đã vượt số lượt tra cứu cho phép. Xin vui lòng quay lại sau ạ.",
+        )
     if not _check_circuit():
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
     session_id = request.query_params.get("session_id", "")
@@ -309,8 +348,11 @@ async def zalo_webhook(
     """
     # Rate limit by client IP
     client_ip = request.client.host if request.client else "unknown"
-    if not _limiter.allow(f"zalo|{client_ip}"):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    if _quota_denied(f"zalo|{client_ip}"):
+        raise HTTPException(
+            status_code=429,
+            detail="Anh/chị đã vượt số lượt tra cứu cho phép. Xin vui lòng quay lại sau ạ.",
+        )
 
     # Circuit breaker
     if not _check_circuit():

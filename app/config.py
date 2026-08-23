@@ -97,6 +97,10 @@ class Settings:
     llm_fallback_backend: str = ""
     rate_limit_per_ip: int = 60
     rate_limit_window_seconds: int = 3600
+    #: Daily per-IP hard cap for hosted deploys (0 = disabled).
+    rate_limit_per_ip_daily: int = 0
+    #: Fraction of the hourly quota after which a friendly warning is sent.
+    rate_limit_warn_at: float = 0.8
     delete_raw_audio_after_session: bool = True
     save_transcripts: bool = False
     legal_intake: bool = False
@@ -266,6 +270,12 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
     rate_limit_window = _int_env("RATE_LIMIT_WINDOW_SECONDS", 3600)
     if rate_limit_per_ip < 0 or rate_limit_window <= 0:
         raise ConfigError("RATE_LIMIT_PER_IP >= 0 and RATE_LIMIT_WINDOW_SECONDS > 0 required.")
+    rate_limit_daily = _int_env("RATE_LIMIT_PER_IP_DAILY", 0)
+    if rate_limit_daily < 0:
+        raise ConfigError("RATE_LIMIT_PER_IP_DAILY must be >= 0 (0 = disabled).")
+    rate_limit_warn_at = _float_env("RATE_LIMIT_WARN_AT", 0.8)
+    if not (0 < rate_limit_warn_at <= 1):
+        raise ConfigError("RATE_LIMIT_WARN_AT must be in (0, 1].")
 
     max_context = _int_env("MAX_CONTEXT_CHARS", 12000)
     max_response = _int_env("MAX_RESPONSE_CHARS", 2000)
@@ -340,6 +350,8 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         llm_fallback_backend=llm_fallback_backend,
         rate_limit_per_ip=rate_limit_per_ip,
         rate_limit_window_seconds=rate_limit_window,
+        rate_limit_per_ip_daily=rate_limit_daily,
+        rate_limit_warn_at=rate_limit_warn_at,
         delete_raw_audio_after_session=_bool_env("DELETE_RAW_AUDIO_AFTER_SESSION", True),
         save_transcripts=_bool_env("SAVE_TRANSCRIPTS", False),
         legal_intake=_bool_env("LEGAL_INTAKE", False),

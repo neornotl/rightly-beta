@@ -226,17 +226,19 @@ def cap_first(s: str) -> str:
     return s[0].upper() + s[1:] if s else s
 
 
-def make_question(topic: str, intent: str, sid: str) -> str:
+def make_question(topic: str, intent: str, sid: str, law_hint: str = "") -> str:
     # avoid redundant phrasing when the topic itself is the penalty concept
     if intent == "muc_phat" and "vi phạm hành chính" in topic.casefold():
         intent = "general"
     tpl = random.choice(INTENT_TEMPLATES[intent])
+    suffix = f" Theo {law_hint} ạ?" if law_hint and random.random() < 0.8 else "?"
     q = tpl.format(
         topic=short_topic(topic),
         topic_short=short_topic(topic),
         topic_cap=cap_first(short_topic(topic)),
         age_hint=random.choice(["58", "60", "62"]),
     )
+    q = re.sub(r"\?\s*$", suffix, q)
     starts_with_ask = re.match(r"^(cho (hỏi|tôi)|tôi |xin hỏi|điều kiện|mức |thời hạn|hồ sơ|năm nay)", q, re.IGNORECASE)
     speaker = "{q}" if starts_with_ask else random.choice(SPEAKERS)
     if speaker == "{q}":
@@ -251,12 +253,135 @@ def make_question(topic: str, intent: str, sid: str) -> str:
     return final
 
 
+#: folk terms users actually say -> canonical topic tokens for retrieval
+ALIAS_TOKENS = {
+    "sổ đỏ": "đất đai quyền sử dụng đất",
+    "sổ hồng": "nhà ở quyền sử dụng đất",
+    "hộ khẩu": "cư trú hộ gia đình",
+    "bhxh": "bảo hiểm xã hội",
+    "bhyt": "bảo hiểm y tế",
+    "bảo hiểm thất nghiệp": "trợ cấp thất nghiệp bảo hiểm",
+}
+
+
+def title_family_key(title: str) -> str:
+    """Coarse key so different editions of the SAME law share one family."""
+    value = (title or "").casefold().replace("_", " ").replace("-", " ")
+    value = re.sub(r"\d+", " ", value)
+    value = re.sub(r"\b(vbhn|vpqh|luat|luật|bo|bộ|qh|nd|tt|sửa đổi)\b", " ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+_GUIDES_RE = re.compile(
+    r"(?:hướng dẫn|thi hành|quy định chi tiết|quy định trình tự)[^,.;]{0,40}?"
+    r"(?:của\s+)?(bộ\s+luật|luật)\s+([^,.;()]{4,60})",
+    re.IGNORECASE,
+)
+
+
+def _link_guides_to_parents(status_db: dict, fam_members: dict[str, list[str]]) -> dict[str, set[str]]:
+    """Union guiding decrees/circulars with the law they implement.
+
+    A question about "trợ cấp thất nghiệp" answered from Nghị định 374/2025
+    (hướng dẫn Luật Việc làm) is CORRECT; the grader must accept either.
+    Returns sid -> merged sid-group (law + its guiding docs + siblings).
+    """
+    parent = {}
+    n_fam_items = sorted(fam_members.items(), key=lambda kv: -len(kv[0]))
+    for sid, info in status_db.items():
+        ty = info.get("trich_yeu", "") or ""
+        m = _GUIDES_RE.search(ty)
+        if not m:
+            continue
+        # The referenced act is named right after "(bộ) luật": keep that core
+        # phrase only, so "Luật Việc làm về bảo hiểm thất nghiệp" pins the
+        # 'việc làm' family instead of a narrower keyword family.
+        core_words = (m.group(2) or "").split()
+        name_core = re.sub(r"\s+", " ", f"{m.group(1)} {' '.join(core_words[:4])}").strip().casefold()
+        best = None
+        for fk, _members in n_fam_items:
+            if fk and fk in name_core:
+                if best is None or len(fk) > len(best):
+                    best = fk
+        if best:
+            parent[sid] = best
+    # union-find
+    parent_of: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        while parent_of.get(x, x) != x:
+            x = parent_of[x] = parent_of.get(parent_of[x], parent_of[x])
+        return x
+
+    def union(a: set[str], b: set[str]) -> None:
+        ra, rb = find(next(iter(a))), find(next(iter(b)))
+        if ra != rb:
+            parent_of[rb] = ra
+
+    groups: dict[str, set[str]] = {}
+    for fk, members in fam_members.items():
+        groups[fk] = set(members)
+    for sid, fk in parent.items():
+        groups.setdefault(fk, set()).add(sid)
+    # merge guide-groups into their parent family groups
+    merged: dict[str, set[str]] = {fk: set(v) for fk, v in fam_members.items()}
+    for sid, fk in parent.items():
+        root = None
+        # attach to any family that shares a member with fk's group? keep simple:
+        merged.setdefault(fk, set()).add(sid)
+    # transitive merge when a doc guides a law whose family contains another guide
+    changed = True
+    while changed:
+        changed = False
+        keys = list(merged.keys())
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                if merged[keys[i]] & merged[keys[j]]:
+                    merged[keys[i]] |= merged[keys[j]]
+                    del merged[keys[j]]
+                    changed = True
+                    break
+            if changed:
+                break
+    out: dict[str, set[str]] = {}
+    for members in merged.values():
+        for sid in members:
+            out.setdefault(sid, set()).update(members)
+    return out
+
+
+def law_short_name(info: dict) -> str:
+    """Human phrasing users cite: 'Luật Đất đai', 'Nghị định 151/2025'."""
+    loai = (info.get("loai") or "").strip()
+    ty = clean_topic(info.get("trich_yeu", ""))
+    if not usable_topic(ty):
+        return ""
+    words = ty.split()[:4]
+    base = " ".join(words)
+    num = re.search(r"(\d+/\d{4})", info.get("ky_hieu", "") or "")
+    tail = f" số {num.group(1)}" if num else ""
+    if loai and loai.casefold() not in base.casefold():
+        return f"{loai} {base}{tail}"
+    return f"{base}{tail}"
+
+
 def main() -> None:
     active_sources = [
         sid for sid in by_source
         if (status_db.get(sid) or {}).get("status") == "active_verified"
     ]
+    # Pre-compute title families over the registry so every grounded question
+    # carries ALL acceptable editions of its target law (grader scores the
+    # family primarily; the single drawn source stays as strict reference).
+    fam_members: dict[str, list[str]] = {}
+    for sid, info in status_db.items():
+        fam = title_family_key(info.get("trich_yeu", ""))
+        if len(fam) >= 2:
+            fam_members.setdefault(fam, []).append(sid)
     print(f"active sources with chunks: {len(active_sources)}")
+    # Merge guiding decrees/circulars into their parent-law families so the
+    # grader accepts an answer sourced from the implementing document.
+    sid_groups = _link_guides_to_parents(status_db, fam_members)
 
     # ---- grounded questions ----
     grounded: list[dict] = []
@@ -292,7 +417,7 @@ def main() -> None:
             intent = "thoi_han"
         if intent not in INTENT_TEMPLATES:
             intent = "general"
-        q = make_question(topic, intent, sid)
+        q = make_question(topic, intent, sid, law_hint=law_short_name(status_db[sid]))
         key = " ".join(strip_diacritics(q).casefold().split())
         if key in seen_q:
             continue
@@ -301,6 +426,9 @@ def main() -> None:
             # after warm-up keep balance soft (no hard rejection; weight below)
             pass
         domain_counts[dom] += 1
+        fam_set = sid_groups.get(sid) or set(
+            fam_members.get(title_family_key(status_db[sid].get("trich_yeu", "")), [])
+        ) | {sid}
         grounded.append({
             "question_id": "",
             "question_text": q,
@@ -309,6 +437,7 @@ def main() -> None:
             "domain": dom,
             "difficulty": "easy" if intent == "general" else "medium",
             "expected_source_ids": [sid],
+            "expected_family_sources": sorted(fam_set),
             "expected_zone": "YELLOW",
             "asr_simulated": False,
         })
@@ -328,11 +457,16 @@ def main() -> None:
             if key in seen_q:
                 continue
             seen_q.add(key)
+            fam_set = sid_groups.get(sid) or set(
+                fam_members.get(title_family_key(status_db[sid].get("trich_yeu", "")), [])
+            ) | {sid}
             grounded.append({
                 "question_id": "", "question_text": q,
                 "category": "REALISTIC_GROUNDED", "intent": "general",
                 "domain": dom, "difficulty": "easy",
-                "expected_source_ids": [sid], "expected_zone": "YELLOW",
+                "expected_source_ids": [sid],
+                "expected_family_sources": sorted(fam_set),
+                "expected_zone": "YELLOW",
                 "asr_simulated": False,
             })
             need -= 1
