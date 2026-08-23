@@ -38,7 +38,10 @@ class TestSystemPromptTone:
         assert "không bịa thông tin" in SYSTEM_PROMPT
 
     def test_safety_rules_present(self):
-        assert "113" in SYSTEM_PROMPT and "115" in SYSTEM_PROMPT
+        # The prompt spells hotlines with spaced digits ("1 1 3") so TTS
+        # reads them digit by digit; accept either spelling.
+        assert "113" in SYSTEM_PROMPT or "1 1 3" in SYSTEM_PROMPT
+        assert "115" in SYSTEM_PROMPT or "1 1 5" in SYSTEM_PROMPT
         assert "hết hiệu lực" in SYSTEM_PROMPT
         assert "Ngoài phạm vi" in SYSTEM_PROMPT
 

@@ -40,7 +40,7 @@ from app.logging_utils import JsonlLogger, SessionStore, utc_now_iso
 from app.metrics_logger import log_pipeline_result
 from app.retrieval.base import Retriever
 from app.retrieval.bm25_retriever import BM25Retriever
-from app.retrieval.document_loader import DocumentLoader
+from app.retrieval.document_loader import DocumentLoader, filter_retrievable
 from app.retrieval.agentic_retriever import AgenticRetriever, AgenticReasoner
 from app.faq import _strip_diacritics
 from app.safety.policy import Policy
@@ -53,6 +53,7 @@ from app.schemas import (
     PipelineResult,
     ProfileFact,
     RetrievedChunk,
+    SafetyDecision,
     UserQuery,
     Zone,
 )
@@ -412,12 +413,22 @@ def make_retriever(settings: Settings) -> Retriever:
         cache_path = settings.chunks_dir / "demo_embeddings.npz"
         exclude_demo = False
 
+    records = DocumentLoader.load_chunks(chunks_file)
+    status_path = settings.resolved_data_dir() / "law_status.json"
+    records, dropped = filter_retrievable(records, status_path=status_path)
+    if any(dropped.values()):
+        logger.warning(
+            "Corpus load dropped %d chunk(s): %s",
+            sum(dropped.values()),
+            dropped,
+        )
+
     if settings.retrieval_backend == "hybrid":
         try:
             from app.retrieval.hybrid_retriever import HybridRetriever
 
             return HybridRetriever.from_chunks(
-                DocumentLoader.load_chunks(chunks_file),
+                records,
                 cache_path=cache_path,
                 exclude_demo=exclude_demo,
                 rerank=settings.retriever_rerank,
@@ -430,10 +441,10 @@ def make_retriever(settings: Settings) -> Retriever:
             # model download, or native runtime is unavailable. BM25 remains a
             # deterministic, fully local retrieval path.
             logger.warning("Hybrid retrieval unavailable (%s); falling back to BM25.", exc)
-            return BM25Retriever.from_jsonl(chunks_file)
+            return BM25Retriever.from_chunks(records)
     if settings.retrieval_backend != "bm25":
         raise ValueError(f"Unsupported retrieval backend: {settings.retrieval_backend}")
-    return BM25Retriever.from_jsonl(chunks_file)
+    return BM25Retriever.from_chunks(records)
 
 
 def make_llm(settings: Settings) -> BaseLLM:
