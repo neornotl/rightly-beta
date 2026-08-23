@@ -486,6 +486,18 @@
       const mySeq = ++speakSeq;
       const useLang = lang || detectLang(text);
 
+      // Auto-listen after TTS finishes in Call Mode
+      function triggerAutoListen() {
+        if (callActive && speakerOn) {
+          if (callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
+          setTimeout(() => {
+            if (callActive && !callMic.disabled) {
+              startMicFlow(callMessages);
+            }
+          }, 800);
+        }
+      }
+
       // Clean text for speech
       const cleanText = text.replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').replace(/Trích dẫn:.*$/i, '').trim();
       if (!cleanText) return;
@@ -506,7 +518,7 @@
             const url = URL.createObjectURL(blob);
             const au = new Audio(url);
             currentAudio = au;
-            au.onended = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); };
+            au.onended = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); triggerAutoListen(); };
             au.onerror = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); };
             await au.play();
             return;
@@ -521,7 +533,7 @@
         const directUrl = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + tl + '&q=' + encodeURIComponent(spokenChunk);
         const directAu = new Audio(directUrl);
         currentAudio = directAu;
-        directAu.onended = () => { if (currentAudio === directAu) currentAudio = null; };
+        directAu.onended = () => { if (currentAudio === directAu) currentAudio = null; triggerAutoListen(); };
         directAu.onerror = () => { if (currentAudio === directAu) currentAudio = null; };
         await directAu.play();
         return;
@@ -538,6 +550,7 @@
         else { u.lang = useLang === 'en' ? 'en-US' : 'vi-VN'; }
         u.rate = 0.92;
         u.pitch = 1.0;
+        u.onend = () => { triggerAutoListen(); };
         synth.speak(u);
       } catch(e) {}
     }
@@ -547,8 +560,23 @@
       const disableMic = target ? callMic : mic;
       disableMic.disabled=true; if(!target){ input.disabled=true; send.disabled=true; send.textContent='...'; }
       setStatus('đang xử lý');
+      if (target && callState) callState.textContent = '⚖ Đang tra cứu nguồn luật...';
       const reqLang = currentLang === 'auto' ? detectLang(text) : currentLang;
       const box=progressBox(container);
+      let gotAnswer = false;
+      // Safety timeout: if no answer within 30s, show friendly fallback
+      const safetyTimeout = setTimeout(() => {
+        if (!gotAnswer && box.parentNode) {
+          box.remove();
+          const render = target ? addCall : add;
+          const msg = 'Dạ, Rightly chưa tìm được câu trả lời. Bác thử hỏi lại nhé.';
+          render('assistant', msg, {speakable: !target});
+          if (target && speakerOn) speak(msg);
+          else if (!target && speakBox.checked) speak(msg);
+          setStatus('sẵn sàng');
+          if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
+        }
+      }, 30000);
       try {
         const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-6)})});
         if(!r.ok) throw new Error('Không thể kết nối');
@@ -556,9 +584,28 @@
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
           const lines=buffer.split('\n\n'); buffer=lines.pop();
           for(const block of lines){ const line=block.split('\n').find(x=>x.startsWith('data: ')); if(!line) continue;
-            const data=JSON.parse(line.slice(6));
-            if(data.type==='progress'){ box.querySelector('.bar').style.width=data.percent+'%'; box.querySelector('.stage').textContent=data.detail||'đang xử lý'; setStatus(data.detail||'đang xử lý'); }
-            else if(data.type==='answer'){ box.remove(); const reply=data.reply||'Mình chưa có câu trả lời.';
+            const raw = line.slice(6).trim();
+            if (!raw || raw === '[DONE]') continue;
+            let data;
+            try { data = JSON.parse(raw); } catch(parseErr) {
+              console.warn('[Rightly] SSE JSON parse error, skipping chunk:', raw.substring(0, 120), parseErr);
+              continue;
+            }
+            if(data.type==='progress'){
+              const bar = box.querySelector('.bar');
+              const stage = box.querySelector('.stage');
+              if (bar) bar.style.width = (data.percent || 0) + '%';
+              if (stage) stage.textContent = data.detail || 'đang xử lý';
+              setStatus(data.detail||'đang xử lý');
+              if (target && callState) callState.textContent = '⚖ ' + (data.detail || 'Đang tra cứu...');
+            }
+            else if(data.type==='ack'){
+              if (target && callState) callState.textContent = '⚖ ' + (data.text || 'Đang tra cứu nguồn luật...');
+              if (data.text && ((target && speakerOn) || (!target && speakBox.checked))) {
+                speak(data.text, 'vi');
+              }
+            }
+            else if(data.type==='answer'){ gotAnswer = true; clearTimeout(safetyTimeout); box.remove(); const reply=data.reply||'Mình chưa có câu trả lời.';
               const replyLang = data.lang || detectLang(reply);
               const render = target ? addCall : add;
               render('assistant',reply,{summary:data.summary,appropriate:data.appropriate,sources:data.sources,speakable:!target});
@@ -567,16 +614,21 @@
               if(onAnswer){ onAnswer(reply, replyLang); }
               if(!target && speakBox.checked) speak(reply, replyLang);
               else if(target && speakerOn) speak(reply, replyLang);
-              setStatus('sẵn sàng'); }
-            else if(data.type==='error') throw new Error(data.detail);
+              setStatus('sẵn sàng');
+              if (target && callState) callState.textContent = '🔊 Đang đọc câu trả lời...';
+            }
+            else if(data.type==='error') throw new Error(data.detail || 'Server error');
           } }
-      } catch(err) { box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
-        const render = target ? addCall : add;
-        render('assistant',msg,{speakable:!target});
-        if(target && speakerOn) speak(msg);
-        else if(!target && speakBox.checked) speak(msg);
-        setStatus('có lỗi'); }
-      finally { if(target){ callMic.disabled=false; } else { input.disabled=false; mic.disabled=false; send.disabled=false; send.textContent='Gửi'; input.focus(); } }
+      } catch(err) { clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
+        if (!gotAnswer) {
+          const render = target ? addCall : add;
+          render('assistant',msg,{speakable:!target});
+          if(target && speakerOn) speak(msg);
+          else if(!target && speakBox.checked) speak(msg);
+        }
+        setStatus('có lỗi');
+        if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
+      } finally { clearTimeout(safetyTimeout); if(target){ callMic.disabled=false; } else { input.disabled=false; mic.disabled=false; send.disabled=false; send.textContent='Gửi'; input.focus(); } }
     }
 
     async function sendText(text){
@@ -620,7 +672,12 @@
           settled = true; reset(); listening.remove();
           const heard = (event.results[0][0].transcript || '').trim();
           if (!heard) { render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng'); return; }
+          if (target && callState) callState.textContent = '✨ Đã nghe: ' + heard.substring(0, 40) + (heard.length > 40 ? '...' : '');
           render('user', heard);
+          // Auto-ack: immediate friendly response before pipeline runs
+          const ackMsgs = ['Dạ, Rightly đang tra cứu cho bác...', 'Dạ, để Rightly tìm hiểu nhé...', 'Vâng ạ, Rightly đang xem...'];
+          const ackText = ackMsgs[Math.floor(Math.random() * ackMsgs.length)];
+          if (target && callState) callState.textContent = '⚖ ' + ackText;
           await streamAnswer(heard, target);
         };
         recognition.onerror = event => {
@@ -668,7 +725,12 @@
             console.log('[Rightly] transcript:', heard);
             listening.remove();
             if(!heard){ render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng'); return; }
+            if (target && callState) callState.textContent = '✨ Đã nghe: ' + heard.substring(0, 40) + (heard.length > 40 ? '...' : '');
             render('user', heard);
+            // Auto-ack: immediate friendly response before pipeline runs
+            const ackMsgs2 = ['Dạ, Rightly đang tra cứu cho bác...', 'Dạ, để Rightly tìm hiểu nhé...', 'Vâng ạ, Rightly đang xem...'];
+            const ackText2 = ackMsgs2[Math.floor(Math.random() * ackMsgs2.length)];
+            if (target && callState) callState.textContent = '⚖ ' + ackText2;
             await streamAnswer(heard, target);
           } catch(err) {
             listening.remove();
