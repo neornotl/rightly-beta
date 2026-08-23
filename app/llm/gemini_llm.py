@@ -124,6 +124,11 @@ class GeminiLLM(BaseLLM):
         except json.JSONDecodeError as exc:
             # Not retryable: a fresh call fails the same way (F/T3 fix).
             raise LLMError(f"Gemini returned non-JSON output: {exc}") from exc
+        if not parsed.get("answer_text"):
+            for alt in ("answer", "reply", "response"):
+                if parsed.get(alt):
+                    parsed["answer_text"] = str(parsed[alt])
+                    break
         parsed.setdefault("source_ids", [])
         parsed.setdefault("limitations", [])
         parsed.setdefault("next_step", "")

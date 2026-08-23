@@ -7,6 +7,7 @@ serverless build cannot fail on ML or web-framework dependencies.
 
 import json
 import os
+import re
 import sys
 import uuid
 from http.server import BaseHTTPRequestHandler
@@ -65,6 +66,131 @@ def _rate_check(ip: str) -> tuple[bool, int, str | None]:
     return True, remaining, warn
 
 
+def _extract_json_obj(s: str):
+    """Pull the first balanced {...} object even when strings contain raw
+    newlines (models emit unescaped control chars despite JSON mime)."""
+    start = s.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    instr = False
+    esc = False
+    end = -1
+    for i in range(start, len(s)):
+        ch = s[i]
+        if instr:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                instr = False
+        else:
+            if ch == '"':
+                instr = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+    if end == -1:
+        return None
+    raw = s[start:end]
+    # Repair unescaped control characters inside strings only.
+    fixed: list[str] = []
+    in_str = False
+    esc2 = False
+    for c in raw:
+        if in_str:
+            if esc2:
+                esc2 = False
+                fixed.append(c)
+            elif c == "\\":
+                esc2 = True
+                fixed.append(c)
+            elif c == '"':
+                in_str = False
+                fixed.append(c)
+            elif c == "\n":
+                fixed.append("\\n")
+            elif c == "\r":
+                pass
+            elif c == "\t":
+                fixed.append("\\t")
+            else:
+                fixed.append(c)
+        else:
+            if c == '"':
+                in_str = True
+            fixed.append(c)
+    try:
+        return json.loads("".join(fixed))
+    except json.JSONDecodeError:
+        return None
+
+
+def _pick_answer(obj) -> str:
+    if isinstance(obj, dict):
+        for k in ("answer_text", "answer", "reply"):
+            v = str(obj.get(k) or "").strip()
+            if v:
+                return v
+        for v in obj.values():
+            sv = str(v).strip()
+            if len(sv) > 20:
+                return sv
+    elif isinstance(obj, list):
+        for item in obj:
+            t = _pick_answer(item)
+            if t:
+                return t
+    return ""
+
+
+def _loose_field(s: str, keys=("answer_text", "answer", "reply")) -> str:
+    """Scan-based extraction of a top-level string field, tolerant of raw
+    newlines and escaped/inner quotes inside the value."""
+    for key in keys:
+        marker = f'"{key}"'
+        kpos = s.find(marker)
+        while kpos != -1:
+            i = kpos + len(marker)
+            # skip whitespace then expect ':'
+            while i < len(s) and s[i] in " \t\r\n":
+                i += 1
+            if i >= len(s) or s[i] != ":":
+                kpos = s.find(marker, kpos + 1)
+                continue
+            i += 1
+            while i < len(s) and s[i] in " \t\r\n":
+                i += 1
+            if i >= len(s) or s[i] != '"':
+                kpos = s.find(marker, kpos + 1)
+                continue
+            i += 1
+            out: list[str] = []
+            while i < len(s):
+                c = s[i]
+                if c == "\\" and i + 1 < len(s):
+                    nxt = s[i + 1]
+                    pair = {"n": "\n", "t": "\t", "r": "", '"': '"', "\\": "\\"}
+                    out.append(pair.get(nxt, "\\" + nxt))
+                    i += 2
+                    continue
+                if c == '"':
+                    return "".join(out).strip()
+                out.append(c)
+                i += 1
+            # unterminated (raw newlines are fine — they stay literal)
+            val = "".join(out).strip()
+            if val:
+                return val
+            kpos = s.find(marker, kpos + 1)
+    return ""
+
+
 def _gemini_reply(system_prompt: str, text: str, history) -> str:
     """One Gemini call through stdlib only; raises on any failure."""
     key = str(GEMINI_KEY).strip()
@@ -110,13 +236,16 @@ def _gemini_reply(system_prompt: str, text: str, history) -> str:
         p.get("text", "") for p in ((cand.get("content") or {}).get("parts") or [])
     )
     cleaned = content.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    obj = None
     try:
         obj = json.loads(cleaned)
-        reply_text = str(obj.get("answer_text") or "").strip()
-        if reply_text:
-            return reply_text
     except json.JSONDecodeError:
-        pass
+        obj = _extract_json_obj(cleaned or content)
+    reply_text = _pick_answer(obj) if obj is not None else ""
+    if not reply_text:
+        reply_text = _loose_field(cleaned or content)
+    if reply_text:
+        return reply_text
     if content.strip():
         return content.strip()
     raise RuntimeError("empty gemini response")
@@ -175,6 +304,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("x-rightly-build", "v3-loosefield")
         self.end_headers()
         self.wfile.write(body)
 
@@ -257,6 +387,14 @@ class handler(BaseHTTPRequestHandler):
         else:
             reply = self._fallback(text, lang)
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
+        # Final safety net: any provider that wrapped its answer in a JSON
+        # envelope gets unwrapped so the UI never shows raw JSON.
+        if reply.lstrip().startswith("{"):
+            fixed = _pick_answer(_extract_json_obj(reply))
+            if not fixed:
+                fixed = _loose_field(reply)
+            if fixed:
+                reply = fixed
         if path == "/api/chat/stream":
             events = [
                 {"type": "progress", "percent": 100, "detail": "Rightly AI"},
