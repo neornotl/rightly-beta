@@ -85,18 +85,18 @@ def recommend(info: dict) -> dict:
     ram = info["ram_gb"]
     vram = info["gpu_vram_gb"]
     ollama = info["ollama"]
-    if vram >= 8 and ollama:
-        model, note = "qwen2.5:14b-instruct-q4_K_M", "GPU mạnh - suy luận local tốt nhất"
+    if vram >= 10 and ollama:
+        model, note = "qwen2.5:14b-instruct-q4_K_M", "GPU manh - suy luận local tot nhat"
     elif vram >= 6 and ollama:
-        model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU vừa - nhanh"
-    elif ram >= 16 and ollama:
-        model, note = "qwen2.5:7b-instruct-q4_K_M", "CPU nhiều RAM - chậm hơn nhưng đủ dùng"
-    elif ram >= 8 and ollama:
-        model, note = "qwen2.5:3b-instruct-q4_K_M", "Máy yếu - bản gọn"
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU vua - nhanh va chinh xac"
+    elif ram >= 14 and ollama:
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "RAM du lon - chay CPU, chinh xac cao (khong can nhanh)"
+    elif ram >= 6 and ollama:
+        model, note = "qwen2.5:3b-instruct-q4_K_M", "May nhe - ban gon thong minh"
     elif ram >= 8:
-        model, note = "", "Chưa có Ollama - khuyến nghị cài để chạy AI trong máy"
+        model, note = "", "Chua co Ollama - khuyen nghi cai de chay AI trong may"
     else:
-        model, note = "", "Máy cấu hình thấp - dùng chế độ cloud (cần API key)"
+        model, note = "", "May cau hinh thap - dung che do cloud (can API key)"
     return {
         "llm_backend": "local" if model else ("gemini" if ram >= 4 else "mock"),
         "ollama_model": model,

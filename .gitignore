@@ -80,3 +80,8 @@ RIGHTLY_SCHOLARSHIP_INTRO.md
 .DS_Store
 Thumbs.db
 .vercel
+.env*
+
+dist/
+build/
+*.spec
