@@ -6,10 +6,12 @@ serverless build cannot fail on ML or web-framework dependencies.
 """
 
 import json
+import math
 import os
 import re
 import sys
 import uuid
+import gzip
 import base64
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
@@ -44,6 +46,124 @@ except ValueError:
 RATE_LIMIT_PER_IP = int(os.getenv("RATE_LIMIT_PER_IP", "20"))
 RATE_LIMIT_WARN_AT = float(os.getenv("RATE_LIMIT_WARN_AT", "0.8"))
 _RL_HITS: dict[str, list[float]] = {}
+
+# ---------------------------------------------------------------------------
+# Compact BM25 retrieval pack (built by scripts/build_vercel_rag.py).
+# Grounds the public web app on the real legal corpus without any heavy deps.
+# ---------------------------------------------------------------------------
+_RAG: dict | None = None
+_RAG_STOP = {
+    "toi", "ban", "ong", "ba", "chu", "co", "chau", "em", "anh", "chi", "cua",
+    "va", "voi", "la", "thi", "ma", "de", "cho", "tai", "o", "khong", "phai",
+    "nen", "se", "da", "dang", "duoc", "bi", "nay", "kia", "day", "gi", "nao",
+    "sao", "vi", "nhung", "hay", "hoac", "neu", "cung", "rat", "cac", "mot",
+    "can", "muon", "hoi", "giup", "khi", "vao", "ra", "len", "xuong", "di",
+    "lai", "xem", "con", "deu", "moi", "nguoi", "the", "lam",
+}
+
+
+def _rag_norm_tokens(text: str) -> list[str]:
+    t = text.replace("đ", "d").replace("Đ", "D")
+    t = unicodedata_normalize(t)
+    return [t for t in re.findall(r"[a-z0-9]+", t) if t not in _RAG_STOP]
+
+
+def unicodedata_normalize(text: str) -> str:
+    import unicodedata as _ud
+
+    t = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in t if not _ud.combining(ch)).casefold()
+
+
+def _rag() -> dict:
+    global _RAG
+    if _RAG is None:
+        base = Path(__file__).resolve().parent / "rag"
+        try:
+            with gzip.open(base / "index.json.gz", "rt", encoding="utf-8") as fh:
+                idx = json.load(fh)
+            with gzip.open(base / "texts.json.gz", "rt", encoding="utf-8") as fh:
+                texts = json.load(fh)
+            _RAG = {**idx, "texts": texts}
+            print(
+                json.dumps({"event": "rag_loaded", "n": idx.get("N", 0)}),
+                file=sys.stderr,
+                flush=True,
+            )
+        except Exception as exc:  # pack missing/corrupt: degrade gracefully
+            print(
+                json.dumps({"event": "rag_load_failed", "code": str(exc)[:120]}),
+                file=sys.stderr,
+                flush=True,
+            )
+            _RAG = {"N": 0}
+    return _RAG
+
+
+def _bm25_search(query: str, top_k: int = 6) -> list[dict]:
+    """Pure-python BM25 over the shipped pack; mirrors app/bm25_retriever."""
+    rag = _rag()
+    if not rag.get("N"):
+        return []
+    q_tokens = _rag_norm_tokens(query)
+    if not q_tokens:
+        return []
+    uniq = set(q_tokens)
+    postings: dict = rag["postings"]
+    doclens: list = rag["doclens"]
+    meta: list = rag["meta"]
+    texts: dict = rag["texts"]
+    n = rag["N"]
+    k1, b, avgdl = rag["k1"], rag["b"], rag["avgdl"]
+
+    acc: dict[int, float] = {}
+    for term in uniq:
+        plist = postings.get(term)
+        if not plist:
+            continue
+        df = len(plist)
+        idf = math.log(1 + (n - df + 0.5) / (df + 0.5))
+        for idx, tf in plist:
+            denom = tf + k1 * (1 - b + b * doclens[idx] / avgdl)
+            acc[idx] = acc.get(idx, 0.0) + idf * (tf * (k1 + 1)) / denom
+
+    # overlap guard (>=2 shared tokens for multi-token queries), then BM25 order
+    scored = sorted(acc.items(), reverse=True)
+    results: list[dict] = []
+    sid_count: dict[str, int] = {}
+    taken = 0
+    for sc, idx in scored[:60]:
+        m = meta[idx]
+        if len(uniq) > 1:
+            overlap = uniq & set(_rag_norm_tokens(texts.get(m["cid"], "")))
+            if len(overlap) < 2:
+                continue
+        if sid_count.get(m["sid"], 0) >= 2 and taken < top_k:
+            continue
+        sid_count[m["sid"]] = sid_count.get(m["sid"], 0) + 1
+        taken += 1
+        results.append(
+            {
+                "cid": m["cid"],
+                "sid": m["sid"],
+                "title": m.get("ti", ""),
+                "text": texts.get(m["cid"], ""),
+                "score": round(sc, 3),
+            }
+        )
+        if len(results) >= top_k:
+            break
+    return results
+
+
+def _format_sources_block(hits: list[dict]) -> tuple[str, list[str]]:
+    lines = []
+    sids: list[str] = []
+    for h in hits:
+        lines.append(f"[{h['sid']}] {h['title']}\n{h['text']}")
+        if h["sid"] not in sids:
+            sids.append(h["sid"])
+    return "\n\n".join(lines), sids[:4]
 
 
 def _rate_check(ip: str) -> tuple[bool, int, str | None]:
@@ -369,9 +489,25 @@ class handler(BaseHTTPRequestHandler):
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
+
+        # Ground the question on the shipped legal corpus before any LLM call.
+        rag_hits = _bm25_search(text, top_k=6) if text else []
+        sources_out: list[str] = ["Văn bản pháp luật"]
         if text:
             try:
-                reply = self._ask_api(text, lang, history)
+                aug_text = text
+                if rag_hits:
+                    block, sids = _format_sources_block(rag_hits)
+                    sources_out = sids
+                    aug_text = (
+                        f"{text}\n\n=== NGUỒN PHÁP LUẬT (CHỈ được dùng các đoạn dưới đây, "
+                        f"KHÔNG bịa số liệu/tên văn bản ngoài nguồn) ===\n{block}\n"
+                        f"=== HẾT NGUỒN ===\nNếu nguồn trên không đủ để trả lời chính xác, "
+                        f"hãy nói thẳng 'hiện chưa có dữ liệu chính xác trong nguồn' và gợi ý "
+                        f"liên hệ cơ quan có thẩm quyền. Kết thúc bằng dòng: "
+                        f"Trích dẫn: <tên các văn bản đã dùng>."
+                    )
+                reply = self._ask_api(aug_text, lang, history)
             except LLMUnavailableError:
                 self._send(
                     503,
@@ -387,6 +523,7 @@ class handler(BaseHTTPRequestHandler):
                 return
         else:
             reply = self._fallback(text, lang)
+            rag_hits = []
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
         # Final safety net: any provider that wrapped its answer in a JSON
         # envelope gets unwrapped so the UI never shows raw JSON.
@@ -399,12 +536,12 @@ class handler(BaseHTTPRequestHandler):
         if path == "/api/chat/stream":
             events = [
                 {"type": "progress", "percent": 100, "detail": "Rightly AI"},
-                {"type": "answer", "reply": reply, "sources": ["Văn bản pháp luật"], "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
+                {"type": "answer", "reply": reply, "sources": sources_out, "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
             ]
             body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
             self._send(200, "text/event-stream", body)
         elif path == "/api/chat":
-            body = {"reply": reply, "sources": ["Văn bản pháp luật"], "lang": reply_lang}
+            body = {"reply": reply, "sources": sources_out, "lang": reply_lang}
             if warn:
                 body["rate_warning"] = warn
             self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
