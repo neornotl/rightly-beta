@@ -17,6 +17,13 @@ tests/
 docs/
 scripts/
 app/
+release/
+Bach-Xuan/
+legal-sources/
+legal_sources/
+TaiLieuCuaToi/
+eval/
+gates/
 *.onnx
 *.bin
 *.sqlite3
