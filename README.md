@@ -7,9 +7,9 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 ## Sản phẩm
 
 - **Bản web:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bản release:** nhánh [`release`](https://github.com/neornotl/rightly-beta/tree/release) của repo này.
+- **Bản release nguồn:** nhánh [`release`](https://github.com/neornotl/rightly-beta/tree/release) của repo beta.
+- **Repo release công khai:** [`neornotl/rightly`](https://github.com/neornotl/rightly/tree/release), được đồng bộ từ nhánh release nguồn.
 - **Bản phát triển:** nhánh [`dev`](https://github.com/neornotl/rightly-beta/tree/dev). Bản web hiện theo dõi nhánh này để nhóm kiểm thử liên tục.
-- **Repo nền/nghiên cứu:** [`neornotl/rightly`](https://github.com/neornotl/rightly).
 
 ## Những gì bản này có
 
@@ -31,6 +31,8 @@ Xem [`docs/`](docs/) và các file `requirements*.txt` để biết đúng cấu
 
 Chi tiết biểu mẫu, phạm vi thu thập phản hồi và cách xử lý dữ liệu: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
 
+Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
+
 ## Credit
 
 | Thành viên | Vai trò | Email |
@@ -42,4 +44,3 @@ Chi tiết biểu mẫu, phạm vi thu thập phản hồi và cách xử lý d�
 ## An toàn và giới hạn
 
 Rightly ưu tiên trả lời có căn cứ và có thể hỏi lại, từ chối hoặc hướng người dùng tới kênh chính thức khi thiếu nguồn hoặc gặp tình huống rủi ro. Không gửi thông tin nhạy cảm vào issue/pull request; hãy đọc chính sách riêng tư trước khi chạy pilot.
-
