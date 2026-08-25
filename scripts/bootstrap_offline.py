@@ -8,8 +8,8 @@ and run there exactly once:
 
 It fetches everything the cloud stack has already learned to do, locally:
   1. python deps ................. requirements.txt + optional (incl. torch CUDA)
-  2. Ollama server + LLM model ... qwen2.5:7b-instruct-q4_k_m (~4.8GB VRAM,
-                                    JSON-stable, council round-26 pick)
+  2. Ollama server + LLM model ... qwen2.5:3b-instruct-q4_k_m (~2GB,
+                                    balanced default for fast CPU chat)
   3. faster-whisper ASR weights . Systran/faster-whisper-small (local-only)
   4. Dense embeddings ........... intfloat/multilingual-e5-small + rebuild
                                     data/chunks/{real,demo}_embeddings.npz so
@@ -26,7 +26,7 @@ Flags:
   --asr            download PhoWhisper weights into the HF cache
   --embeddings     download e5-small + build embedding caches (.npz)
   --piper          download optional piper voice files into data/voices/
-  --model NAME     Ollama model to pull (default: qwen2.5:7b-instruct-q4_k_m)
+  --model NAME     Ollama model to pull (default: qwen2.5:3b-instruct-q4_k_m)
   --env offline    write a fresh .env (only if it does not exist yet)
                    --env online   keeps/enables pateway cloud backend
   --skip-torch     do not pip-install torch/sentence-transformers (use existing)
@@ -54,7 +54,7 @@ try:  # Windows consoles may still default to cp1252 during a child process.
 except Exception:
     pass
 
-OLLAMA_DEFAULT_MODEL = "qwen2.5:7b-instruct-q4_k_m"
+OLLAMA_DEFAULT_MODEL = "qwen2.5:3b-instruct-q4_k_m"
 OLLAMA_SETUP_URL = "https://ollama.com/download/OllamaSetup.exe"
 OLLAMA_SERVER = "http://localhost:11434"
 
@@ -388,7 +388,7 @@ def install_ollama(args: argparse.Namespace) -> None:
     bin_path = _ollama_bin()
     if not bin_path:
         raise SystemExit("Ollama server is reachable but ollama.exe is unavailable for model download.")
-    _step(f"ollama pull {model}  (~5GB, may take a while)")
+    _step(f"ollama pull {model}  (model size depends on hardware choice)")
     # Ollama stores completed layers in its content-addressed cache.  Running
     # pull again after a DNS/connection failure continues from those layers.
     _run_resumable(
@@ -584,10 +584,9 @@ def main() -> int:
         "Next steps:\n"
         "  1. python scripts/check_local_llm.py\n"
         "  2. python scripts/run_mock_demo.py   (LLM_BACKEND=local from .env)\n"
-        "Demo machine notes (council round-26 pick): qwen2.5:7b-instruct-q4_k_m\n"
-        "fits RTX 3060 Ti 8GB with ~1.5GB headroom for CUDA/embedding; if it is\n"
-        "slow or fails, OLLAMA_MODEL=qwen3:8b (quality fallback, think=false) or\n"
-        "qwen2.5:3b (emergency CPU). Switch back to cloud anytime:\n"
+        "Balanced local default: qwen2.5:3b-instruct-q4_k_m.\n"
+        "Machines with >=8GB GPU may use qwen2.5:7b-instruct-q4_K_M.\n"
+        "Switch back to cloud anytime:\n"
         "set LLM_BACKEND=pateway in .env.\n"
     )
     return 0

@@ -25,16 +25,17 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-MODEL = "qwen2.5:7b-instruct-q4_K_M"
+MODEL = "qwen2.5:3b-instruct-q4_K_M"
 APP_EXE_NAME = "Rightly.exe"
 # Bump whenever bundled runtime scripts change. Existing installs then receive
 # the fixed installer/bootstrap code on the next run without rebuilding venv or
 # redownloading already-installed models.
-INSTALLER_MARKER = "rightly-installer-v11"
+INSTALLER_MARKER = "rightly-installer-v17"
 INSTALL_RETRIES = 6
 INSTALL_RETRY_DELAY_S = 8
 
 _UI = None
+_INSTANCE_LOCK_HANDLE = None
 
 def _prepare_output_streams():
     """PyInstaller windowed builds have no console streams."""
@@ -268,17 +269,33 @@ def run(cmd, **kw):
         popen_kw["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     process = subprocess.Popen(normalized, **popen_kw)
     assert process.stdout is not None
+    # Read from a helper thread.  A direct read(2048) can wait forever when a
+    # child emits a short status line and then spends several minutes loading a
+    # model; the installer UI would look frozen even though the child is alive.
+    output_queue = queue.Queue()
+
+    def _reader():
+        while True:
+            chunk = process.stdout.read(2048)
+            if not chunk:
+                break
+            output_queue.put(chunk)
+
+    reader = threading.Thread(target=_reader, name="rightly-installer-output", daemon=True)
+    reader.start()
     pending = ""
-    while True:
-        chunk = process.stdout.read(2048)
-        if not chunk:
-            break
+    while reader.is_alive() or not output_queue.empty():
+        try:
+            chunk = output_queue.get(timeout=0.2)
+        except queue.Empty:
+            continue
         pending += chunk.decode("utf-8", errors="replace")
         parts = pending.replace("\r", "\n").split("\n")
         pending = parts.pop() if parts else ""
         for line in parts:
             if line.strip():
                 print(line.strip(), flush=True)
+    reader.join(timeout=2)
     if pending.strip():
         print(pending.strip(), flush=True)
     return_code = process.wait()
@@ -337,6 +354,35 @@ def pause_for_user():
         input("Nhấn Enter để thoát...")
     except (EOFError, KeyboardInterrupt):
         pass
+
+
+def acquire_instance_lock() -> bool:
+    """Allow only one normal installer session at a time.
+
+    The handle remains open for the lifetime of this process, so Windows
+    releases the lock automatically even after a crash or forced close.
+    """
+    global _INSTANCE_LOCK_HANDLE
+    if os.name != "nt":
+        return True
+    try:
+        import msvcrt
+
+        lock_path = Path(os.environ.get("TEMP", str(Path.home()))) / "Rightly-Setup.lock"
+        _INSTANCE_LOCK_HANDLE = open(lock_path, "a+b")
+        _INSTANCE_LOCK_HANDLE.seek(0)
+        _INSTANCE_LOCK_HANDLE.write(b"0")
+        _INSTANCE_LOCK_HANDLE.flush()
+        _INSTANCE_LOCK_HANDLE.seek(0)
+        msvcrt.locking(_INSTANCE_LOCK_HANDLE.fileno(), msvcrt.LK_NBLCK, 1)
+        return True
+    except (OSError, IOError):
+        try:
+            if _INSTANCE_LOCK_HANDLE:
+                _INSTANCE_LOCK_HANDLE.close()
+        finally:
+            _INSTANCE_LOCK_HANDLE = None
+        return False
 
 
 def step(n, total, title):
@@ -667,6 +713,18 @@ def launch() -> int:
     global _UI
     if any(os.environ.get(name) == "1" for name in ("SETUP_DRYRUN", "SETUP_TEST_MODE", "SETUP_EXTRACT_ONLY")):
         return main()
+    if not acquire_instance_lock():
+        try:
+            from tkinter import messagebox
+
+            messagebox.showinfo(
+                "Rightly Setup",
+                "Bộ cài Rightly đang chạy ở một cửa sổ khác. "
+                "Hãy đóng cửa sổ đó hoặc chờ cài xong rồi thử lại.",
+            )
+        except Exception:
+            pass
+        return 1
     try:
         _UI = InstallerUI()
     except Exception as exc:

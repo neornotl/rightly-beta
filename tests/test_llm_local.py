@@ -43,7 +43,7 @@ def test_local_llm_defaults():
     llm = LocalLLM()
     assert llm.name == "local"
     assert llm.base_url == "http://localhost:11434/v1"
-    assert llm.model == "qwen2.5:7b-instruct-q4_k_m"
+    assert llm.model == "qwen2.5:3b-instruct-q4_k_m"
 
 
 def test_local_generate_answer_ok(monkeypatch):

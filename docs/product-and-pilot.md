@@ -8,13 +8,13 @@ Bản web đang chạy tại [https://intel-demo-topaz.vercel.app/](https://inte
 
 ## Pilot
 
-Pilot dùng để quan sát khả năng sử dụng, độ rõ của câu trả lời, trải nghiệm giọng nói và lỗi thực tế. Nhóm chưa công bố báo cáo định lượng hay khẳng định rằng mọi câu trả lời đều đúng; người dùng vẫn cần kiểm tra nguồn chính thức.
+Pilot dùng để quan sát khả năng sử dụng, độ rõ của câu trả lời, trải nghiệm giọng nói và lỗi thực tế. Snapshot ngày 26/08/2026 gồm 56 phản hồi public và 5 hồ sơ private pilot. Đây là bằng chứng trải nghiệm người dùng, không phải benchmark độc lập về độ đúng pháp lý; người dùng vẫn cần kiểm tra nguồn chính thức.
 
 ### Public pilot
 
-[Mở biểu mẫu public](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/edit?usp=sharing_eil_se_dm&ts=6a8dd201)
+[Mở biểu mẫu public](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform)
 
-Liên kết được giữ nguyên theo đường dẫn nhóm cung cấp. Quản trị viên nên kiểm tra lại chế độ chia sẻ trước khi phát hành rộng rãi.
+Kết quả tổng hợp, cơ cấu mẫu và feedback-to-fix được ghi tại [`pilot-results-2026-08.md`](pilot-results-2026-08.md). Dữ liệu phản hồi thô do chủ biểu mẫu quản lý và có thể cung cấp cho ban giám khảo theo kênh kiểm soát phù hợp.
 
 ## Bằng chứng về vấn đề thực tế
 
@@ -22,7 +22,9 @@ Tài liệu nền về các rào cản tiếp cận dịch vụ công số nằm
 
 ### Private pilot
 
-Chưa công bố — sẽ bổ sung sau. Không có private pilot URL nào trong repo.
+Ngày 22/08/2026, nhóm lưu 5 hồ sơ người tham gia và 3 bản ghi phiên thử nghiệm (khoảng 24,2 GB) trong thư mục Drive riêng. Repo không chứa form, chữ ký, thông tin liên hệ, hội thoại thô hoặc video nhận diện người tham gia.
+
+Các file consent hiện có còn trường mẫu chưa điền và chưa có chữ ký/ngày xác nhận hoàn chỉnh. Vì vậy nhóm **không coi chúng là quyền công bố hình ảnh**. Mọi trích đoạn có thể nhận diện chỉ được sử dụng sau khi có consent hoàn chỉnh; trường hợp đã yêu cầu che mặt phải được blur trước khi chia sẻ.
 
 ## Credit
 

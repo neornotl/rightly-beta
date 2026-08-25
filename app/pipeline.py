@@ -1127,6 +1127,14 @@ class Pipeline:
     def _general_result(self, session_id: str, text: str, fixed_message: str, context: HybridSessionContext) -> PipelineResult:
         message = fixed_message
         if not message:
+            # Never ask a language model to evaluate arithmetic.  This keeps
+            # short expressions such as ``1+4-3+7=?`` deterministic while
+            # leaving explanations and all natural-language questions to the
+            # configured LLM.
+            from app.arithmetic import calculate_expression
+
+            message = calculate_expression(text) or ""
+        if not message:
             outbound_text = text
             outbound_history = context.turns[-8:]
             if self.settings.pii_scrub_outbound and self.settings.llm_backend in {"gemini", "groq", "pateway"}:

@@ -109,7 +109,7 @@ def test_local_llm_defaults(monkeypatch):
     settings = load_settings(env_file=_NO_ENV)
     assert settings.llm_backend == "local"
     assert settings.ollama_base_url == "http://localhost:11434/v1"
-    assert settings.ollama_model == "qwen2.5:7b-instruct-q4_k_m"
+    assert settings.ollama_model == "qwen2.5:3b-instruct-q4_k_m"
 
 
 def test_local_llm_env_parsing(monkeypatch):

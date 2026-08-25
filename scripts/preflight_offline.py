@@ -9,16 +9,23 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.request
 from pathlib import Path
+
+try:  # Windows installer consoles may default to cp1252.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# A 7B model on a CPU-only machine can legitimately need 2–3 minutes for the
-# full local pipeline (router + retrieval + grounded answer).  The old 120s
+# A local model on a CPU-only machine can legitimately need a while for the
+# full local pipeline (router + retrieval + grounded answer). The old 120s
 # smoke-test limit treated that slow-but-valid path as an installation error.
 PREFLIGHT_CHAT_TIMEOUT_S = max(
     120, int(os.environ.get("RIGHTLY_PREFLIGHT_CHAT_TIMEOUT", "300"))
@@ -39,6 +46,29 @@ def _post_json(url: str, payload: dict, timeout: int = 30) -> dict:
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _post_json_with_heartbeat(url: str, payload: dict, timeout: int, label: str) -> dict:
+    """Keep the installer visibly alive while a CPU-only LLM is generating."""
+    result: dict[str, dict] = {}
+    error: list[BaseException] = []
+
+    def _request() -> None:
+        try:
+            result["value"] = _post_json(url, payload, timeout=timeout)
+        except BaseException as exc:  # propagate the original network/timeout error
+            error.append(exc)
+
+    worker = threading.Thread(target=_request, name="rightly-preflight-request", daemon=True)
+    started = time.monotonic()
+    worker.start()
+    while worker.is_alive():
+        elapsed = int(time.monotonic() - started)
+        print(f"{label}: vẫn đang xử lý ({elapsed}s)…", flush=True)
+        worker.join(timeout=10)
+    if error:
+        raise error[0]
+    return result["value"]
 
 
 def _check_machine(failures: list[str]) -> None:
@@ -88,6 +118,7 @@ def run() -> int:
         failures.append(f"faster-whisper model missing: {', '.join(missing)}")
     else:
         try:
+            print("Checking local ASR model…", flush=True)
             from app.asr.whisper_asr import WhisperASR
 
             WhisperASR(model_path=str(model_dir), device=settings.whisper_device).check_availability()
@@ -104,6 +135,7 @@ def run() -> int:
         failures.append(f"Piper voice missing: {piper_path}")
     else:
         try:
+            print("Checking Vietnamese Piper voice…", flush=True)
             from app.tts.piper_tts import PiperTTS
 
             out = Path(tempfile.gettempdir()) / "rightly_preflight.wav"
@@ -120,6 +152,7 @@ def run() -> int:
         failures.append(f"English Piper voice missing: {piper_en}")
     else:
         try:
+            print("Checking English Piper voice…", flush=True)
             from app.tts.piper_tts import PiperTTS
 
             out_en = Path(tempfile.gettempdir()) / "rightly_preflight_en.wav"
@@ -143,10 +176,11 @@ def run() -> int:
     # Load the selected local LLM before declaring setup complete.
     print("Checking local Ollama response (CPU-only machines may take a while)...", flush=True)
     try:
-        result = _post_json(
+        result = _post_json_with_heartbeat(
             "http://127.0.0.1:11434/api/generate",
             {"model": settings.ollama_model, "prompt": "Reply with exactly OK.", "stream": False},
             timeout=PREFLIGHT_CHAT_TIMEOUT_S,
+            label="Đang nạp LLM local",
         )
         if not str(result.get("response", "")).strip():
             failures.append("Ollama model returned an empty smoke-test response")
@@ -171,11 +205,17 @@ def run() -> int:
         if not ready:
             failures.append("Temporary Rightly server did not become ready on /health")
         else:
-            smoke = _post_json("http://127.0.0.1:8011/api/chat", {
-                "session_id": "preflight",
-                "text": "Xin chào, hãy trả lời ngắn gọn OK.",
-                "lang": "vi",
-            }, timeout=PREFLIGHT_CHAT_TIMEOUT_S)
+            print("Checking local Rightly chat endpoint…", flush=True)
+            smoke = _post_json_with_heartbeat(
+                "http://127.0.0.1:8011/api/chat",
+                {
+                    "session_id": "preflight",
+                    "text": "Xin chào, hãy trả lời ngắn gọn OK.",
+                    "lang": "vi",
+                },
+                timeout=PREFLIGHT_CHAT_TIMEOUT_S,
+                label="Đang kiểm tra câu trả lời Rightly",
+            )
             if not str(smoke.get("reply", "")).strip():
                 failures.append("Local chat smoke test returned an empty reply")
     except Exception as exc:

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Detect the machine and pick the strongest reasoning setup that fits.
+"""Detect the machine and pick a balanced reasoning setup that stays fast.
 
 Writes recommended settings into .env (only keys not already set) so
 non-technical users just run CaiDat.bat once.
 
-Tiers (strongest local reasoning first):
-  GPU >= 8GB VRAM  -> Ollama qwen2.5:14b-instruct (or 7b on 6-7GB)
-  RAM  >= 16GB     -> Ollama qwen2.5:7b-instruct-q4_K_M on CPU
-  RAM  >= 8GB      -> Ollama qwen2.5:3b-instruct
+Tiers (balanced by default; never choose the largest model automatically):
+  GPU >= 8GB VRAM  -> Ollama qwen2.5:7b-instruct-q4_K_M
+  RAM >= 24GB and 12+ cores -> Ollama qwen2.5:7b-instruct-q4_K_M on CPU
+  RAM  >= 8GB      -> Ollama qwen2.5:3b-instruct-q4_K_M on CPU
   below / no Ollama-> cloud Gemini (needs key) else mock
 """
 
@@ -18,6 +18,12 @@ import platform
 import shutil
 import subprocess
 import sys
+
+try:  # Windows terminals may still use cp1252; hardware notes are UTF-8.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 
 def _win_ram_gb() -> float:
@@ -107,17 +113,18 @@ def detect() -> dict:
 def recommend(info: dict) -> dict:
     ram = info["ram_gb"]
     vram = info["gpu_vram_gb"]
-    ollama = info["ollama"]
+    cores = info.get("cpu_cores", 0)
     # Choose the model from hardware even before Ollama is installed; the
     # one-time installer will install the selected runtime immediately after.
-    if vram >= 10:
-        model, note = "qwen2.5:14b-instruct-q4_K_M", "GPU manh - suy luận local tot nhat"
-    elif vram >= 6:
-        model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU vua - nhanh va chinh xac"
-    elif ram >= 14:
-        model, note = "qwen2.5:7b-instruct-q4_K_M", "RAM du lon - chay CPU, chinh xac cao (khong can nhanh)"
+    # 7B is reserved for machines where it remains responsive. A 7B model on
+    # a typical 16GB CPU-only laptop can take 30-60s per answer; 3B is the
+    # balanced default and is still grounded by Rightly's legal retrieval.
+    if vram >= 8:
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU >= 8 GB - 7B chạy nhanh, chất lượng cao"
+    elif ram >= 24 and cores >= 12:
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "CPU/RAM mạnh - 7B vẫn đủ nhanh"
     elif ram >= 8:
-        model, note = "qwen2.5:3b-instruct-q4_K_M", "May nhe - ban gon thong minh"
+        model, note = "qwen2.5:3b-instruct-q4_K_M", "Cấu hình phổ biến - 3B cân bằng tốc độ và độ thông minh"
     else:
         model, note = "", "May cau hinh thap - khong dat yeu cau offline 8GB RAM"
     return {
@@ -150,7 +157,7 @@ def write_env(reco: dict, env_path: str = ".rightly-hardware.env") -> str:
         date=__import__("datetime").date.today().isoformat(),
         llm_backend=reco["llm_backend"],
         llm_block=llm_block,
-        model=reco["ollama_model"] or "qwen2.5:7b-instruct-q4_K_M",
+        model=reco["ollama_model"] or "qwen2.5:3b-instruct-q4_K_M",
     )
     # This is a generated recommendation file, so replace it on each run.
     # Appending would leave duplicate keys and make the selected model depend

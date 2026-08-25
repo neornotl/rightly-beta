@@ -7,9 +7,10 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 ## Sản phẩm đang chạy
 
 - **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
+- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.17.0](https://github.com/neornotl/rightly-beta/releases/tag/v0.17.0-pilot)
 - **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
 - **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
-- **Repo release công khai:** [neornotl/rightly/release](https://github.com/neornotl/rightly/tree/release)
+- **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
 
 ## Tính năng và giới hạn thực tế
 
@@ -17,6 +18,8 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 - Nhận câu hỏi bằng chữ; giọng nói phụ thuộc quyền Microphone của trình duyệt và backend ASR đã cài.
 - Truy xuất văn bản nguồn, safety routing và câu trả lời có trích nguồn khi tìm được evidence.
 - TTS dùng backend cloud hoặc local theo cấu hình. Chế độ local/offline cần cài đủ model và thư viện; không mặc định có nghĩa là offline hoàn toàn.
+- Bản cài pilot tự nhận diện RAM/CPU/GPU, chọn model 3B hoặc 7B theo ngưỡng phần cứng, tải tiếp sau lỗi mạng và chỉ mở ứng dụng sau preflight LLM/ASR/TTS/health. Yêu cầu hiện tại: Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet trong lần cài đầu.
+- Câu hỏi tiếng Việt không dấu được mở rộng sang thuật ngữ pháp lý chuẩn trước khi truy xuất; phép tính ngắn được xử lý tất định thay vì giao cho LLM.
 - Nguồn có thể thiếu hoặc chậm cập nhật. Không dùng kết quả như tư vấn pháp lý cuối cùng; hãy kiểm tra với cơ quan có thẩm quyền.
 
 ## Chạy và phát triển
@@ -25,11 +28,12 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 
 ## Pilot
 
-- **Public pilot:** [mở biểu mẫu](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/edit?usp=sharing_eil_se_dm&ts=6a8dd201) (liên kết do nhóm cung cấp).
-- **Private pilot:** Chưa công bố — sẽ bổ sung sau.
-- Chưa có báo cáo pilot định lượng được công bố; số liệu thử nghiệm nội bộ không được trình bày như kết quả người dùng thật.
+- **Public pilot:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform), 56 phản hồi tại snapshot ngày 26/08/2026.
+- Điểm trung bình: thân thiện/phù hợp 4,41/5; ý tưởng cốt lõi 4,36/5; dễ dùng 4,23/5; rõ ràng 4,18/5; chính xác/tin cậy 4,18/5.
+- **Private pilot:** 5 hồ sơ người tham gia và 3 bản ghi phiên thử nghiệm ngày 22/08/2026 được lưu riêng. Không đưa dữ liệu định danh, chữ ký hoặc video gốc lên GitHub.
+- Feedback về giọng đọc, câu trả lời bị ngắt, tốc độ hiển thị, mobile và nguồn `null` đã được chuyển thành các thay đổi có thể kiểm tra trong pipeline/web.
 
-Chi tiết: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
+Kết quả, giới hạn mẫu và cách bảo vệ dữ liệu: [`docs/pilot-results-2026-08.md`](docs/pilot-results-2026-08.md). Chi tiết sản phẩm: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
 
 Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
 

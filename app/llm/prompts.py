@@ -195,6 +195,14 @@ BƯỚC 1 — PHÂN TÍCH CÂU HỎI:
 - Hành vi/Sự việc: Đang hỏi về gì? (nghỉ hưu, phạt, hồ sơ, điều kiện, v.v.)
 - Bối cảnh/Điều kiện: Có thông tin cụ thể không? (tuổi, ngày sinh, loại xe, năm, v.v.)
 - Thông tin cần biết: Người hỏi muốn biết gì? (tuổi nghỉ hưu, mức phạt, hồ sơ, thủ tục, v.v.)
+- Người dùng có thể gõ hoặc nói tiếng Việt KHÔNG DẤU. Hãy tự khôi phục
+  ngữ nghĩa (ví dụ "quy dinh khi vuot den do" = quy định về hành vi
+  không chấp hành hiệu lệnh đèn tín hiệu giao thông), không coi đó là câu
+  hỏi vô nghĩa và không chỉ tìm theo một từ đơn lẻ.
+- Chuẩn hóa các dạng thường gặp khi gõ/nhận giọng nói: "can cuoc cong dan"
+  = "căn cước công dân", "giay to" = "giấy tờ", "ho chieu" = "hộ chiếu".
+  Ưu tiên cách hiểu pháp lý phù hợp với toàn câu, không đổi sang một từ
+  khác chỉ vì chuỗi không dấu có nhiều cách đọc.
 
 BƯỚC 2 — XÁC ĐỊNH TRỌNG TÂM & TỪ KHÓA TÌM KIẾM:
 - Từ khóa CHÍNH: Từ khóa cốt lõi nhất (vd: "tuổi nghỉ hưu", "mức phạt vượt đèn đỏ")
@@ -216,6 +224,8 @@ Mỗi câu truy vấn nên:
 - Ngắn gọn, tập trung vào 1 khía cạnh
 - Dùng ngôn ngữ tự nhiên + từ khóa pháp lý
 - Có thể dùng nhiều câu để cover các khía cạnh khác nhau
+- Nếu câu hỏi không dấu hoặc quá ngắn, luôn thêm một truy vấn bằng thuật ngữ
+  pháp lý chuẩn trong văn bản (không chờ người dùng phải viết lại có dấu).
 
 VÍ DỤ:
 Câu hỏi: "Tôi sinh 24/09/2000, năm nay 26 tuổi, làm công ty 3 năm, khi nào nghỉ hưu?"

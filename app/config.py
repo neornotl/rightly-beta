@@ -91,7 +91,7 @@ class Settings:
     pateway_base_url: str = ""
     pateway_model: str = ""
     ollama_base_url: str = "http://localhost:11434/v1"
-    ollama_model: str = "qwen2.5:7b-instruct-q4_k_m"
+    ollama_model: str = "qwen2.5:3b-instruct-q4_k_m"
     whisper_model: str = "small"
     whisper_model_path: str = ""
     whisper_device: str = "auto"
@@ -352,7 +352,7 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         ollama_base_url=os.environ.get(
             "OLLAMA_BASE_URL", "http://localhost:11434/v1"
         ).strip(),
-        ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5:7b-instruct-q4_k_m").strip(),
+        ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5:3b-instruct-q4_k_m").strip(),
         whisper_model=os.environ.get("WHISPER_MODEL", "small").strip(),
         whisper_model_path=os.environ.get("WHISPER_MODEL_PATH", "").strip(),
         whisper_device=os.environ.get("WHISPER_DEVICE", "auto").strip(),

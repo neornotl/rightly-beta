@@ -73,7 +73,7 @@ if exist ".env" (
 )
 set "DETECTED_MODEL="
 if exist ".rightly-hardware.env" for /f "usebackq tokens=1,* delims==" %%A in (".rightly-hardware.env") do if /i "%%A"=="OLLAMA_MODEL" set "DETECTED_MODEL=%%B"
-if not defined DETECTED_MODEL set "DETECTED_MODEL=qwen2.5:7b-instruct-q4_K_M"
+if not defined DETECTED_MODEL set "DETECTED_MODEL=qwen2.5:3b-instruct-q4_K_M"
 
 echo [5/7] Tai va kiem tra tron bo stack offline (LLM + ASR + Piper TTS)...
 echo    Can internet o buoc nay; sau khi xong Rightly khong can mang.
