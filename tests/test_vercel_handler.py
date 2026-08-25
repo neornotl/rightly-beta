@@ -103,6 +103,105 @@ def test_vercel_handler_passes_recent_history_to_the_llm(monkeypatch):
     assert captured["messages"][-1] == {"role": "user", "content": "BHYT"}
 
 
+def _assert_cloud_payload_is_scrubbed(payload: dict) -> None:
+    serialized = json.dumps(payload, ensure_ascii=False)
+    for secret in (
+        "pilot.user@example.test",
+        "0900 123 456",
+        "012345678901",
+        "số 12 đường Hoa Mai",
+    ):
+        assert secret not in serialized
+    assert "[EMAIL]" in serialized
+    assert "[SĐT]" in serialized
+    assert "[CCCD]" in serialized
+    assert "[ĐỊA CHỈ]" in serialized
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_groq(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "assistant", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_gemini(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "AQ.test-express-key")
+    monkeypatch.setattr(index, "GROQ_KEY", "")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"candidates": [{"content": {"parts": [{"text": '{"answer_text":"ok"}'}]}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "user", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_pateway(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
+    monkeypatch.setattr(index, "GROQ_KEY", "")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "assistant", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_handler_keeps_raw_turn_for_local_retrieval_before_cloud_boundary(monkeypatch):
+    raw_question = "Tôi ở số 12 đường Hoa Mai, CCCD 012345678901 cần hỏi BHYT"
+    captured = {}
+    monkeypatch.setattr(index, "RATE_LIMIT_PER_IP", 99)
+    monkeypatch.setattr(index, "RATE_LIMIT_WARN_AT", 2)
+    monkeypatch.setattr(index, "_grounded_search", lambda text, **_kw: captured.setdefault("rag", text) and [])
+    monkeypatch.setattr(
+        index.handler,
+        "_ask_api",
+        lambda _self, text, _lang, history=None, **_kw: captured.update(text=text, history=history) or "ok",
+    )
+    request, sent = _post_handler(
+        "/api/chat",
+        {"text": raw_question, "history": [{"role": "user", "content": raw_question}]},
+    )
+
+    request.do_POST()
+
+    assert sent["status"] == 200
+    assert captured["rag"] == raw_question
+    assert captured["text"] == raw_question
+    assert captured["history"] == [{"role": "user", "content": raw_question}]
+
+
 def test_vercel_handler_transcribes_raw_browser_audio_without_json_parsing(monkeypatch):
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     captured = {}

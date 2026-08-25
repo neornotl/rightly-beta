@@ -20,6 +20,8 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 - TTS dùng backend cloud hoặc local theo cấu hình. Chế độ local/offline cần cài đủ model và thư viện; không mặc định có nghĩa là offline hoàn toàn.
 - Bản cài pilot tự nhận diện RAM/CPU/GPU, chọn model 3B hoặc 7B theo ngưỡng phần cứng, tải tiếp sau lỗi mạng và chỉ mở ứng dụng sau preflight LLM/ASR/TTS/health. Yêu cầu hiện tại: Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet trong lần cài đầu.
 - Câu hỏi tiếng Việt không dấu được mở rộng sang thuật ngữ pháp lý chuẩn trước khi truy xuất; phép tính ngắn được xử lý tất định thay vì giao cho LLM.
+- Đăng nhập web **không** tự đọc hoặc ghi lịch sử cloud. Người dùng phải bấm “Đồng bộ: Tắt” và xác nhận rõ ràng trước khi đồng bộ; có nút “Xóa cloud” để xóa toàn bộ lịch sử của tài khoản. Mẫu RLS và retention 90 ngày nằm tại [`docs/supabase_context.sql`](docs/supabase_context.sql).
+- Trước khi một câu hỏi hoặc lịch sử đi tới Gemini, Groq hoặc Pateway, Rightly thay các định danh có độ tin cậy cao (email, số điện thoại, CCCD/CMND, hộ chiếu, địa chỉ có mốc đường/phố) bằng nhãn ẩn danh. Bản hiển thị và truy xuất cục bộ không bị sửa.
 - Nguồn có thể thiếu hoặc chậm cập nhật. Không dùng kết quả như tư vấn pháp lý cuối cùng; hãy kiểm tra với cơ quan có thẩm quyền.
 
 ## Chạy và phát triển

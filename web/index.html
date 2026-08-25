@@ -94,6 +94,7 @@
     .auth-btn:hover { border-color: var(--verm); color: var(--verm); }
     .auth-user { display: inline-flex; align-items: center; gap: 7px; cursor: default; }
     .auth-user button { border: 0; background: transparent; color: var(--verm); font: 600 11px var(--sans); cursor: pointer; padding: 0; }
+    .auth-user button.cloud-danger { color: var(--verm-d); }
     .auth-panel {
       position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-start; justify-content: center;
       padding: 12vh 20px 30px; background: rgba(28,27,24,.42); backdrop-filter: blur(3px);
@@ -354,7 +355,12 @@
       <div class="status" id="status">sẵn sàng</div>
       <div class="auth-area">
         <button class="auth-btn" id="authOpen" type="button">Đăng nhập</button>
-        <span class="auth-user hidden" id="authUser"><span id="authUserLabel"></span><button id="authSignOut" type="button">Thoát</button></span>
+        <span class="auth-user hidden" id="authUser">
+          <span id="authUserLabel"></span>
+          <button id="cloudSync" type="button" title="Chọn có đồng ý lưu lịch sử lên tài khoản hay không">Đồng bộ: Tắt</button>
+          <button class="cloud-danger" id="cloudDelete" type="button" title="Xóa toàn bộ lịch sử đã lưu trên tài khoản">Xóa cloud</button>
+          <button id="authSignOut" type="button">Thoát</button>
+        </span>
       </div>
     </header>
 
@@ -387,7 +393,7 @@
     <div class="auth-card">
       <button class="auth-close" id="authClose" type="button" aria-label="Đóng">×</button>
       <h2 id="authTitle">Đăng nhập Rightly</h2>
-      <p id="authIntro">Đăng nhập để lưu và khôi phục ngữ cảnh hội thoại của riêng bạn trên các thiết bị.</p>
+      <p id="authIntro">Đăng nhập không tự lưu hội thoại. Sau khi đăng nhập, bạn có thể tự chọn bật đồng bộ lịch sử trên tài khoản.</p>
       <button class="auth-google" id="authGoogle" type="button">🔐 Tiếp tục với Google</button>
       <div class="auth-divider">hoặc email</div>
       <form id="authForm">
@@ -453,10 +459,15 @@
     const authOpen = document.querySelector('#authOpen'), authPanel = document.querySelector('#authPanel');
     const authClose = document.querySelector('#authClose'), authUser = document.querySelector('#authUser');
     const authUserLabel = document.querySelector('#authUserLabel'), authSignOut = document.querySelector('#authSignOut');
+    const cloudSync = document.querySelector('#cloudSync'), cloudDelete = document.querySelector('#cloudDelete');
     const authGoogle = document.querySelector('#authGoogle'), authForm = document.querySelector('#authForm');
     const authSignUp = document.querySelector('#authSignUp'), authMessage = document.querySelector('#authMessage');
     const authEmail = document.querySelector('#authEmail');
     let supabaseClient = null, currentUser = null;
+    // Cloud history is opt-in for this browser session.  It deliberately does
+    // not persist across sign-out/reload, so logging in alone can never upload
+    // or fetch a conversation.
+    let cloudSyncEnabled = false;
     let sessionId = (() => {
       try { return localStorage.getItem('rightly.session') || crypto.randomUUID(); }
       catch(e){ return crypto.randomUUID(); }
@@ -482,6 +493,8 @@
         const name = currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name);
         authUserLabel.textContent = String(name || currentUser.email || 'Đã đăng nhập').slice(0, 28);
       }
+      cloudSync.textContent = cloudSyncEnabled ? 'Đồng bộ: Bật' : 'Đồng bộ: Tắt';
+      cloudSync.setAttribute('aria-pressed', String(cloudSyncEnabled));
     }
 
     function openAuth(){
@@ -494,7 +507,7 @@
     function closeAuth(){ authPanel.classList.add('hidden'); }
 
     async function loadCloudContext(){
-      if (!supabaseClient || !currentUser || chatHistory.length) return;
+      if (!cloudSyncEnabled || !supabaseClient || !currentUser || chatHistory.length) return;
       try {
         const {data, error} = await supabaseClient.from('rightly_context')
           .select('turns').eq('session_id', sessionId).maybeSingle();
@@ -510,7 +523,7 @@
     }
 
     async function saveCloudContext(){
-      if (!supabaseClient || !currentUser || !chatHistory.length) return;
+      if (!cloudSyncEnabled || !supabaseClient || !currentUser || !chatHistory.length) return;
       try {
         await supabaseClient.from('rightly_context').upsert({
           user_id: currentUser.id,
@@ -537,11 +550,10 @@
         const {data} = await supabaseClient.auth.getSession();
         currentUser = data && data.session ? data.session.user : null;
         updateAuthUi();
-        await loadCloudContext();
         supabaseClient.auth.onAuthStateChange((_event, session) => {
           currentUser = session ? session.user : null;
+          if (!currentUser) cloudSyncEnabled = false;
           updateAuthUi();
-          if (currentUser) setTimeout(loadCloudContext, 0);
         });
       } catch (e) {
         authGoogle.disabled = true;
@@ -582,7 +594,38 @@
     });
     authSignOut.addEventListener('click', async () => {
       if (supabaseClient) await supabaseClient.auth.signOut();
-      currentUser = null; updateAuthUi();
+      currentUser = null; cloudSyncEnabled = false; updateAuthUi();
+    });
+    cloudSync.addEventListener('click', async () => {
+      if (!supabaseClient || !currentUser) { setStatus('Hãy đăng nhập trước khi chọn đồng bộ'); return; }
+      if (cloudSyncEnabled) {
+        cloudSyncEnabled = false;
+        updateAuthUi();
+        setStatus('Đã tắt đồng bộ cloud');
+        return;
+      }
+      const accepted = window.confirm(
+        'Bạn đồng ý lưu tối đa 100 lượt hội thoại gần nhất vào tài khoản Rightly để dùng trên thiết bị khác? '
+        + 'Dữ liệu chỉ được lưu sau khi bạn đồng ý và có thể xóa bất cứ lúc nào.'
+      );
+      if (!accepted) return;
+      cloudSyncEnabled = true;
+      updateAuthUi();
+      await loadCloudContext();
+      await saveCloudContext();
+      setStatus('Đã bật đồng bộ cloud');
+    });
+    cloudDelete.addEventListener('click', async () => {
+      if (!supabaseClient || !currentUser) return;
+      const confirmed = window.confirm(
+        'Xóa toàn bộ lịch sử Rightly đã lưu trên cloud của tài khoản này? Hành động này không thể hoàn tác.'
+      );
+      if (!confirmed) return;
+      const {error} = await supabaseClient.from('rightly_context').delete().eq('user_id', currentUser.id);
+      if (error) { setStatus('Chưa xóa được lịch sử cloud'); return; }
+      cloudSyncEnabled = false;
+      updateAuthUi();
+      setStatus('Đã xóa lịch sử cloud và tắt đồng bộ');
     });
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }

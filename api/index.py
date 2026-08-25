@@ -34,6 +34,13 @@ except ImportError as exc:  # Keep chat/health usable when auth package is absen
     _GOOGLE_AUTH_IMPORT_ERROR = str(exc)
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# The public Vercel handler must enforce the same outbound-privacy rule as the
+# local pipeline.  Keep this import dependency-free (the scrubber is stdlib
+# only) so every configured cloud LLM receives the protected text.
+from app.privacy.scrubber import scrub_outbound
 
 # Secrets must be configured in Vercel Environment Variables.  Do not add a
 # source-code fallback: it would be public in Git and impossible to rotate
@@ -646,6 +653,10 @@ def _gemini_reply(
     stream_callback=None,
 ) -> str:
     """One Gemini call through stdlib only; raises on any failure."""
+    # ``_gemini_reply`` is also useful in focused tests and maintenance tools,
+    # so defend the provider boundary here as well as in ``_ask_api``.
+    text = scrub_outbound(str(text))
+    history = _scrub_cloud_history(history)
     key = str(GEMINI_KEY).strip()
     model = (model_override or GEMINI_MODEL).strip()
     if key.startswith("AQ."):
@@ -786,6 +797,27 @@ def _normalise_history(raw_history: object) -> list[dict[str, str]]:
             continue
         history.append({"role": role, "content": content[:1200]})
     return history
+
+
+def _scrub_cloud_history(history: object) -> list[dict[str, str]]:
+    """Return a provider-safe copy without changing browser/local history.
+
+    This is deliberately an ephemeral copy: the original request payload is
+    still used for local retrieval and is never mutated before a UI response is
+    sent.  All three cloud providers consume only this return value.
+    """
+    if not isinstance(history, list):
+        return []
+    safe_history: list[dict[str, str]] = []
+    for turn in history[-12:]:
+        if not isinstance(turn, dict):
+            continue
+        role = str(turn.get("role", "")).lower()
+        content = str(turn.get("content", "")).strip()
+        if role not in {"user", "assistant"} or not content:
+            continue
+        safe_history.append({"role": role, "content": scrub_outbound(content)[:1200]})
+    return safe_history
 
 
 class handler(BaseHTTPRequestHandler):
@@ -1403,6 +1435,11 @@ class handler(BaseHTTPRequestHandler):
 
     @classmethod
     def _ask_api(cls, text, lang, history=None, stream_callback=None):
+        # Preserve the raw question/history for local RAG and the browser, but
+        # never let a cloud provider see that raw copy.  Each provider below
+        # uses these ephemeral redacted values only.
+        outbound_text = scrub_outbound(str(text))
+        outbound_history = _scrub_cloud_history(history)
         if lang == "en":
             system_prompt = (
                 "You are Rightly, a Vietnamese legal & administrative assistant. Reply in English. "
@@ -1456,7 +1493,7 @@ class handler(BaseHTTPRequestHandler):
         if GEMINI_KEY:
             try:
                 reply_text = _gemini_reply(
-                    call_prompt, text, history, stream_callback=stream_callback
+                    call_prompt, outbound_text, outbound_history, stream_callback=stream_callback
                 )
                 if reply_text:
                     return reply_text
@@ -1472,8 +1509,8 @@ class handler(BaseHTTPRequestHandler):
                     try:
                         reply_text = _gemini_reply(
                             call_prompt,
-                            text,
-                            history,
+                            outbound_text,
+                            outbound_history,
                             model_override="gemini-2.5-flash",
                             stream_callback=stream_callback,
                         )
@@ -1494,8 +1531,8 @@ class handler(BaseHTTPRequestHandler):
                     "model": GROQ_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        *(history or []),
-                        {"role": "user", "content": text},
+                        *outbound_history,
+                        {"role": "user", "content": outbound_text},
                     ],
                     "temperature": 0.2,
                     "max_tokens": 900,
@@ -1528,7 +1565,7 @@ class handler(BaseHTTPRequestHandler):
             try:
                 history_text = "\n".join(
                     f"{'Người dân' if turn['role'] == 'user' else 'Rightly'}: {turn['content']}"
-                    for turn in (history or [])
+                    for turn in outbound_history
                 )
                 payload = {
                     "model": PATEWAY_MODEL,
@@ -1538,7 +1575,7 @@ class handler(BaseHTTPRequestHandler):
                             "content": (
                                 f"{system_prompt}\n\n"
                                 + (f"Hội thoại trước đó:\n{history_text}\n\n" if history_text else "")
-                                + f"Người dân nhắn: {text}\nTrả lời:"
+                                + f"Người dân nhắn: {outbound_text}\nTrả lời:"
                             ),
                         },
                     ],
