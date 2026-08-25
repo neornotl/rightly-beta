@@ -35,8 +35,11 @@ Flags:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -70,6 +73,31 @@ PIPER_EN_VOICES_URL = (
     "/lessac/medium/en_US-lessac-medium"
 )
 VOICES_DIR = ROOT / "data" / "voices"
+ASSET_MANIFEST_PATH = ROOT / "scripts" / "asset_manifest.json"
+
+
+def _asset_sha256(url: str, target: Path) -> str | None:
+    """Read an explicitly verified hash; absent entries remain unverifiable."""
+    try:
+        manifest = json.loads(ASSET_MANIFEST_PATH.read_text(encoding="utf-8"))
+        entry = manifest.get("assets", {}).get(target.name) or manifest.get("assets", {}).get(url)
+        digest = str(entry.get("sha256", "")).strip().lower() if isinstance(entry, dict) else ""
+        return digest if re.fullmatch(r"[0-9a-f]{64}", digest) else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _verify_sha256(path: Path, expected: str) -> None:
+    actual = hashlib.sha256()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(1024 * 1024), b""):
+            actual.update(block)
+    got = actual.hexdigest().lower()
+    if got != expected.lower():
+        raise RuntimeError(
+            f"Kiểm tra toàn vẹn thất bại cho {path.name}: nhận {got}, "
+            f"mong đợi {expected.lower()}. File bị loại bỏ; hãy chạy lại để tải lại."
+        )
 
 TIMEOUT_S = 3600
 
@@ -204,11 +232,20 @@ def _run_resumable(cmd: list[str], label: str, *, probe_url: str | None = None) 
     raise subprocess.CalledProcessError(last_code, cmd)
 
 
-def _download_resumable(url: str, target: Path) -> None:
+def _download_resumable(url: str, target: Path, *, expected_sha256: str | None = None) -> None:
     """Download one HTTP asset with Range resume and atomic completion."""
     if target.exists() and target.stat().st_size > 0:
-        print(f"   {target.name} already present")
-        return
+        if expected_sha256:
+            try:
+                _verify_sha256(target, expected_sha256)
+            except RuntimeError:
+                target.unlink()
+            else:
+                print(f"   {target.name} already present (SHA-256 OK)")
+                return
+        else:
+            print(f"   {target.name} already present")
+            return
 
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
@@ -240,6 +277,12 @@ def _download_resumable(url: str, target: Path) -> None:
                 and (expected_size is None or part.stat().st_size >= expected_size)
             ):
                 os.replace(part, target)
+                if expected_sha256:
+                    try:
+                        _verify_sha256(target, expected_sha256)
+                    except RuntimeError:
+                        target.unlink(missing_ok=True)
+                        raise
                 print(f"   saved {target.name}")
                 return
             if expected_size is not None:
@@ -474,7 +517,7 @@ def download_piper_voice(args: argparse.Namespace) -> None:
         for suffix in (".onnx", ".onnx.json"):
             url = base_url + suffix
             target = VOICES_DIR / f"{voice_name}{suffix}"
-            _download_resumable(url, target)
+            _download_resumable(url, target, expected_sha256=_asset_sha256(url, target))
 
 
 # ---------------------------------------------------------------- env
