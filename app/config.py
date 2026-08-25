@@ -26,7 +26,8 @@ def _load_env_file(path: Path) -> None:
     try:
         from dotenv import load_dotenv  # type: ignore
 
-        load_dotenv(path)
+        # utf-8-sig keeps an editor-added BOM from becoming part of APP_MODE.
+        load_dotenv(path, encoding="utf-8-sig")
         return
     except ImportError:
         pass
@@ -37,7 +38,7 @@ def _load_env_file(path: Path) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, value = line.partition("=")
-        key = key.strip()
+        key = key.strip().lstrip("\ufeff")
         value = value.strip().strip("'\"")
         if key and key not in os.environ:
             os.environ[key] = value
@@ -90,20 +91,25 @@ class Settings:
     pateway_base_url: str = ""
     pateway_model: str = ""
     ollama_base_url: str = "http://localhost:11434/v1"
-    ollama_model: str = "qwen2.5:7b-instruct-q4_k_m"
+    ollama_model: str = "qwen2.5:3b-instruct-q4_k_m"
     whisper_model: str = "small"
+    whisper_model_path: str = ""
     whisper_device: str = "auto"
     phowhisper_model: str = "vinai/PhoWhisper-small"
     llm_fallback_backend: str = ""
     rate_limit_per_ip: int = 60
     rate_limit_window_seconds: int = 3600
+    #: Daily per-IP hard cap for hosted deploys (0 = disabled).
+    rate_limit_per_ip_daily: int = 0
+    #: Fraction of the hourly quota after which a friendly warning is sent.
+    rate_limit_warn_at: float = 0.8
     delete_raw_audio_after_session: bool = True
     save_transcripts: bool = False
     legal_intake: bool = False
     answer_review: bool = False
     answer_review_max_revisions: int = 2
     max_context_chars: int = 12000
-    max_response_chars: int = 2000
+    max_response_chars: int = 4000
     pii_scrub_outbound: bool = True
     use_llm_classifier: bool = False
     log_retention_days: int = 30
@@ -117,6 +123,11 @@ class Settings:
     dense_gate: float = 0.84
     edge_tts_voice: str = "vi-VN-HoaiMyNeural"
     edge_tts_rate: str = "+0%"
+    piper_model_path: str = ""
+    piper_model_path_en: str = ""
+    local_memory_path: str = "data/private_cache/memory.sqlite3"
+    local_memory_retention_days: int = 90
+    offline_mode: bool = False
     official_hotline_label: str = "Đường dây nóng khẩn cấp (113)"
     official_hotline_value: str = "113"
     official_one_stop_label: str = "Bộ phận một cửa - Tổng đài dịch vụ công 1022"
@@ -192,7 +203,7 @@ _VALID_ASR = {"mock", "phowhisper", "whisper"}
 _VALID_RETRIEVAL = {"bm25", "hybrid"}
 _VALID_LLM = {"mock", "gemini", "groq", "pateway", "local"}
 _VALID_FALLBACK = {"", "gemini", "groq", "pateway", "local"}
-_VALID_TTS = {"mock", "edge"}
+_VALID_TTS = {"mock", "edge", "gtts", "piper", "google"}
 
 
 def _multi_env(prefix: str, key1: str) -> tuple[str, ...]:
@@ -266,9 +277,15 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
     rate_limit_window = _int_env("RATE_LIMIT_WINDOW_SECONDS", 3600)
     if rate_limit_per_ip < 0 or rate_limit_window <= 0:
         raise ConfigError("RATE_LIMIT_PER_IP >= 0 and RATE_LIMIT_WINDOW_SECONDS > 0 required.")
+    rate_limit_daily = _int_env("RATE_LIMIT_PER_IP_DAILY", 0)
+    if rate_limit_daily < 0:
+        raise ConfigError("RATE_LIMIT_PER_IP_DAILY must be >= 0 (0 = disabled).")
+    rate_limit_warn_at = _float_env("RATE_LIMIT_WARN_AT", 0.8)
+    if not (0 < rate_limit_warn_at <= 1):
+        raise ConfigError("RATE_LIMIT_WARN_AT must be in (0, 1].")
 
     max_context = _int_env("MAX_CONTEXT_CHARS", 12000)
-    max_response = _int_env("MAX_RESPONSE_CHARS", 2000)
+    max_response = _int_env("MAX_RESPONSE_CHARS", 4000)
     if max_context <= 0 or max_response <= 0:
         raise ConfigError("MAX_CONTEXT_CHARS and MAX_RESPONSE_CHARS must be positive.")
     if max_response > max_context:
@@ -281,6 +298,10 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
     log_retention = _int_env("LOG_RETENTION_DAYS", 30)
     if log_retention < 0:
         raise ConfigError("LOG_RETENTION_DAYS must be >= 0 (0 = keep forever).")
+
+    memory_retention = _int_env("LOCAL_MEMORY_RETENTION_DAYS", 90)
+    if memory_retention <= 0:
+        raise ConfigError("LOCAL_MEMORY_RETENTION_DAYS must be positive.")
 
     llm_timeout = _float_env("LLM_TIMEOUT_SECONDS", 60.0)
     llm_max_retries = _int_env("LLM_MAX_RETRIES", 3)
@@ -331,8 +352,9 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         ollama_base_url=os.environ.get(
             "OLLAMA_BASE_URL", "http://localhost:11434/v1"
         ).strip(),
-        ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5:7b-instruct-q4_k_m").strip(),
+        ollama_model=os.environ.get("OLLAMA_MODEL", "qwen2.5:3b-instruct-q4_k_m").strip(),
         whisper_model=os.environ.get("WHISPER_MODEL", "small").strip(),
+        whisper_model_path=os.environ.get("WHISPER_MODEL_PATH", "").strip(),
         whisper_device=os.environ.get("WHISPER_DEVICE", "auto").strip(),
         phowhisper_model=os.environ.get(
             "PHOWHISPER_MODEL", "vinai/PhoWhisper-small"
@@ -340,6 +362,8 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         llm_fallback_backend=llm_fallback_backend,
         rate_limit_per_ip=rate_limit_per_ip,
         rate_limit_window_seconds=rate_limit_window,
+        rate_limit_per_ip_daily=rate_limit_daily,
+        rate_limit_warn_at=rate_limit_warn_at,
         delete_raw_audio_after_session=_bool_env("DELETE_RAW_AUDIO_AFTER_SESSION", True),
         save_transcripts=_bool_env("SAVE_TRANSCRIPTS", False),
         legal_intake=_bool_env("LEGAL_INTAKE", False),
@@ -360,6 +384,13 @@ def load_settings(env_file: Optional[Path] = None) -> Settings:
         dense_gate=dense_gate,
         edge_tts_voice=os.environ.get("EDGE_TTS_VOICE", "vi-VN-HoaiMyNeural"),
         edge_tts_rate=os.environ.get("EDGE_TTS_RATE", "+0%"),
+        piper_model_path=os.environ.get("PIPER_MODEL_PATH", "").strip(),
+        piper_model_path_en=os.environ.get("PIPER_MODEL_PATH_EN", "").strip(),
+        local_memory_path=os.environ.get(
+            "LOCAL_MEMORY_PATH", "data/private_cache/memory.sqlite3"
+        ).strip(),
+        local_memory_retention_days=memory_retention,
+        offline_mode=_bool_env("OFFLINE_MODE", False),
         official_hotline_label=os.environ.get(
             "OFFICIAL_HOTLINE_LABEL", "Đường dây nóng (chưa xác minh)"
         ),

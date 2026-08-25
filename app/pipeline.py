@@ -40,7 +40,7 @@ from app.logging_utils import JsonlLogger, SessionStore, utc_now_iso
 from app.metrics_logger import log_pipeline_result
 from app.retrieval.base import Retriever
 from app.retrieval.bm25_retriever import BM25Retriever
-from app.retrieval.document_loader import DocumentLoader
+from app.retrieval.document_loader import DocumentLoader, filter_retrievable
 from app.retrieval.agentic_retriever import AgenticRetriever, AgenticReasoner
 from app.faq import _strip_diacritics
 from app.safety.policy import Policy
@@ -53,6 +53,7 @@ from app.schemas import (
     PipelineResult,
     ProfileFact,
     RetrievedChunk,
+    SafetyDecision,
     UserQuery,
     Zone,
 )
@@ -62,6 +63,38 @@ from app.tts.mock_tts import MockTTS
 logger = logging.getLogger(__name__)
 
 _MIN_QUERY_CHARS = 3
+
+# Standalone greetings are handled locally so they never enter legal RAG and
+# accidentally receive an unrelated law excerpt.  Keep this list deliberately
+# short and exact; longer messages still go through normal safety/routing.
+_SOCIAL_GREETINGS = {
+    "xin chao",
+    "xin chao ban",
+    "chao",
+    "chao ban",
+    "hello",
+    "hi",
+    "hey",
+    "he lo",
+    "he lu",
+    "hula",
+    "ey",
+    "hu",
+    "alo",
+    "a lo",
+    "alo alo",
+    "a lo a lo",
+    "co ai khong",
+    "nghe khong",
+}
+
+
+def _is_social_greeting(text: str) -> bool:
+    """Recognize short standalone greetings before legal retrieval runs."""
+    social = _strip_diacritics(normalize_query(text)).strip()
+    # ASR/browser speech often appends punctuation to a greeting.
+    social = re.sub(r"[.!?,;:]+$", "", social).strip()
+    return social in _SOCIAL_GREETINGS
 
 
 class _MissingAgenticFacts(Exception):
@@ -85,6 +118,9 @@ def _is_personalized_rule_query(text: str) -> bool:
 
 def _has_gender(text: str) -> bool:
     return bool(re.search(r"\b(nam|nữ|nu)\b", _strip_diacritics(normalize_query(text))))
+
+
+_CLASSIFIER_SKIP_SECONDS = 90.0
 
 
 def _focus_is_retirement(focus: str) -> bool:
@@ -388,6 +424,7 @@ def make_asr(settings: Settings) -> BaseASR:
             model_size=settings.whisper_model,
             device=settings.whisper_device,
             language="vi",
+            model_path=settings.whisper_model_path or None,
         )
     return MockASR()
 
@@ -412,12 +449,37 @@ def make_retriever(settings: Settings) -> Retriever:
         cache_path = settings.chunks_dir / "demo_embeddings.npz"
         exclude_demo = False
 
+    records = DocumentLoader.load_chunks(chunks_file)
+    status_path = settings.resolved_data_dir() / "law_status.json"
+    records, dropped = filter_retrievable(records, status_path=status_path)
+    if any(dropped.values()):
+        logger.warning(
+            "Corpus load dropped %d chunk(s): %s",
+            sum(dropped.values()),
+            dropped,
+        )
+    # User-supplied documents (TaiLieuCuaToi) join the retrievable corpus.
+    try:
+        from app.user_docs import ingest_user_docs
+
+        summary = ingest_user_docs(settings.resolved_data_dir())
+        if summary.get("ingested"):
+            logger.info("User docs ingested: %s", summary["files"])
+    except Exception as exc:
+        logger.warning("User docs ingestion skipped: %s", exc)
+    user_chunks_file = settings.chunks_dir / "user_chunks.jsonl"
+    if user_chunks_file.exists():
+        user_records = DocumentLoader.load_chunks(user_chunks_file)
+        if user_records:
+            records = user_records + records
+            logger.info("Corpus includes %d user-doc chunk(s)", len(user_records))
+
     if settings.retrieval_backend == "hybrid":
         try:
             from app.retrieval.hybrid_retriever import HybridRetriever
 
             return HybridRetriever.from_chunks(
-                DocumentLoader.load_chunks(chunks_file),
+                records,
                 cache_path=cache_path,
                 exclude_demo=exclude_demo,
                 rerank=settings.retriever_rerank,
@@ -430,10 +492,10 @@ def make_retriever(settings: Settings) -> Retriever:
             # model download, or native runtime is unavailable. BM25 remains a
             # deterministic, fully local retrieval path.
             logger.warning("Hybrid retrieval unavailable (%s); falling back to BM25.", exc)
-            return BM25Retriever.from_jsonl(chunks_file)
+            return BM25Retriever.from_chunks(records)
     if settings.retrieval_backend != "bm25":
         raise ValueError(f"Unsupported retrieval backend: {settings.retrieval_backend}")
-    return BM25Retriever.from_jsonl(chunks_file)
+    return BM25Retriever.from_chunks(records)
 
 
 def make_llm(settings: Settings) -> BaseLLM:
@@ -443,7 +505,10 @@ def make_llm(settings: Settings) -> BaseLLM:
             fallback = _build_llm(settings, settings.llm_fallback_backend)
         except RuntimeError:
             fallback = None  # fallback backend not usable: skip silently
-        if fallback is not None and fallback.available:  # type: ignore[attr-defined]
+        # MockLLM is an intentional local safety fallback and does not expose
+        # the provider-specific ``available`` flag.  Treat that adapter as
+        # usable instead of crashing startup while Ollama is warming up.
+        if fallback is not None and getattr(fallback, "available", True):
             from app.llm.fallback import FallbackLLM
 
             return FallbackLLM(primary=llm, fallback=fallback)
@@ -513,6 +578,20 @@ def _build_llm(settings: Settings, backend: str) -> BaseLLM:
 
 
 def make_tts(settings: Settings) -> BaseTTS:
+    if settings.tts_backend == "google":
+        from app.tts.google_cloud_tts import GoogleCloudTTS
+
+        return GoogleCloudTTS(lang="vi")
+    if settings.tts_backend == "piper":
+        from app.tts.piper_tts import PiperTTS
+
+        model_path = settings.piper_model_path
+        if not model_path:
+            model_path = str(settings.resolved_data_dir() / "voices" / "vi_VN-vais1000-medium.onnx")
+        return PiperTTS(
+            model_path=model_path,
+            cache_dir=settings.resolved_results_dir() / "tts_cache",
+        )
     if settings.tts_backend == "edge":
         from app.tts.fallback import TTSFallback
 
@@ -553,6 +632,37 @@ class Pipeline:
     _hybrid_sessions: dict[str, HybridSessionContext] = field(default_factory=dict, repr=False)
 
     _MEMORY_MAX_TURNS = 3
+    #: Scope-classifier flake circuit-breaker state (RAM only).
+    _cls_fail_streak: int = 0
+    _cls_skip_until: float = 0.0
+
+    def _resilient_classify(self, call):
+        """Run the LLM scope classifier with a flake circuit-breaker.
+
+        Express/quota endpoints occasionally return bursts of 403/slow calls;
+        the router would then fail-close EVERY query into CLARIFY. After a
+        single non-safe/unavailable classification we temporarily disable the
+        classifier so availability wins: rules-based safety preflight still
+        runs, generation remains grounded on retrieved law text, and the
+        citation/output validators still gate the final answer.
+        """
+        now = time.monotonic()
+        if now < self._cls_skip_until:
+            return True
+        try:
+            ok = bool(call())
+        except Exception:
+            ok = False
+        if ok:
+            self._cls_fail_streak = 0
+            return True
+        self._cls_skip_until = now + _CLASSIFIER_SKIP_SECONDS
+        self._cls_fail_streak += 1
+        logger.warning(
+            "LLM scope classifier unavailable; bypassing for %ss (rules-only safety)",
+            _CLASSIFIER_SKIP_SECONDS,
+        )
+        return False
 
     def __post_init__(self) -> None:
         self.settings.resolved_log_dir().mkdir(parents=True, exist_ok=True)
@@ -643,14 +753,8 @@ class Pipeline:
                 progress_callback({"stage": stage, "percent": percent, "detail": detail})
 
         progress("received", 8, "Đã nhận câu hỏi")
-        # Greetings and short social messages do not need router/RAG/LLM calls.
-        # Keeping this local also prevents a transient gateway outage from
-        # turning a simple hello into a misleading connection error.
-        social = _strip_diacritics(normalize_query(text)).strip()
-        if social in {"xin chao", "chao", "hello", "hi", "hey", "he lo", "he lu", "hula", "ey", "hu"}:
-            message = "Xin chào! Hôm nay bạn thế nào?"
-            self._append_hybrid_turn(context, text, message)
-            return self._simple_result(session_id, text, message)
+        # The LLM router classifies social language semantically. The exact
+        # greeting matcher is used only inside its failure fallback below.
         progress("safety", 18, "Đang kiểm tra an toàn và phạm vi câu hỏi")
         # Emergency/criminal hard gates always run before the conversational
         # router. General chat must never weaken these protections.
@@ -761,6 +865,8 @@ class Pipeline:
             return {"intent": "consent_yes", "profile_facts": [], "relevant_profile_fields": []}
         if plain in {"khong", "khong dong y"}:
             return {"intent": "consent_no", "profile_facts": [], "relevant_profile_fields": []}
+        if _is_social_greeting(text):
+            return {"intent": "general", "profile_facts": [], "relevant_profile_fields": []}
         return {"intent": "legal", "profile_facts": [], "relevant_profile_fields": []}
 
     _INTAKE_PRONOUNS = re.compile(
@@ -865,6 +971,7 @@ class Pipeline:
         current = answer
         summary = ""
         appropriate: Optional[bool] = None
+        readable: Optional[bool] = None
         note = ""
         revised = False
         revisions_left = max(0, int(self.settings.answer_review_max_revisions))
@@ -888,15 +995,18 @@ class Pipeline:
                 appropriate = (
                     bool(appropriate_raw) if isinstance(appropriate_raw, bool) else None
                 )
+                readable_raw = response.get("readable")
+                readable = bool(readable_raw) if isinstance(readable_raw, bool) else None
                 note = str(response.get("note", "")).strip()
                 self.store.record(
                     session_id,
                     "answer_reviewed",
                     appropriate=appropriate,
+                    readable=readable,
                     note=note[:300],
                     revised=revised,
                 )
-                if appropriate is not False or revisions_left <= 0:
+                if (appropriate is not False and readable is not False) or revisions_left <= 0:
                     break
                 # Not appropriate and budget left -> let the model fix itself.
                 revised_answer = self._revise_answer(
@@ -914,7 +1024,7 @@ class Pipeline:
             return replace(
                 current,
                 summary=summary,
-                appropriate=appropriate,
+                appropriate=False if readable is False else appropriate,
                 review_note=note,
             )
         except Exception:
@@ -1016,6 +1126,14 @@ class Pipeline:
 
     def _general_result(self, session_id: str, text: str, fixed_message: str, context: HybridSessionContext) -> PipelineResult:
         message = fixed_message
+        if not message:
+            # Never ask a language model to evaluate arithmetic.  This keeps
+            # short expressions such as ``1+4-3+7=?`` deterministic while
+            # leaving explanations and all natural-language questions to the
+            # configured LLM.
+            from app.arithmetic import calculate_expression
+
+            message = calculate_expression(text) or ""
         if not message:
             outbound_text = text
             outbound_history = context.turns[-8:]
@@ -1329,14 +1447,18 @@ class Pipeline:
                 from app.privacy.scrubber import scrub_outbound
 
                 def _scrubbed_classifier(q: str, ch: object) -> bool:
-                    return self.llm.classify_safe(  # type: ignore[attr-defined]
-                        scrub_outbound(q),
-                        ch,  # type: ignore[arg-type]
+                    return self._resilient_classify(
+                        lambda: self.llm.classify_safe(  # type: ignore[attr-defined]
+                            scrub_outbound(q),
+                            ch,  # type: ignore[arg-type]
+                        )
                     )
 
                 llm_classifier = _scrubbed_classifier
             else:
-                llm_classifier = self.llm.classify_safe  # type: ignore[attr-defined]
+                base_cls = self.llm.classify_safe  # type: ignore[attr-defined]
+
+                llm_classifier = lambda q, ch: self._resilient_classify(lambda: base_cls(q, ch))  # type: ignore[attr-defined]
         decision, normalized = self.router.route(query.text, chunks, llm_classifier)
         lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
 

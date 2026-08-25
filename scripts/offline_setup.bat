@@ -1,7 +1,7 @@
 @echo off
 REM Rightly - ONE-CLICK offline bootstrap for the demo machine (Windows).
 REM Double-click this file AFTER copying the whole repo to the demo PC.
-REM It downloads (once): python deps, Ollama + qwen2.5:7b-instruct-q4_k_m, PhoWhisper,
+REM It downloads (once): python deps, Ollama + balanced qwen2.5:3b-instruct-q4_k_m, PhoWhisper,
 REM embedding model + caches. Then the demo runs 100% offline.
 
 setlocal

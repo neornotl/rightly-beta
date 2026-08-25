@@ -61,7 +61,12 @@ def _is_transient_http(error: Exception) -> bool:
     message = str(error).lower()
     if isinstance(error, (ConnectionError, TimeoutError, OSError)):
         return True
-    return any(token in message for token in ("429", "500", "502", "503", "504", "timeout"))
+    # Vertex express keys also surface short bursts of 403/quota errors that
+    # clear within seconds; bounded retries then fall back to the next LLM.
+    return any(
+        token in message
+        for token in ("429", "500", "502", "503", "504", "timeout", "403", "quota", "resource_exhausted")
+    )
 
 
 def is_retryable_llm_error(error: Exception) -> bool:
@@ -86,7 +91,7 @@ class BaseLLM(ABC):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
         system_prompt: Optional[str] = None,
     ) -> dict:

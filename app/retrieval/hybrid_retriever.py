@@ -4,12 +4,14 @@ with a disk cache of precomputed embeddings."""
 
 from __future__ import annotations
 
+import math
+import re
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import re
 
 from app.retrieval.base import Retriever
 from app.retrieval.bm25_retriever import BM25Retriever
@@ -278,72 +280,78 @@ def _rrf_fuse(lists: list[list[RetrievedChunk]], k: int = 60) -> tuple[list[Retr
     return [_to_chunk(by_chunk[cid], rrf_scores.get(cid, 0.0)) for cid in ranked], breakdowns
 
 
+#: Folk terms users say -> canonical tokens found in law titles.
+_QUERY_ALIASES = {
+    "so do": "đất đai quyền sử dụng đất",
+    "so hong": "nhà ở quyền sử dụng đất",
+    "ho khau": "cư trú hộ gia đình thường trú",
+    "bhxh": "bảo hiểm xã hội",
+    "bhyt": "bảo hiểm y tế",
+    "tro cap that nghiep": "bảo hiểm thất nghiệp trợ cấp",
+}
+
+
+def _title_family_key(title: str) -> str:
+    """Coarse grouping key so superseded editions of the SAME law land in one
+    bucket (digits/years and doc-type words stripped)."""
+    value = title.casefold().replace("_", " ").replace("-", " ")
+    value = re.sub(r"\d+", " ", value)
+    value = re.sub(r"\b(vbhn|vpqh|luat|luật|bo|bộ|qh|nd|tt)\b", " ", value)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _is_vbhn_title(title: str) -> bool:
+    return bool(re.search(r"\d{1,3}\s*[-–]\s*VBHN", (title or "").upper()))
+
+
+def _texts_similar(a: str, b: str, threshold: float = 0.80) -> bool:
+    """Fast near-duplicate test: word-set Jaccard (consolidated editions of
+    the same provision share almost all words; distinct laws do not)."""
+    wa = frozenset(a.split())
+    wb = frozenset(b.split())
+    if not wa or not wb:
+        return False
+    if abs(len(wa) - len(wb)) > max(len(wa), len(wb)) * 0.6:
+        return False
+    inter = len(wa & wb)
+    return inter / (len(wa) + len(wb) - inter) >= threshold
+
+
 def _prefer_current_sources(hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
-    """Collapse repeated text from superseded/legacy source IDs.
+    """Collapse near-identical text from superseded editions of the SAME law.
 
-    VBHN imports can have an older registry ID and a current canonical ID for
-    the same text. Prefer the current Bach-Xuan VBHN source and retain only one
-    chunk per source in the context so the LLM does not see conflicting copies.
+    Only texts that are actually near-identical are treated as duplicates
+    (preferring the VBHN/consolidated edition). Distinct laws must never be
+    collapsed just because their titles look alike — an earlier version of
+    this heuristic merged different acts and dropped the correct source from
+    the context (-22.7 hit@5 on the 1000-question benchmark).
     """
-    by_text: dict[str, RetrievedChunk] = {}
+    families: dict[str, list[RetrievedChunk]] = {}
     for hit in hits:
-        key = " ".join(hit.text.split())
-        current = by_text.get(key)
-        if current is None:
-            by_text[key] = hit
-            continue
-        current_title = current.metadata.title if current.metadata else ""
-        hit_title = hit.metadata.title if hit.metadata else ""
-        if "VBHN" in hit_title.upper() and "VBHN" not in current_title.upper():
-            by_text[key] = hit
-    # Also collapse alternate IDs for the same named law (for example an old
-    # consolidated copy and the newer 2026 VBHN copy).
-    by_title: dict[str, RetrievedChunk] = {}
-    for hit in by_text.values():
         title = hit.metadata.title if hit.metadata else ""
-        title_key = title.casefold().replace("_", " ").replace("-", " ")
-        title_key = re.sub(r"\d+", " ", title_key)
-        title_key = re.sub(r"\b(vbhn|vpqh|luat|luật|bo|bộ|qh)\b", " ", title_key)
-        title_key = re.sub(r"\s+", " ", title_key).strip()
-        if len(title_key) < 12:
-            title_key = hit.source_id
-        current = by_title.get(title_key)
-        if current is None:
-            by_title[title_key] = hit
-            continue
-        current_title = current.metadata.title if current.metadata else ""
-        hit_title = hit.metadata.title if hit.metadata else ""
-        current_is_vbhn = bool(re.match(r"\s*\d{1,3}-VBHN", current_title.upper()))
-        hit_is_vbhn = bool(re.match(r"\s*\d{1,3}-VBHN", hit_title.upper()))
-        current_year = re.search(r"_(20\d{2})$", current.source_id)
-        hit_year = re.search(r"_(20\d{2})$", hit.source_id)
-        newer = bool(hit_year and current_year and hit_year.group(1) > current_year.group(1))
-        if (hit_is_vbhn and not current_is_vbhn) or newer:
-            by_title[title_key] = hit
+        key = _title_family_key(title) or hit.source_id
+        families.setdefault(key, []).append(hit)
 
-    def title_key(value: str) -> str:
-        value = re.sub(r"[0-9_-]+|vbhn|vpqh|luật|luat|bộ|bo|qh", " ", value.casefold())
-        return re.sub(r"\s+", " ", value).strip()
-
-    current_by_title: dict[str, RetrievedChunk] = {}
-    for hit in by_title.values():
-        title = hit.metadata.title if hit.metadata else ""
-        key = title_key(title)
-        if key:
-            existing = current_by_title.get(key)
-            if existing is None or hit.source_id > existing.source_id:
-                current_by_title[key] = hit
-    if current_by_title:
-        current_sources = {hit.source_id for hit in current_by_title.values()}
-        by_title = {
-            key: hit for key, hit in by_title.items()
-            if hit.source_id in current_sources
-            or title_key(hit.metadata.title if hit.metadata else "") not in current_by_title
-        }
+    kept: list[RetrievedChunk] = []
+    for group in families.values():
+        group_sorted = sorted(
+            group,
+            key=lambda h: (
+                not _is_vbhn_title(h.metadata.title if h.metadata else ""),
+                h.source_id,
+                -h.score,
+            ),
+        )
+        representatives: list[RetrievedChunk] = []
+        for cand in group_sorted:
+            if any(_texts_similar(cand.text, rep.text) for rep in representatives):
+                continue
+            representatives.append(cand)
+        kept.extend(representatives)
 
     deduped: list[RetrievedChunk] = []
     source_counts: dict[str, int] = {}
-    for hit in sorted(by_title.values(), key=lambda item: -item.score):
+    for hit in sorted(kept, key=lambda item: -item.score):
         if source_counts.get(hit.source_id, 0) >= 3:
             continue
         source_counts[hit.source_id] = source_counts.get(hit.source_id, 0) + 1
@@ -484,6 +492,7 @@ class HybridRetriever(Retriever):
     dense_gate: float = _DENSE_GATE
     rerank_threshold: float = 0.0  # only applied when gate == "none"
     _reranker: object = field(default=None, repr=False)
+    _title_index: Optional[dict[str, dict]] = field(default=None, repr=False)
 
     @classmethod
     def from_chunks(
@@ -507,6 +516,59 @@ class HybridRetriever(Retriever):
             bm25_gate=bm25_gate,
             dense_gate=dense_gate,
         )
+
+    def _build_title_index(self) -> dict[str, dict]:
+        """source_id -> {tokens, max_bonus_cap} plus token IDF, built once.
+
+        Users often name the legal topic ("bảo hiểm xã hội", "trợ giúp pháp
+        lý"); chunks whose document TITLE shares those rare tokens deserve a
+        modest boost on top of the fused score.
+        """
+        from app.retrieval.bm25_retriever import _VIETNAMESE_STOPWORDS, normalize_vietnamese
+
+        def toks(text: str) -> set[str]:
+            words = [w for w in re.findall(r"[a-zà-ỹđ]{3,}", normalize_vietnamese(text))]
+            return {w for w in words if w not in _VIETNAMESE_STOPWORDS}
+
+        src_tokens: dict[str, set[str]] = {}
+        for c in self.bm25.chunks:
+            if c.source_id not in src_tokens:
+                src_tokens[c.source_id] = toks(c.title)
+        n_src = max(len(src_tokens), 1)
+        df: dict[str, int] = Counter()
+        for toks_ in src_tokens.values():
+            for t in toks_:
+                df[t] += 1
+        idf = {t: math.log(1 + n_src / d) for t, d in df.items()}
+        return {"src_tokens": src_tokens, "idf": idf}
+
+    def _title_boost(self, query: str, source_id: str) -> float:
+        if self._title_index is None:
+            self._title_index = self._build_title_index()
+        idx = self._title_index
+        stoks = idx["src_tokens"].get(source_id)
+        if not stoks:
+            return 0.0
+        from app.retrieval.bm25_retriever import _VIETNAMESE_STOPWORDS, normalize_vietnamese
+
+        qtoks = {
+            w
+            for w in re.findall(r"[a-zà-ỹđ]{3,}", normalize_vietnamese(query))
+            if w not in _VIETNAMESE_STOPWORDS
+        }
+        # folk-term aliases ("sổ đỏ" -> đất đai / quyền sử dụng đất)
+        nq = normalize_vietnamese(query)
+        for folk, canonical in _QUERY_ALIASES.items():
+            if folk in nq:
+                qtoks |= {
+                    w for w in re.findall(r"[a-zà-ỹđ]{3,}", canonical)
+                    if w not in _VIETNAMESE_STOPWORDS
+                }
+        overlap = qtoks & stoks
+        if not overlap:
+            return 0.0
+        # 0.003/token, capped at 0.0075 — well under one RRF vote (~0.016)
+        return min(0.003 * len(overlap), 0.0075)
 
     def _filter(self, hits: list[RetrievedChunk]) -> list[RetrievedChunk]:
         if not self.exclude_demo:
@@ -555,29 +617,47 @@ class HybridRetriever(Retriever):
                 boosted.append(hit)
         fused = boosted
         
-        # Classify evidence type for each hit
-        evidence_types = {}
-        for hit in fused:
-            ev_type = _classify_evidence(query, hit)
-            evidence_types[hit.chunk_id] = ev_type
-        
-        # Sort by evidence type priority, then score
-        type_priority = {
-            EvidenceType.DIRECT_ANSWER: 5,
-            EvidenceType.CONDITIONS_EXCEPTIONS: 4,
-            EvidenceType.PROCEDURE: 3,
-            EvidenceType.CITATION_ONLY: 2,
-            EvidenceType.IRRELEVANT: 1,
+        # Small additive bonuses only: title affinity + evidence-type as a
+        # TIE-BREAKER. The old hard re-sort by evidence type discarded ~10
+        # points of hit@5 by promoting pattern-matching chunks over on-topic
+        # ones; bonuses keep the fused ranking dominant.
+        ev_bonus = {
+            EvidenceType.DIRECT_ANSWER: 0.0012,
+            EvidenceType.CONDITIONS_EXCEPTIONS: 0.0009,
+            EvidenceType.PROCEDURE: 0.0006,
+            EvidenceType.CITATION_ONLY: 0.0003,
+            EvidenceType.IRRELEVANT: 0.0,
         }
-        fused.sort(
-            key=lambda hit: (
-                type_priority.get(evidence_types.get(hit.chunk_id, EvidenceType.IRRELEVANT), 0),
-                hit.score,
-                breakdowns.get(hit.chunk_id, ScoreBreakdown()).rrf_score
-            ),
-            reverse=True
-        )
-        
+        rescored = []
+        for hit in fused:
+            total = (
+                hit.score
+                + self._title_boost(query, hit.source_id)
+                + ev_bonus.get(_classify_evidence(query, hit), 0.0)
+            )
+            rescored.append((total, hit))
+        rescored.sort(key=lambda pair: (-pair[0], pair[1].chunk_id))
+        fused = [
+            _to_chunk(hit, total) if abs(total - hit.score) > 1e-12 else hit
+            for total, hit in rescored
+        ]
+
+        # Source diversity: two chunks max per source inside the returned
+        # window so one verbose act cannot crowd out the correct law.
+        diversified: list[RetrievedChunk] = []
+        src_count: dict[str, int] = {}
+        overflow: list[RetrievedChunk] = []
+        for hit in fused:
+            c = src_count.get(hit.source_id, 0)
+            if c >= 2 and len(diversified) < top_k * 3:
+                overflow.append(hit)
+                continue
+            src_count[hit.source_id] = c + 1
+            diversified.append(hit)
+            if len(diversified) >= top_k and overflow:
+                break
+        fused = diversified + overflow[:top_k]
+
         if self.rerank and len(fused) > 1:
             reranker = self._load_reranker()
             pairs = [(query, h.text) for h in fused[:12]]

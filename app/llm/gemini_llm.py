@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 from app.llm.base import BaseLLM, LLMError, format_history, is_retryable_llm_error, retry_transient
 from app.llm.prompts import CLASSIFY_SYSTEM, SYSTEM_PROMPT
@@ -12,13 +13,25 @@ _SYSTEM = SYSTEM_PROMPT
 _CLASSIFY_SYSTEM = CLASSIFY_SYSTEM
 
 
+def _thinking_budget(default: int = 512) -> int | None:
+    """Reasoning budget for 2.5 models; -1 disables thinking entirely."""
+    raw = os.environ.get("GEMINI_THINKING_BUDGET", str(default)).strip()
+    try:
+        val = int(raw)
+    except ValueError:
+        return default
+    if val < 0:
+        return None
+    return val
+
+
 class GeminiLLM(BaseLLM):
     name = "gemini"
 
     def __init__(
         self,
         api_key: str = "",
-        model: str = "gemini-2.0-flash",
+        model: str = "gemini-2.5-flash",
         timeout_seconds: float = 60.0,
         max_retries: int = 3,
         backoff_seconds: float = 1.0,
@@ -39,10 +52,17 @@ class GeminiLLM(BaseLLM):
             try:
                 from google import genai  # type: ignore
 
-                self._client = genai.Client(
-                    api_key=self.api_key,
-                    http_options={"timeout": self.timeout_seconds},
-                )
+                kwargs: dict = {
+                    "api_key": self.api_key,
+                    # google-genai v2 expects http timeout in MILLISECONDS
+                    "http_options": {"timeout": int(self.timeout_seconds * 1000)},
+                }
+                # New-format Google Cloud API keys ("AQ....") are Vertex AI
+                # express-mode credentials: they only work through the Vertex
+                # backend, not the Gemini-API developer endpoint.
+                if self.api_key.startswith("AQ."):
+                    kwargs["vertexai"] = True
+                self._client = genai.Client(**kwargs)
             except ImportError as exc:
                 raise LLMError(
                     "google-genai not installed. pip install -r requirements-optional.txt"
@@ -55,7 +75,7 @@ class GeminiLLM(BaseLLM):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
     ) -> dict:
         if not self.available:
@@ -71,13 +91,24 @@ class GeminiLLM(BaseLLM):
             f"Giới hạn câu trả lời: {max_chars} ký tự."
         )
         client = self._get_client()
+        gen_cfg: dict = {
+            "response_mime_type": "application/json",
+            "temperature": 0.2,
+        }
+        budget = _thinking_budget()
+        if self.model.startswith("gemini-2.5") and budget is not None:
+            gen_cfg["thinking_config"] = {"thinking_budget": budget}
         try:
             response = retry_transient(
                 lambda: client.models.generate_content(
                     model=self.model,
                     contents=[
-                        {"role": "user", "parts": [_SYSTEM, user]},
+                        {
+                            "role": "user",
+                            "parts": [{"text": _SYSTEM}, {"text": user}],
+                        }
                     ],
+                    config=gen_cfg,
                 ),
                 max_retries=self.max_retries,
                 timeout_seconds=self.timeout_seconds,
@@ -93,6 +124,11 @@ class GeminiLLM(BaseLLM):
         except json.JSONDecodeError as exc:
             # Not retryable: a fresh call fails the same way (F/T3 fix).
             raise LLMError(f"Gemini returned non-JSON output: {exc}") from exc
+        if not parsed.get("answer_text"):
+            for alt in ("answer", "reply", "response"):
+                if parsed.get(alt):
+                    parsed["answer_text"] = str(parsed[alt])
+                    break
         parsed.setdefault("source_ids", [])
         parsed.setdefault("limitations", [])
         parsed.setdefault("next_step", "")
@@ -112,10 +148,11 @@ class GeminiLLM(BaseLLM):
             response = retry_transient(
                 lambda: client.models.generate_content(
                     model=self.model,
-                    contents=[{"role": "user", "parts": [_CLASSIFY_SYSTEM, query[:2000]]}],
+                    contents=[{"role": "user", "parts": [{"text": _CLASSIFY_SYSTEM}, {"text": query[:2000]}]}],
                     config={
                         "response_mime_type": "application/json",
                         "temperature": 0.0,
+                        "thinking_config": {"thinking_budget": 0},
                     },
                 ),
                 max_retries=self.max_retries,

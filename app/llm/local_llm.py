@@ -4,15 +4,13 @@ Council R-local: the offline brain. Talks to a local Ollama server
 (http://localhost:11434 by default) or any OpenAI-compatible local server
 (LM Studio, llama.cpp server, vLLM). Nothing ever leaves the machine.
 
-Model recommendation for the demo machine (i5 + 16GB DDR5 + RTX 3060 Ti 8GB),
-council round 26 ruling (luna + nemotron + m365, 2026-08-16):
-  OLLAMA_MODEL=qwen2.5:7b-instruct-q4_k_m  (main: ~4.8GB VRAM, JSON-stable,
-                                            fast, no thinking tokens; leaves
-                                            ~1.5GB headroom for CUDA kernel +
-                                            e5-small embedding)
-  Fallback:  qwen3:8b                       (better VN quality, needs
-                                            think=false, slightly slower)
-  Emergency: qwen2.5:3b                     (CPU-only fallback)
+Model recommendation:
+  OLLAMA_MODEL=qwen2.5:3b-instruct-q4_k_m  (balanced default for 8-16GB
+                                            CPU-only machines; fast and
+                                            sufficiently capable with RAG)
+  Upgrade: qwen2.5:7b-instruct-q4_k_m      (only when hardware detection
+                                            confirms >=8GB GPU or a very
+                                            powerful CPU/RAM combination)
   Not recommended: gemma3:12b (7.4GB VRAM - OOM risk on 8GB card)
 
 Qwen3 is a "thinking" model: Ollama >= 0.8 honours ``think=false`` so the
@@ -21,7 +19,7 @@ pollute the JSON payload. Passed best-effort via extra_body for qwen3* tags.
 
 Setup (one-time, needs internet; afterwards fully offline):
   ollama serve                  # or install the Ollama desktop app
-  ollama pull qwen2.5:7b-instruct-q4_k_m
+  ollama pull qwen2.5:3b-instruct-q4_k_m
 """
 
 from __future__ import annotations
@@ -37,7 +35,7 @@ _SYSTEM = SYSTEM_PROMPT
 _CLASSIFY_SYSTEM = CLASSIFY_SYSTEM
 
 _DEFAULT_BASE_URL = "http://localhost:11434/v1"
-_DEFAULT_MODEL = "qwen2.5:7b-instruct-q4_k_m"
+_DEFAULT_MODEL = "qwen2.5:3b-instruct-q4_k_m"
 _AVAILABLE_TTL_S = 30.0
 
 
@@ -133,31 +131,41 @@ class LocalLLM(BaseLLM):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         if not self.available:
             raise LLMError(
                 f"Local LLM unreachable at {self.base_url}. Start Ollama "
                 f"('ollama serve') and pull the model ('ollama pull {self.model}')."
             )
-        context = "\n\n".join(
-            f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
-        )
         history_block = format_history(history)
-        user = (
-            (f"{history_block}\n\n" if history_block else "")
-            + f"Câu hỏi: {query}\n\n"
-            f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
-            f"Giới hạn câu trả lời: {max_chars} ký tự."
-        )
+        if system_prompt:
+            # Router/general/agentic calls provide their own JSON contract.
+            # Keep the user's text verbatim instead of wrapping it in the
+            # legal-answer prompt, otherwise "alo" can be misread as a law
+            # question before the local model gets a chance to classify it.
+            user = ((f"{history_block}\n\n" if history_block else "") + query)
+            active_system = system_prompt
+        else:
+            context = "\n\n".join(
+                f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
+            )
+            user = (
+                (f"{history_block}\n\n" if history_block else "")
+                + f"Câu hỏi: {query}\n\n"
+                f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
+                f"Giới hạn câu trả lời: {max_chars} ký tự."
+            )
+            active_system = _SYSTEM
         client = self._get_client()
         try:
             text = retry_transient(
                 lambda: self._generate(
                     client,
                     [
-                        {"role": "system", "content": _SYSTEM},
+                        {"role": "system", "content": active_system},
                         {"role": "user", "content": user},
                     ],
                     temperature=0.2,

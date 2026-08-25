@@ -1,58 +1,35 @@
-"""Detect local hardware and recommend the best model config for Rightly.
+# -*- coding: utf-8 -*-
+"""Detect the machine and pick a balanced reasoning setup that stays fast.
 
-Run standalone:
-    python scripts/detect_hardware.py
+Writes recommended settings into .env (only keys not already set) so
+non-technical users just run CaiDat.bat once.
 
-Or have start.bat call it to auto-fill .env on first install:
-    python scripts/detect_hardware.py --write .env
-
-Reads (no third-party deps required; all stdlib + optional psutil/wmi):
-  - Total RAM (GB)
-  - CPU core count
-  - GPU VRAM (nvidia-smi -> MB; else 0 = CPU-only)
-  - Free disk space (GB)
-
-Picks a tier that keeps the model running in memory with headroom and
-writes OLLAMA_MODEL / WHISPER_MODEL / WHISPER_DEVICE / ASR_BACKEND /
-LLM_BACKEND / TTS_BACKEND accordingly.
-
-Tiers (RAM is the binding constraint on CPU-only laptops):
-  <6 GB  -> LLM: none (mock) + whisper tiny      (survival)
-  6-11   -> LLM: qwen2.5:3b-instruct-q4_k_m + whisper base
-  11-15  -> LLM: qwen2.5:7b-instruct-q4_k_m + whisper small
-  >=16   -> LLM: qwen3:8b + whisper small/medium
-
-GPU VRAM overrides: >=6GB VRAM allows the same models on CUDA.
-Disk guard: refuse to write a config that needs more model cache than
-free space.
+Tiers (balanced by default; never choose the largest model automatically):
+  GPU >= 8GB VRAM  -> Ollama qwen2.5:7b-instruct-q4_K_M
+  RAM >= 24GB and 12+ cores -> Ollama qwen2.5:7b-instruct-q4_K_M on CPU
+  RAM  >= 8GB      -> Ollama qwen2.5:3b-instruct-q4_K_M on CPU
+  below / no Ollama-> cloud Gemini (needs key) else mock
 """
 
 from __future__ import annotations
 
-import argparse
 import os
-import re
+import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+try:  # Windows terminals may still use cp1252; hardware notes are UTF-8.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 
-def detect_cpu_cores() -> int:
-    return os.cpu_count() or 4
-
-
-def detect_total_ram_gb() -> float:
+def _win_ram_gb() -> float:
     try:
-        import psutil  # type: ignore
-        return round(psutil.virtual_memory().total / (1024 ** 3), 1)
-    except Exception:
-        pass
-    try:
-        # Windows stdlib fallback via ctypes
         import ctypes
+
         class MEMORYSTATUSEX(ctypes.Structure):
             _fields_ = [
                 ("dwLength", ctypes.c_ulong),
@@ -65,166 +42,134 @@ def detect_total_ram_gb() -> float:
                 ("ullAvailVirtual", ctypes.c_ulonglong),
                 ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
             ]
+
         stat = MEMORYSTATUSEX()
         stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
-        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
-            return round(stat.ullTotalPhys / (1024 ** 3), 1)
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
+        return stat.ullTotalPhys / (1024 ** 3)
     except Exception:
-        pass
-    return 8.0
+        return 0.0
 
 
-def detect_gpu_vram_mb() -> int:
-    """GPU VRAM in MB; 0 means no usable GPU detected (CPU-only)."""
+def _nvidia_vram_gb() -> float:
     try:
         out = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
             capture_output=True, text=True, timeout=10,
         )
-        if out.returncode == 0 and out.stdout.strip():
-            return int(re.sub(r"\D", "", out.stdout.splitlines()[0]) or 0)
-    except Exception:
-        pass
-    try:
-        import torch  # type: ignore
-        if torch.cuda.is_available():
-            return int(torch.cuda.get_device_properties(0).total_memory / (1024 ** 2))
-    except Exception:
-        pass
-    return 0
-
-
-def detect_free_disk_gb() -> float:
-    try:
-        total, used, free = shutil.disk_usage(ROOT)
-        return round(free / (1024 ** 3), 1)
+        mib = [float(x.strip()) for x in out.stdout.splitlines() if x.strip().isdigit()]
+        return max(mib) / 1024 if mib else 0.0
     except Exception:
         return 0.0
 
 
-def recommend(ram_gb: float, cores: int, vram_mb: int, free_gb: float) -> dict:
-    vram_gb = vram_mb / 1024
-    gpu = vram_gb >= 6.0
-    device = "cuda" if gpu else "cpu"
+def _ollama_path() -> str | None:
+    """Find Ollama even when its installer has not refreshed this process PATH."""
+    found = shutil.which("ollama")
+    if found:
+        return found
+    candidates: list[str] = []
+    for env_name in ("LOCALAPPDATA", "PROGRAMFILES", "PROGRAMFILES(X86)"):
+        base = os.environ.get(env_name)
+        if not base:
+            continue
+        root = os.path.abspath(base)
+        candidates.extend(
+            os.path.join(root, rel)
+            for rel in (
+                "Programs\\Ollama\\ollama.exe",
+                "Ollama\\ollama.exe",
+                "Ollama\\bin\\ollama.exe",
+            )
+        )
+    return next((path for path in candidates if os.path.isfile(path)), None)
 
-    # LLM tier. On CPU-only machines bigger models are unusably slow, so the
-    # tier keeps 3b until RAM is ample (>=16GB) unless a real GPU exists.
-    if ram_gb < 6:
-        llm_model = "mock"          # too weak for a local LLM
-        llm_backend = "mock"
-    elif ram_gb < 11:
-        llm_model = "qwen2.5:3b-instruct-q4_k_m"
-        llm_backend = "local"
-    elif gpu:
-        llm_model = "qwen2.5:7b-instruct-q4_k_m"
-        llm_backend = "local"
-    elif ram_gb < 16:
-        llm_model = "qwen2.5:3b-instruct-q4_k_m"   # CPU-only: keep it fast
-        llm_backend = "local"
-    elif ram_gb < 20:
-        llm_model = "qwen2.5:7b-instruct-q4_k_m"   # CPU-only but lots of RAM
-        llm_backend = "local"
+
+def _ollama_ready() -> bool:
+    return _ollama_path() is not None or _port_open(11434)
+
+
+def _port_open(port: int) -> bool:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def detect() -> dict:
+    info = {
+        "os": f"{platform.system()} {platform.release()}",
+        "cpu_cores": os.cpu_count() or 0,
+        "ram_gb": round(_win_ram_gb() if sys.platform == "win32" else 0, 1),
+        "gpu_vram_gb": round(_nvidia_vram_gb(), 1),
+        "ollama": _ollama_ready(),
+        "ollama_path": _ollama_path(),
+    }
+    info["recommendation"] = recommend(info)
+    return info
+
+
+def recommend(info: dict) -> dict:
+    ram = info["ram_gb"]
+    vram = info["gpu_vram_gb"]
+    cores = info.get("cpu_cores", 0)
+    # Choose the model from hardware even before Ollama is installed; the
+    # one-time installer will install the selected runtime immediately after.
+    # 7B is reserved for machines where it remains responsive. A 7B model on
+    # a typical 16GB CPU-only laptop can take 30-60s per answer; 3B is the
+    # balanced default and is still grounded by Rightly's legal retrieval.
+    if vram >= 8:
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU >= 8 GB - 7B chạy nhanh, chất lượng cao"
+    elif ram >= 24 and cores >= 12:
+        model, note = "qwen2.5:7b-instruct-q4_K_M", "CPU/RAM mạnh - 7B vẫn đủ nhanh"
+    elif ram >= 8:
+        model, note = "qwen2.5:3b-instruct-q4_K_M", "Cấu hình phổ biến - 3B cân bằng tốc độ và độ thông minh"
     else:
-        llm_model = "qwen3:8b"
-        llm_backend = "local"
-
-    # ASR tier (whisper is the offline default)
-    if ram_gb < 6:
-        whisper_model = "tiny"
-    elif ram_gb < 11:
-        whisper_model = "base"
-    elif ram_gb < 16:
-        whisper_model = "small"
-    else:
-        whisper_model = "small"     # medium too slow on CPU-only
-
-    # Disk guard: model caches need a few GB
-    if free_gb > 0 and free_gb < 4 and llm_backend == "local":
-        llm_backend = "mock"
-        llm_model = "mock"
-
+        model, note = "", "May cau hinh thap - khong dat yeu cau offline 8GB RAM"
     return {
-        "ram_gb": ram_gb,
-        "cpu_cores": cores,
-        "gpu_vram_mb": vram_mb,
-        "free_disk_gb": free_gb,
-        "gpu_capable": gpu,
-        "llm_backend": llm_backend,
-        "llm_model": llm_model,
-        "whisper_model": whisper_model,
-        "whisper_device": device,
-        "asr_backend": "whisper" if ram_gb >= 6 else "mock",
-        "tts_backend": "edge" if ram_gb >= 6 else "mock",
-        "explanation": (
-            f"{ram_gb:.1f}GB RAM / {cores} cores / "
-            f"{'GPU '+str(vram_mb)+'MB' if vram_mb else 'no GPU'} / "
-            f"{free_gb:.1f}GB free disk"
-        ),
+        "llm_backend": "local" if model else ("gemini" if ram >= 4 else "mock"),
+        "ollama_model": model,
+        "note": note,
     }
 
 
-def _write_env(path: Path, rec: dict) -> None:
-    """Update/create a .env with the recommended values (preserve the rest)."""
-    replacements = {
-        "LLM_BACKEND": rec["llm_backend"],
-        "OLLAMA_MODEL": rec["llm_model"],
-        "WHISPER_MODEL": rec["whisper_model"],
-        "WHISPER_DEVICE": rec["whisper_device"],
-        "ASR_BACKEND": rec["asr_backend"],
-        "TTS_BACKEND": rec["tts_backend"],
-    }
-    lines = []
-    if path.exists():
-        lines = path.read_text(encoding="utf-8").splitlines()
-    updated = set()
-    out = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#") and "=" in stripped:
-            key = stripped.split("=", 1)[0].strip()
-            if key in replacements:
-                out.append(f"{key}={replacements[key]}")
-                updated.add(key)
-                continue
-        out.append(line)
-    for key, val in replacements.items():
-        if key not in updated:
-            out.append(f"{key}={val}")
-    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+ENV_TEMPLATE = """# --- do CaiDat-Rightly sinh ra {date} ---
+APP_MODE=local
+ASR_BACKEND=whisper
+RETRIEVAL_BACKEND=bm25
+TTS_BACKEND=mock
+LLM_BACKEND={llm_backend}
+{llm_block}
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL={model}
+"""
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Rightly hardware auto-detect")
-    parser.add_argument(
-        "--write", metavar="PATH", default=None,
-        help="Write recommended values into a .env file (default: no write)",
-    )
-    parser.add_argument("--json", action="store_true", help="Print JSON only")
-    args = parser.parse_args()
-
-    rec = recommend(
-        ram_gb=detect_total_ram_gb(),
-        cores=detect_cpu_cores(),
-        vram_mb=detect_gpu_vram_mb(),
-        free_gb=detect_free_disk_gb(),
-    )
-
-    if args.json:
-        import json
-        print(json.dumps(rec, ensure_ascii=False, indent=2))
+def write_env(reco: dict, env_path: str = ".rightly-hardware.env") -> str:
+    llm_block = ""
+    if reco["llm_backend"] == "local":
+        pass  # Ollama needs no key
     else:
-        print("=== Rightly hardware detection ===")
-        print(f"  {rec['explanation']}")
-        print(f"  -> LLM backend: {rec['llm_backend']} ({rec['llm_model']})")
-        print(f"  -> ASR backend: {rec['asr_backend']} (whisper {rec['whisper_model']}, {rec['whisper_device']})")
-        print(f"  -> TTS backend: {rec['tts_backend']}")
-
-    if args.write:
-        target = Path(args.write)
-        _write_env(target, rec)
-        print(f"\nWrote recommended values to {target}")
-    return 0
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        llm_block = f"GEMINI_API_KEY={gemini_key}\nGEMINI_THINKING_BUDGET=512\n" if gemini_key else "# Thêm GEMINI_API_KEY vào file này để dùng AI cloud\n"
+    content = ENV_TEMPLATE.format(
+        date=__import__("datetime").date.today().isoformat(),
+        llm_backend=reco["llm_backend"],
+        llm_block=llm_block,
+        model=reco["ollama_model"] or "qwen2.5:3b-instruct-q4_K_M",
+    )
+    # This is a generated recommendation file, so replace it on each run.
+    # Appending would leave duplicate keys and make the selected model depend
+    # on which dotenv parser happened to read the file last.
+    with open(env_path, "w", encoding="utf-8") as fh:
+        fh.write(content)
+    return env_path
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import json
+
+    info = detect()
+    print(json.dumps(info, ensure_ascii=False, indent=2))
+    print(f"Wrote hardware recommendation to {write_env(info['recommendation'])}")

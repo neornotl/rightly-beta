@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -10,6 +11,7 @@ from app.llm.base import BaseLLM
 from app.llm.prompts import AGENTIC_RETRIEVAL_SYSTEM, AGENTIC_REASONING_SYSTEM
 from app.retrieval.base import Retriever
 from app.schemas import RetrievedChunk
+from app.retrieval.query_expansion import expand_legal_query, strip_diacritics
 
 
 @dataclass
@@ -134,15 +136,18 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
     def _fallback_analysis(self, query: str) -> QueryAnalysis:
         """Simple fallback when LLM analysis fails."""
         q_lower = query.lower()
+        q_plain = strip_diacritics(query)
         
         # Detect info type
-        if any(w in q_lower for w in ["bao nhiêu", "mức phạt", "phạt"]):
+        if any(w in q_lower for w in ["bao nhiêu", "mức phạt", "phạt"]) or "phat" in q_plain:
             info_type = "penalty"
         elif any(w in q_lower for w in ["tuổi", "khi nào", "năm nào"]):
             info_type = "table"
         elif any(w in q_lower for w in ["hồ sơ", "giấy tờ", "cần gì"]):
             info_type = "list"
-        elif any(w in q_lower for w in ["điều kiện", "được không", "ai được"]):
+        elif any(w in q_lower for w in ["điều kiện", "được không", "ai được"]) or any(
+            w in q_plain for w in ["dieu kien", "duoc khong", "ai duoc"]
+        ):
             info_type = "condition"
         elif any(w in q_lower for w in ["thủ tục", "làm sao", "nơi nộp", "thời hạn"]):
             info_type = "procedure"
@@ -156,6 +161,11 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
         for kw in ["nghỉ hưu", "vượt đèn đỏ", "khai sinh", "kết hôn", "ly hôn", "hộ chiếu", "căn cước", "sổ đỏ", "thừa kế", "bảo hiểm", "phạt", "hồ sơ", "giấy tờ", "điều kiện", "tuổi", "mức phạt", "thời hạn", "thủ tục"]:
             if kw in q_lower:
                 keywords.append(kw)
+
+        # Keep the fallback useful when the input has no Vietnamese tone
+        # marks (a common keyboard and speech-recognition form).
+        if re.search(r"\bvuot\s+den\s+do\b|\bden\s+do\b", q_plain):
+            keywords.extend(["vượt đèn đỏ", "không chấp hành hiệu lệnh đèn tín hiệu"])
         
         # Build search query
         search_query = " ".join(keywords[:5]) if keywords else query
@@ -182,25 +192,29 @@ Hãy phân tích và sinh ra JSON theo schema bên trên."""
         analysis = analysis or self.analyze_query(query)
         self.last_analysis = analysis
         
-        # Step 2: Retrieve with each search query
+        # Step 2: Retrieve with each search query.  The LLM is still the
+        # semantic planner, but every query gets a bounded deterministic
+        # expansion so no-diacritic speech/keyboard input reaches the legal
+        # phrase used by the corpus (for example "vuot den do").
         all_chunks = []
         seen_chunk_ids = set()
-        
-        for sq in analysis.search_queries:
-            chunks = self.retriever.search(sq, top_k=self.top_k)
+
+        candidate_queries: list[str] = []
+        seen_queries: set[str] = set()
+        for raw_query in [*analysis.search_queries, query]:
+            for sq in expand_legal_query(raw_query):
+                key = strip_diacritics(sq)
+                if key and key not in seen_queries:
+                    seen_queries.add(key)
+                    candidate_queries.append(sq)
+        # Keep latency bounded even if a backend returns a very long list.
+        for sq in candidate_queries[: max(self.max_search_queries * 3, 6)]:
+            chunks = self.retriever.search(sq, top_k=max(self.top_k, 8))
             for chunk in chunks:
                 if chunk.chunk_id not in seen_chunk_ids:
                     seen_chunk_ids.add(chunk.chunk_id)
                     all_chunks.append(chunk)
-        
-        # Also search with original query as fallback
-        if query not in analysis.search_queries:
-            fallback_chunks = self.retriever.search(query, top_k=self.top_k)
-            for chunk in fallback_chunks:
-                if chunk.chunk_id not in seen_chunk_ids:
-                    seen_chunk_ids.add(chunk.chunk_id)
-                    all_chunks.append(chunk)
-        
+
         # Sort by score, limit to top_k
         all_chunks.sort(key=lambda c: c.score, reverse=True)
         return all_chunks[:self.top_k]
@@ -253,7 +267,10 @@ EVIDENCE (các đoạn văn bản pháp luật được cung cấp):
 Hãy suy luận và trả lời theo JSON schema. Nội dung answer_text bắt buộc theo đúng bố cục sau:
 1. Mở đầu lịch sự bằng "Dạ," rồi đưa kết luận trực tiếp trong 1-2 câu.
 2. "Căn cứ và giải thích:" — xuống dòng, liệt kê rules/điều kiện/phép tính bằng "- "; phải ghi rõ tên loại văn bản, số/ký hiệu và Điều/Khoản nếu evidence cung cấp.
-3. "Kết luận:" — chốt lại kết quả và giới hạn trong 1-2 câu.
+3. Sau mỗi quy định, giải thích ngắn quy định đó có nghĩa gì với trường hợp người hỏi. Thuật ngữ pháp lý phải được giải thích bằng từ đời thường.
+4. Nếu có nhiều điều kiện hoặc bước làm, tách thành các mục/gạch đầu dòng, mỗi ý chỉ một việc.
+5. "Kết luận:" — chốt lại kết quả và giới hạn trong 1-2 câu.
+Trả lời đủ ý, thường khoảng 120-350 từ tùy độ phức tạp (đây không phải giới hạn cứng), không cắt ngang câu hoặc kết thúc bằng dấu ba chấm.
 Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa ví dụ trong văn bản thành facts của người dân.
 {{
   "answer_text": "string",
@@ -278,7 +295,7 @@ Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa v
             response = self.llm.generate_answer(
                 query=user_prompt,
                 chunks=chunks,
-                max_chars=2000,
+                max_chars=4000,
                 history=None,
                 system_prompt=AGENTIC_REASONING_SYSTEM,
             )

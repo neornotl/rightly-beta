@@ -6,12 +6,18 @@ import csv
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from app.schemas import SourceMetadata
 
 _DEMO_MARKER = re.compile(r"DEMO|SYNTHETIC", re.IGNORECASE)
+
+#: Chunks shorter than this are ingest artifacts (mid-word tails such as
+#: ``"á)"``, ``"9."``) — they can never answer a query and only pollute the
+#: BM25/dense indexes.
+MIN_CHUNK_CHARS = 15
 
 
 class IngestError(ValueError):
@@ -85,8 +91,18 @@ class DocumentLoader:
                 if current:
                     chunks.append(current)
                 if len(para) > self.chunk_chars:
-                    for i in range(0, len(para), self.chunk_chars - self.overlap_chars):
+                    step = self.chunk_chars - self.overlap_chars
+                    for i in range(0, len(para), step):
                         chunks.append(para[i : i + self.chunk_chars].strip())
+                    # The final slice may be a tiny remainder that only
+                    # duplicates the overlap region of the previous slice.
+                    # Drop it instead of indexing a mid-word fragment.
+                    while (
+                        len(chunks) > 1
+                        and chunks[-1]
+                        and len(chunks[-1]) <= self.overlap_chars
+                    ):
+                        chunks.pop()
                     current = ""
                 else:
                     current = para
@@ -188,3 +204,58 @@ class DocumentLoader:
             is_demo=rec.is_demo,
             url=rec.url,
         )
+
+
+def parse_law_date(value: str) -> Optional[date]:
+    """Parse a registry date in ISO (``2027-03-01``) or VN (``01-03-2027``)."""
+    value = (value or "").strip()
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def filter_retrievable(
+    records: list[ChunkRecord],
+    status_path: Optional[Path] = None,
+    today: Optional[date] = None,
+) -> tuple[list[ChunkRecord], dict[str, int]]:
+    """Drop chunks that must never reach retrieval.
+
+    Removed:
+    - degenerate fragments shorter than :data:`MIN_CHUNK_CHARS`;
+    - chunks of sources registered ``pending_effective`` — the registry says
+      the document is not yet verified/in force, so citing it as current law
+      would be wrong even though its text is on disk.
+
+    Expired sources stay retrievable *by design*: the assistant uses them to
+    redirect users to the replacement document, and
+    :class:`~app.validation.citation_validator.CitationValidator` blocks any
+    answer that cites them as current.
+
+    Returns ``(kept_records, dropped_counts)``.
+    """
+    today = today or date.today()
+    statuses: dict[str, str] = {}
+    effective: dict[str, Optional[date]] = {}
+    if status_path is not None and Path(status_path).exists():
+        payload = json.loads(Path(status_path).read_text(encoding="utf-8"))
+        for sid, info in (payload.get("sources") or {}).items():
+            statuses[sid] = info.get("status", "")
+            effective[sid] = parse_law_date(info.get("ngay_hieu_luc") or "")
+
+    kept: list[ChunkRecord] = []
+    dropped = {"too_short": 0, "pending_effective": 0}
+    for rec in records:
+        if len(rec.text.strip()) < MIN_CHUNK_CHARS:
+            dropped["too_short"] += 1
+            continue
+        status = statuses.get(rec.source_id)
+        eff = effective.get(rec.source_id)
+        if status == "pending_effective" and (eff is None or eff > today):
+            dropped["pending_effective"] += 1
+            continue
+        kept.append(rec)
+    return kept, dropped

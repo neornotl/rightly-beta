@@ -40,7 +40,7 @@ class WhisperASR(BaseASR):
         self,
         model_size: str = "small",
         device: str = "auto",
-        language: str = "vi",
+        language: Optional[str] = "vi",
         compute_type: str = "default",
         model_path: Optional[str] = None,
     ):
@@ -48,8 +48,6 @@ class WhisperASR(BaseASR):
         self.device = device
         self.language = language
         self.compute_type = compute_type
-        if self.compute_type == "default" and device in {"cpu", "auto"}:
-            self.compute_type = "int8"
         self.model_path = model_path
         self._model = None
         self._error: Optional[str] = None
@@ -72,16 +70,36 @@ class WhisperASR(BaseASR):
             raise RuntimeError(
                 "faster-whisper is not installed. pip install faster-whisper"
             ) from exc
-        try:
-            self._model = WhisperModel(
-                self.model_path or self.model_size,
-                device=self.device,
-                compute_type=self.compute_type,
-            )
-        except Exception as exc:
-            self._error = f"Failed to load Whisper model: {exc}"
-            raise RuntimeError(self._error) from exc
-        return self._model
+        # CTranslate2 does not support int8 efficiently on every Windows CPU
+        # backend.  Start with the user's/default choice, then fall back to a
+        # compatible float32 CPU load instead of making setup fail forever.
+        candidates: list[tuple[str, str]] = [(self.device, self.compute_type)]
+        if self.compute_type in {"default", "int8", "int8_float16"}:
+            candidates.append((self.device, "float32"))
+        if self.device == "auto":
+            candidates.append(("cpu", "float32"))
+
+        errors: list[str] = []
+        seen: set[tuple[str, str]] = set()
+        for load_device, load_compute in candidates:
+            if (load_device, load_compute) in seen:
+                continue
+            seen.add((load_device, load_compute))
+            try:
+                self._model = WhisperModel(
+                    self.model_path or self.model_size,
+                    device=load_device,
+                    compute_type=load_compute,
+                    local_files_only=bool(self.model_path),
+                )
+                self.device = load_device
+                self.compute_type = load_compute
+                return self._model
+            except Exception as exc:
+                errors.append(f"{load_device}/{load_compute}: {exc}")
+
+        self._error = "Failed to load Whisper model: " + " | ".join(errors)
+        raise RuntimeError(self._error)
 
     def transcribe(self, audio_path: str | Path) -> ASRResult:
         self.check_audio_file(audio_path)
@@ -106,19 +124,23 @@ class WhisperASR(BaseASR):
     def _transcribe_once(self, model: object, audio_path: str | Path) -> ASRResult:
         start = time.perf_counter()
         try:
+            transcribe_options = {
+                "language": self.language,
+                "vad_filter": True,
+                "vad_parameters": {"threshold": 0.5, "min_silence_duration_ms": 300},
+                "beam_size": 5,
+                "best_of": 5,
+                "temperature": (0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+                "condition_on_previous_text": False,
+                "compression_ratio_threshold": 2.2,
+                "log_prob_threshold": -1.2,
+                "no_speech_threshold": 0.6,
+            }
+            if self.language in {None, "vi"}:
+                transcribe_options["initial_prompt"] = _INITIAL_PROMPT
             segments, info = model.transcribe(
                 str(audio_path),
-                language=self.language,
-                vad_filter=True,
-                vad_parameters={"threshold": 0.5, "min_silence_duration_ms": 300},
-                beam_size=5,
-                best_of=5,
-                temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
-                condition_on_previous_text=False,
-                compression_ratio_threshold=2.2,
-                log_prob_threshold=-1.2,
-                no_speech_threshold=0.6,
-                initial_prompt=_INITIAL_PROMPT,
+                **transcribe_options,
             )
             transcript = " ".join(seg.text.strip() for seg in segments).strip()
         except Exception as exc:

@@ -1,35 +1,39 @@
-# Rightly
+# Rightly — release
 
 Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Người dùng có thể nhập câu hỏi bằng chữ hoặc giọng nói; hệ thống tìm nguồn trong kho dữ liệu đã cấu hình rồi tạo câu trả lời dễ đọc, kèm nguồn khi có bằng chứng phù hợp.
 
-> **Trạng thái hiện tại:** MVP/bản thử nghiệm. Rightly không phải cơ quan nhà nước, không thay thế luật sư và không phải kênh tư vấn khẩn cấp. Nội dung có thể thiếu hoặc chậm cập nhật; hãy kiểm tra lại với cơ quan có thẩm quyền.
+> **Trạng thái:** bản release pilot dùng để trình diễn và đánh giá. Rightly vẫn là MVP, không phải dịch vụ pháp lý chính thức.
 
-## Sản phẩm
+## Sản phẩm đang chạy
 
-- **Bản web:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bản release nguồn:** nhánh [`release`](https://github.com/neornotl/rightly-beta/tree/release) của repo beta.
-- **Repo release công khai:** [`neornotl/rightly`](https://github.com/neornotl/rightly/tree/release), được đồng bộ từ nhánh release nguồn.
-- **Bản phát triển:** nhánh [`dev`](https://github.com/neornotl/rightly-beta/tree/dev). Bản web hiện theo dõi nhánh này để nhóm kiểm thử liên tục.
+- **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
+- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.17.0](https://github.com/neornotl/rightly-beta/releases/tag/v0.17.0-pilot)
+- **Mã nguồn release:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
+- **Mã nguồn phát triển:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
+- **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
 
-## Những gì bản này có
+## Tính năng và giới hạn thực tế
 
 - Chat tiếng Việt trên web và giao diện local tùy cấu hình máy.
-- Nhận câu hỏi bằng chữ; nhận giọng nói phụ thuộc quyền Microphone của trình duyệt và backend ASR đã cài.
-- Truy xuất văn bản nguồn (BM25/hybrid tùy cấu hình), safety routing và câu trả lời có trích nguồn khi tìm được evidence.
-- TTS có thể dùng backend cloud hoặc local theo cấu hình; không mặc định có nghĩa là offline hoàn toàn.
-- Chế độ local/offline cần cài đủ Python, thư viện và model theo hướng dẫn; chế độ web cần các biến môi trường cloud tương ứng.
+- Nhận câu hỏi bằng chữ; giọng nói phụ thuộc quyền Microphone của trình duyệt và backend ASR đã cài.
+- Truy xuất văn bản nguồn, safety routing và câu trả lời có trích nguồn khi tìm được evidence.
+- TTS dùng backend cloud hoặc local theo cấu hình. Chế độ local/offline cần cài đủ model và thư viện; không mặc định có nghĩa là offline hoàn toàn.
+- Bản cài pilot tự nhận diện RAM/CPU/GPU, chọn model 3B hoặc 7B theo ngưỡng phần cứng, tải tiếp sau lỗi mạng và chỉ mở ứng dụng sau preflight LLM/ASR/TTS/health. Yêu cầu hiện tại: Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet trong lần cài đầu.
+- Câu hỏi tiếng Việt không dấu được mở rộng sang thuật ngữ pháp lý chuẩn trước khi truy xuất; phép tính ngắn được xử lý tất định thay vì giao cho LLM.
+- Nguồn có thể thiếu hoặc chậm cập nhật. Không dùng kết quả như tư vấn pháp lý cuối cùng; hãy kiểm tra với cơ quan có thẩm quyền.
 
-## Chạy và phát triển
+## Cài đặt và phát triển
 
-Xem [`docs/`](docs/) và các file `requirements*.txt` để biết đúng cấu hình của bản checkout. Không commit API key, service-account JSON hoặc dữ liệu người dùng vào repo.
+Người dùng Windows có thể tải một file `Rightly-Setup.exe` từ release ở trên. Nhà phát triển đọc các file `requirements*.txt`, hướng dẫn trong [`docs/`](docs/) và các script setup trước khi chạy. Không commit API key, service-account JSON hoặc dữ liệu người dùng.
 
 ## Pilot
 
-- **Public pilot:** [mở biểu mẫu](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/edit?usp=sharing_eil_se_dm&ts=6a8dd201) (liên kết biểu mẫu do nhóm cung cấp).
-- **Private pilot:** Chưa công bố — sẽ bổ sung sau.
-- Chưa công bố kết quả pilot định lượng; các số liệu trong tài liệu thử nghiệm chỉ được coi là kết quả nội bộ cho đến khi có báo cáo được nhóm xác nhận.
+- **Public pilot:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform), 56 phản hồi tại snapshot ngày 26/08/2026.
+- Điểm trung bình: thân thiện/phù hợp 4,41/5; ý tưởng cốt lõi 4,36/5; dễ dùng 4,23/5; rõ ràng 4,18/5; chính xác/tin cậy 4,18/5.
+- **Private pilot:** 5 hồ sơ người tham gia và 3 bản ghi phiên thử nghiệm ngày 22/08/2026 được lưu riêng. Không đưa dữ liệu định danh, chữ ký hoặc video gốc lên GitHub.
+- Feedback về giọng đọc, câu trả lời bị ngắt, tốc độ hiển thị, mobile và nguồn `null` đã được chuyển thành các thay đổi có thể kiểm tra trong pipeline/web.
 
-Chi tiết biểu mẫu, phạm vi thu thập phản hồi và cách xử lý dữ liệu: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
+Kết quả, giới hạn mẫu và cách bảo vệ dữ liệu: [`docs/pilot-results-2026-08.md`](docs/pilot-results-2026-08.md). Chi tiết sản phẩm: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
 
 Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
 
@@ -40,7 +44,3 @@ Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layo
 | Trần Hoàng Sơn | Phát triển sản phẩm | [hoangson24092009vn@gmail.com](mailto:hoangson24092009vn@gmail.com) |
 | Lê Xuân Bách | Pháp lý | [bachlxbach@gmail.com](mailto:bachlxbach@gmail.com) |
 | Trương Quang Minh | Quảng bá và điều phối pilot | [truongquangminh7@gmail.com](mailto:truongquangminh7@gmail.com) |
-
-## An toàn và giới hạn
-
-Rightly ưu tiên trả lời có căn cứ và có thể hỏi lại, từ chối hoặc hướng người dùng tới kênh chính thức khi thiếu nguồn hoặc gặp tình huống rủi ro. Không gửi thông tin nhạy cảm vào issue/pull request; hãy đọc chính sách riêng tư trước khi chạy pilot.

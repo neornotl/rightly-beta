@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="48" fill="#163149"/>
+  <path d="M62 58h91c28 0 51 23 51 51v13h-28v-13c0-13-10-23-23-23H90v93l25-22 20 20-48 42-25-25V58z" fill="#82c9a3"/>
+  <path d="m96 137 27 27 72-76 20 19-92 97-47-47z" fill="#82c9a3"/>
+  <path d="m135 101 31-32h32l-42 46z" fill="#5ca98a"/>
+  <text x="128" y="231" fill="#82c9a3" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="600" text-anchor="middle">Rightly</text>
+</svg>

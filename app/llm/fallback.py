@@ -42,7 +42,7 @@ class FallbackLLM(BaseLLM):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
         system_prompt: Optional[str] = None,
     ) -> dict:
