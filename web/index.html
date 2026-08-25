@@ -602,7 +602,7 @@
       if (cloudSyncEnabled) {
         cloudSyncEnabled = false;
         updateAuthUi();
-        setStatus('Đã tắt đồng bộ cloud');
+        setStatus('Đã tắt đồng bộ. Dữ liệu cloud cũ vẫn còn; bấm Xóa cloud nếu muốn xóa.');
         return;
       }
       const accepted = window.confirm(

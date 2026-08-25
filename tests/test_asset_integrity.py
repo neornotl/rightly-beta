@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from scripts import bootstrap_offline as bootstrap
+from scripts import preflight_offline
 import setup_installer
 
 
@@ -39,3 +40,13 @@ def test_installer_verifier_rejects_corrupt_file(tmp_path: Path):
 def test_unlisted_assets_are_not_given_a_guessed_hash():
     assert bootstrap._asset_sha256("https://example.invalid/file", Path("file")) is None
     assert setup_installer._manifest_sha256("file", "https://example.invalid/file") is None
+
+
+def test_empty_manifest_is_reported_as_unverified_not_verified():
+    verified, bootstrap_note = bootstrap._asset_verification_summary()
+    preflight_verified, preflight_note = preflight_offline._asset_verification_note()
+
+    assert verified == 0
+    assert not preflight_verified
+    assert "NOT checksum-verified" in bootstrap_note
+    assert "NOT verified" in preflight_note

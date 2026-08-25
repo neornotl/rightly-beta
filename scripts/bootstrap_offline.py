@@ -87,6 +87,28 @@ def _asset_sha256(url: str, target: Path) -> str | None:
         return None
 
 
+def _asset_verification_summary() -> tuple[int, str]:
+    """Report only hashes actually recorded by the release publisher.
+
+    An empty manifest is intentionally *not* treated as a successful checksum
+    check. Downloads remain resumable, but the installer tells the operator
+    that cryptographic verification has not yet been configured.
+    """
+    try:
+        manifest = json.loads(ASSET_MANIFEST_PATH.read_text(encoding="utf-8"))
+        assets = manifest.get("assets", {})
+        verified = sum(
+            isinstance(entry, dict)
+            and bool(re.fullmatch(r"[0-9a-f]{64}", str(entry.get("sha256", "")).lower()))
+            for entry in assets.values()
+        )
+        if verified:
+            return verified, f"SHA-256 verification configured for {verified} direct asset(s)."
+        return 0, "WARNING: asset manifest has no publisher-verified SHA-256 values. Downloads are resumable but NOT checksum-verified."
+    except (OSError, ValueError, TypeError):
+        return 0, "WARNING: asset manifest is unavailable. Downloads are resumable but NOT checksum-verified."
+
+
 def _verify_sha256(path: Path, expected: str) -> None:
     actual = hashlib.sha256()
     with path.open("rb") as fh:
@@ -600,12 +622,15 @@ def main() -> int:
 
     _check_hardware_requirements()
 
+    verified_assets, verification_note = _asset_verification_summary()
+
     print(
         "\nRightly offline bootstrap - downloads everything ONCE into this "
         "machine's local cache (models, voices, embeddings).\n"
         "Nothing is uploaded anywhere; after this finishes the demo runs "
         "100% offline.\n"
     )
+    print(verification_note)
     if not (args.all or args.deps or args.ollama or args.asr or args.embeddings or args.piper):
         args.all = True
 
@@ -622,8 +647,11 @@ def main() -> int:
         download_piper_voice(args)
     write_env(args)
 
+    completion = "Full offline stack is ready on this machine."
+    if not verified_assets:
+        completion += " Asset checksum verification is NOT configured; see docs/installer-integrity.md before a production release."
     print(
-        "\n=== DONE. Full offline stack is ready on this machine. ===\n"
+        f"\n=== DONE. {completion} ===\n"
         "Next steps:\n"
         "  1. python scripts/check_local_llm.py\n"
         "  2. python scripts/run_mock_demo.py   (LLM_BACKEND=local from .env)\n"
