@@ -16,6 +16,10 @@ Pilot dùng để quan sát khả năng sử dụng, độ rõ của câu trả 
 
 Liên kết được giữ nguyên theo đường dẫn nhóm cung cấp. Quản trị viên nên kiểm tra lại chế độ chia sẻ trước khi phát hành rộng rãi.
 
+## Bằng chứng về vấn đề thực tế
+
+Tài liệu nền về các rào cản tiếp cận dịch vụ công số nằm tại [`docs/evidence/tong-hop-nguon-dich-vu-cong-so.txt`](evidence/tong-hop-nguon-dich-vu-cong-so.txt). Đây là evidence bối cảnh cho proposal/pilot, không phải căn cứ pháp lý và không phải kết quả pilot của Rightly. Xem thêm quy tắc sử dụng tại [`docs/evidence/README.md`](evidence/README.md).
+
 ### Private pilot
 
 Chưa công bố — sẽ bổ sung sau. Không có private pilot URL nào trong repo.
@@ -25,4 +29,3 @@ Chưa công bố — sẽ bổ sung sau. Không có private pilot URL nào trong
 - **Trần Hoàng Sơn** — phát triển sản phẩm — [hoangson24092009vn@gmail.com](mailto:hoangson24092009vn@gmail.com)
 - **Lê Xuân Bách** — pháp lý — [bachlxbach@gmail.com](mailto:bachlxbach@gmail.com)
 - **Trương Quang Minh** — quảng bá và điều phối pilot — [truongquangminh7@gmail.com](mailto:truongquangminh7@gmail.com)
-
