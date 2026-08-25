@@ -5,6 +5,7 @@ The request path uses the Python standard library; ``google-auth`` is imported
 only when Vertex TTS OAuth credentials are configured.
 """
 
+import ast
 import json
 import math
 import os
@@ -113,6 +114,132 @@ _RAG_STOP = {
     "can", "muon", "hoi", "giup", "khi", "vao", "ra", "len", "xuong", "di",
     "lai", "xem", "con", "deu", "moi", "nguoi", "the", "lam",
 }
+
+
+_BASIC_MATH_RE = re.compile(r"^[0-9\s+\-*/().xX×:=?]+$")
+
+
+def _basic_math_reply(text: str, lang: str) -> str | None:
+    """Return a deterministic answer for a short, harmless arithmetic query.
+
+    A calculator is both faster and more reliable than asking a legal LLM to
+    infer arithmetic intent.  The AST allow-list deliberately rejects names,
+    attribute access, exponentiation and every non-arithmetic expression.
+    """
+    candidate = str(text or "").strip()
+    if not candidate or len(candidate) > 80 or not _BASIC_MATH_RE.fullmatch(candidate):
+        return None
+    candidate = candidate.rstrip("=? ").replace("×", "*").replace("x", "*").replace("X", "*").replace(":", "/")
+    if not candidate:
+        return None
+    try:
+        tree = ast.parse(candidate, mode="eval")
+    except SyntaxError:
+        return None
+
+    def evaluate(node):
+        if isinstance(node, ast.Expression):
+            return evaluate(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+            return node.value
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = evaluate(node.operand)
+            return value if isinstance(node.op, ast.UAdd) else -value
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            left, right = evaluate(node.left), evaluate(node.right)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            if right == 0:
+                raise ZeroDivisionError
+            return left / right
+        raise ValueError("not basic arithmetic")
+
+    try:
+        result = evaluate(tree)
+    except (ValueError, ZeroDivisionError, OverflowError):
+        return None
+    if not isinstance(result, (int, float)) or not math.isfinite(result):
+        return None
+    rendered = str(int(result)) if float(result).is_integer() else f"{result:.10g}"
+    return f"The result is {rendered}." if lang == "en" else f"Kết quả là {rendered}."
+
+
+def _red_light_intent(text: str) -> bool:
+    """Recognise the red-light traffic intent, including unaccented typos.
+
+    This is deliberately bounded: it requires both a traffic-light signal and
+    a violation/action cue, so a merely similar individual word cannot route a
+    general legal question incorrectly.  It is a deterministic safety net;
+    normal retrieval and the LLM remain responsible for all other questions.
+    """
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    folded = re.sub(r"(.)\1{1,}", r"\1", folded)
+    tokens = re.findall(r"[a-z0-9]+", folded)
+    if not tokens:
+        return False
+
+    def near(*targets: str) -> bool:
+        from difflib import SequenceMatcher
+
+        for token in tokens:
+            for target in targets:
+                if token == target:
+                    return True
+                if len(target) >= 4 and len(token) >= 4 and SequenceMatcher(None, token, target).ratio() >= 0.82:
+                    return True
+        return False
+
+    signal = (near("den") and near("do")) or (near("den") and near("tin", "hieu")) or (near("tin") and near("hieu"))
+    action = near("vuot", "chap", "hanh", "vi pham", "xu phat", "phat")
+    return signal and action
+
+
+def _vehicle_group(text: str) -> str | None:
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    if re.search(r"\b(?:xe\s*)?(?:may|mo\s*to|gan\s*may)\b", folded):
+        return "motorcycle"
+    if re.search(r"\b(?:o\s*to|oto|xe\s*hoi|xe\s*tai|xe\s*buyt)\b", folded):
+        return "car"
+    if re.search(r"\b(?:xe\s*dap|xe\s*tho\s*so)\b", folded):
+        return "non_motor"
+    return None
+
+
+def _direct_public_reply(text: str, lang: str) -> tuple[str, list[str]] | None:
+    """Fast, no-provider responses for intents where ambiguity is known."""
+    arithmetic = _basic_math_reply(text, lang)
+    if arithmetic:
+        return arithmetic, ["Tính toán cơ bản"]
+    if _red_light_intent(text) and not _vehicle_group(text):
+        if lang == "en":
+            reply = (
+                "**There are rules and penalties for running a red light, but the exact penalty depends on the vehicle.** "
+                "Please tell me whether it was a motorcycle/moped, car, bicycle or another vehicle. "
+                "The general rule is that failing to obey a traffic signal is a violation; Rightly needs the vehicle type before giving a specific penalty.\n\n"
+                "Citation: Decree 168/2024/ND-CP."
+            )
+        else:
+            reply = (
+                "**Có quy định xử phạt hành vi vượt đèn đỏ, nhưng mức phạt phụ thuộc vào loại phương tiện.** "
+                "Bạn đang đi xe máy/xe gắn máy, ô tô, xe đạp/xe thô sơ hay phương tiện khác? "
+                "Nguyên tắc chung là không chấp hành hiệu lệnh đèn tín hiệu giao thông là vi phạm; cần xác định loại xe trước khi áp mức phạt cụ thể.\n\n"
+                "Trích dẫn: Nghị định 168/2024/NĐ-CP."
+            )
+        return reply, ["Nghị định 168/2024/NĐ-CP"]
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    if re.search(r"\b(?:thoi\s*tiet|weather|nhiet\s*do|mua\s*hom\s*nay)\b", folded):
+        reply = (
+            "Rightly is a legal and administrative assistant, so I cannot verify weather information. "
+            "Please use a weather service for current conditions."
+            if lang == "en"
+            else "Rightly chuyên hỗ trợ pháp luật và thủ tục hành chính nên không thể xác minh thông tin thời tiết hiện tại. Bạn hãy xem dịch vụ dự báo thời tiết để có dữ liệu chính xác nhé."
+        )
+        return reply, ["Phạm vi hỗ trợ của Rightly"]
+    return None
 
 
 def _rag_norm_tokens(text: str) -> list[str]:
@@ -230,11 +357,19 @@ def _grounded_search(query: str, top_k: int = 8) -> list[dict]:
         expansions.append(
             "doi tuong dieu kien huong tro cap huu tri xa hoi tu du 75 tuoi ho ngheo ho can ngheo"
         )
-    if ("den do" in folded or "tin hieu" in folded) and (
-        "xe may" in folded or "mo to" in folded
-    ):
+    red_light = _red_light_intent(text)
+    vehicle = _vehicle_group(text)
+    if red_light and vehicle == "motorcycle":
         expansions.append(
             "muc phat vuot den do xu phat xe mo to xe gan may khong chap hanh hieu lenh den tin hieu giao thong 4.000.000 6.000.000"
+        )
+    elif red_light and vehicle == "car":
+        expansions.append(
+            "muc phat vuot den do xu phat xe o to khong chap hanh hieu lenh den tin hieu giao thong nghi dinh 168 2024"
+        )
+    elif red_light:
+        expansions.append(
+            "khong chap hanh hieu lenh den tin hieu giao thong xu phat nghi dinh 168 2024"
         )
 
     merged: dict[str, dict] = {}
@@ -279,7 +414,7 @@ def _grounded_search(query: str, top_k: int = 8) -> list[dict]:
                 },
             )
             break
-    if "den do" in folded and ("xe may" in folded or "mo to" in folded):
+    if red_light and vehicle == "motorcycle":
         rag = _rag()
         by_cid = {m.get("cid"): m for m in rag.get("meta", [])}
         # The shipped Nghị định 168 pack has the motorcycle red-light clause
@@ -747,6 +882,27 @@ class handler(BaseHTTPRequestHandler):
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
+        direct = _direct_public_reply(text, lang)
+        if direct:
+            reply, sources_out = direct
+            reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
+            if path == "/api/chat/stream":
+                # A deterministic answer is already complete.  Emit it as a
+                # single delta so concatenating deltas is byte-for-byte equal
+                # to the final answer event, just like the client contract.
+                events = [
+                    {"type": "progress", "percent": 100, "detail": "Đã hoàn tất"},
+                    {"type": "delta", "text": reply},
+                    {"type": "answer", "reply": reply, "sources": sources_out, "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
+                ]
+                body = "".join(f"data: {json.dumps(event, ensure_ascii=False)}\n\n" for event in events)
+                self._send(200, "text/event-stream", body)
+            else:
+                body = {"reply": reply, "sources": sources_out, "lang": reply_lang}
+                if warn:
+                    body["rate_warning"] = warn
+                self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
+            return
         stream_impl = getattr(getattr(self, "_ask_api", None), "__func__", getattr(self, "_ask_api", None))
         if (
             path == "/api/chat/stream"

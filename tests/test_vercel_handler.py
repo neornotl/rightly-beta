@@ -223,3 +223,77 @@ def test_vercel_handler_has_no_embedded_provider_key():
     source = (index.ROOT / "api" / "index.py").read_text(encoding="utf-8")
     assert 'or "sk-' not in source
     assert "b64decode" not in source
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("1+4-3+7=?", "Kết quả là 9."),
+        ("(12 - 2) / 5", "Kết quả là 2."),
+    ],
+)
+def test_basic_arithmetic_is_deterministic_and_does_not_need_a_legal_llm(question, expected):
+    assert index._basic_math_reply(question, "vi") == expected
+    assert index._basic_math_reply("__import__('os')", "vi") is None
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "quy định khi vượt đèn đỏ",
+        "quy dinh khi vuot den do",
+        "quy dinh khi vuot dden do",
+    ],
+)
+def test_generic_red_light_question_is_recognised_and_requests_vehicle_type(question):
+    direct = index._direct_public_reply(question, "vi")
+
+    assert direct is not None
+    reply, sources = direct
+    assert "loại phương tiện" in reply
+    assert "không có dữ liệu" not in reply
+    assert sources == ["Nghị định 168/2024/NĐ-CP"]
+
+
+def test_red_light_retrieval_keeps_motorcycle_clause_scoped_to_motorcycles():
+    motorcycle = index._grounded_search("quy dinh khi vuot den do xe may")
+    car = index._grounded_search("quy dinh khi vuot den do o to")
+
+    assert [hit["cid"] for hit in motorcycle] == ["nd168_2024::c060"]
+    assert "nd168_2024::c060" not in [hit["cid"] for hit in car]
+
+
+def test_chat_direct_answers_skip_provider_and_never_return_raw_json(monkeypatch):
+    monkeypatch.setattr(index.handler, "_ask_api", lambda *_args, **_kwargs: pytest.fail("provider should not run"))
+    request, sent = _post_handler("/api/chat", {"text": "1+4-3+7=?", "lang": "vi"})
+
+    request.do_POST()
+
+    body = json.loads(sent["body"])
+    assert sent["status"] == 200
+    assert body == {"reply": "Kết quả là 9.", "sources": ["Tính toán cơ bản"], "lang": "vi"}
+
+
+def test_stream_direct_answer_delta_join_equals_final_answer(monkeypatch):
+    monkeypatch.setattr(index.handler, "_ask_api", lambda *_args, **_kwargs: pytest.fail("provider should not run"))
+    request, sent = _post_handler("/api/chat/stream", {"text": "quy dinh khi vuot den do", "lang": "vi"})
+
+    request.do_POST()
+
+    events = [
+        json.loads(line.removeprefix("data: "))
+        for line in sent["body"].splitlines()
+        if line.startswith("data: ")
+    ]
+    delta_text = "".join(event["text"] for event in events if event["type"] == "delta")
+    final = next(event for event in events if event["type"] == "answer")
+    assert sent["status"] == 200
+    assert delta_text == final["reply"]
+    assert "loại phương tiện" in final["reply"]
+
+
+def test_weather_is_explicitly_out_of_scope_not_random_legal_guidance():
+    reply, sources = index._direct_public_reply("thoi tiet hom nay", "vi")
+
+    assert "pháp luật" in reply
+    assert sources == ["Phạm vi hỗ trợ của Rightly"]
