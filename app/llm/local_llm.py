@@ -60,23 +60,69 @@ class LocalLLM(BaseLLM):
         self._client = None
         self._available: bool | None = None
         self._available_checked_at = 0.0
+        self._readiness: dict[str, str | bool] | None = None
         self.last_usage: dict = {}
 
     @property
     def available(self) -> bool:
-        """True when a local server answers /models quickly (cached 30s)."""
+        """True when Ollama is reachable *and* the configured model is present."""
+        return bool(self.readiness().get("ready", False))
+
+    def readiness(self, *, force: bool = False) -> dict[str, str | bool]:
+        """Return a UI-safe readiness report without sending a prompt.
+
+        ``/v1/models`` is lightweight and catches the common failed-install
+        state where Ollama is running but the selected model was never pulled.
+        The result is cached briefly to avoid a health-check request on every
+        UI repaint.
+        """
         now = time.monotonic()
-        if self._available is not None and now - self._available_checked_at < _AVAILABLE_TTL_S:
-            return self._available
+        if (
+            not force
+            and self._readiness is not None
+            and now - self._available_checked_at < _AVAILABLE_TTL_S
+        ):
+            return dict(self._readiness)
         self._available_checked_at = now
         try:
             import requests
 
             resp = requests.get(f"{self.base_url}/models", timeout=2.0)
-            self._available = resp.status_code < 500
-        except Exception:
-            self._available = False
-        return self._available
+            if resp.status_code >= 400:
+                status = {
+                    "ready": False,
+                    "code": "ollama_unreachable",
+                    "detail": f"Ollama returned HTTP {resp.status_code} at {self.base_url}.",
+                }
+            else:
+                payload = resp.json()
+                models = payload.get("data", []) if isinstance(payload, dict) else []
+                names = {
+                    str(item.get("id") or item.get("name") or "").strip()
+                    for item in models
+                    if isinstance(item, dict)
+                }
+                if self.model not in names:
+                    status = {
+                        "ready": False,
+                        "code": "model_missing",
+                        "detail": f"Ollama is running but model '{self.model}' is not installed.",
+                    }
+                else:
+                    status = {
+                        "ready": True,
+                        "code": "ready",
+                        "detail": f"Ollama model '{self.model}' is ready.",
+                    }
+        except Exception as exc:
+            status = {
+                "ready": False,
+                "code": "ollama_unreachable",
+                "detail": f"Cannot reach Ollama at {self.base_url}: {type(exc).__name__}.",
+            }
+        self._readiness = status
+        self._available = bool(status["ready"])
+        return dict(status)
 
     def _get_client(self):
         if self._client is None:
@@ -136,9 +182,11 @@ class LocalLLM(BaseLLM):
         system_prompt: Optional[str] = None,
     ) -> dict:
         if not self.available:
+            detail = str(self.readiness().get("detail", "Local LLM is unavailable."))
             raise LLMError(
-                f"Local LLM unreachable at {self.base_url}. Start Ollama "
-                f"('ollama serve') and pull the model ('ollama pull {self.model}')."
+                f"Local LLM unreachable or model unavailable. {detail} "
+                f"Start Ollama ('ollama serve') and pull the model "
+                f"('ollama pull {self.model}')."
             )
         history_block = format_history(history)
         if system_prompt:

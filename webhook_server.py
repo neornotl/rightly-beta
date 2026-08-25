@@ -77,6 +77,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from app.config import load_settings
+from app.llm.base import LLMError
 from app.pipeline import Pipeline
 from app.ratelimit import RateLimiter
 
@@ -172,6 +173,10 @@ def _record_success():
 # Pipeline singleton
 _pipeline: Optional[Pipeline] = None
 _local_memory = None
+# Each new stream for one browser session supersedes the previous one.  The
+# event lets the SSE producer stop immediately and discard a late answer.
+_active_stream_cancellations: dict[str, threading.Event] = {}
+_active_stream_lock = threading.Lock()
 
 
 def get_pipeline() -> Pipeline:
@@ -230,7 +235,50 @@ def _set_voice_language(request: Request) -> None:
         asr.language = language
 
 
-def _local_chat_payload(body: "ChatRequest", request: Request) -> dict:
+def _local_llm_status() -> dict:
+    """Return a local-only readiness payload without creating a MockLLM."""
+    if settings.llm_backend != "local":
+        return {"ready": True, "code": "not_local", "detail": "This runtime does not use Ollama."}
+    llm = getattr(_pipeline, "llm", None)
+    if llm is None:
+        from app.llm.local_llm import LocalLLM
+
+        llm = LocalLLM(
+            base_url=settings.ollama_base_url,
+            model=settings.ollama_model,
+            timeout_seconds=settings.llm_timeout_seconds,
+            max_retries=settings.llm_max_retries,
+            backoff_seconds=settings.llm_retry_backoff_seconds,
+        )
+    readiness = getattr(llm, "readiness", None)
+    if callable(readiness):
+        return readiness()
+    available = bool(getattr(llm, "available", False))
+    return {
+        "ready": available,
+        "code": "ready" if available else "llm_unavailable",
+        "detail": "Local model is ready." if available else "Local model is unavailable.",
+    }
+
+
+def _local_llm_recovery_message() -> str:
+    status = _local_llm_status()
+    if status.get("code") == "model_missing":
+        return (
+            f"Model AI local chưa được cài: {settings.ollama_model}. "
+            "Mở Rightly Setup hoặc chạy lại phần tải model, rồi thử lại."
+        )
+    return (
+        "Ollama AI local chưa sẵn sàng. Hãy mở Ollama hoặc khởi động lại Rightly, "
+        "sau đó thử lại sau vài giây."
+    )
+
+
+def _local_chat_payload(
+    body: "ChatRequest", request: Request, cancellation: threading.Event | None = None
+) -> dict:
+    if cancellation is not None and cancellation.is_set():
+        raise HTTPException(status_code=499, detail="Yêu cầu đã được thay bằng câu hỏi mới.")
     client_ip = request.client.host if request.client else "unknown"
     key = f"web|{client_ip}"
     if _offtopic_blocked(key):
@@ -243,10 +291,16 @@ def _local_chat_payload(body: "ChatRequest", request: Request) -> dict:
     try:
         result = get_pipeline().process_text(body.session_id, body.text.strip())
         _record_success()
+    except LLMError as exc:
+        _record_failure()
+        logger.warning("Local LLM unavailable: %s", exc)
+        raise HTTPException(status_code=503, detail=_local_llm_recovery_message()) from exc
     except Exception as exc:
         _record_failure()
         logger.exception("Local chat pipeline error")
         raise HTTPException(status_code=502, detail="Chat backend unavailable") from exc
+    if cancellation is not None and cancellation.is_set():
+        raise HTTPException(status_code=499, detail="Yêu cầu đã được thay bằng câu hỏi mới.")
     answer = result.answer
     reply = _unwrap_reply(answer.answer_text if answer else result.decision.user_message)
     memory = get_local_memory()
@@ -336,10 +390,14 @@ async def local_session_cookie(request: Request, call_next):
 
 @app.get("/health")
 async def health():
+    llm_status = _local_llm_status()
     return {
-        "status": "ok",
+        "status": "ok" if llm_status["ready"] else "degraded",
         "circuit_open": _circuit_open,
         "pipeline": "ready" if _pipeline is not None else "lazy",
+        "llm_ready": bool(llm_status["ready"]),
+        "llm_code": llm_status["code"],
+        "llm_detail": llm_status["detail"],
         "auth_configured": bool(SUPABASE_URL and SUPABASE_PUBLIC_KEY),
     }
 
@@ -369,27 +427,50 @@ async def local_chat(body: ChatRequest, request: Request):
 @app.post("/api/chat/stream")
 async def local_chat_stream(body: ChatRequest, request: Request):
     """SSE contract shared with the Vercel public handler."""
+    cancellation = threading.Event()
+    with _active_stream_lock:
+        previous = _active_stream_cancellations.get(body.session_id)
+        if previous is not None:
+            previous.set()
+        _active_stream_cancellations[body.session_id] = cancellation
+
     async def events():
-        task = asyncio.create_task(asyncio.to_thread(_local_chat_payload, body, request))
-        percent = 5
-        while not task.done():
-            yield f"data: {json.dumps({'type': 'progress', 'percent': percent, 'detail': 'Rightly đang tra cứu'}, ensure_ascii=False)}\n\n"
-            percent = min(90, percent + 10)
-            await asyncio.sleep(1.0)
         try:
-            payload = task.result()
-        except HTTPException as exc:
-            yield f"data: {json.dumps({'type': 'error', 'detail': exc.detail}, ensure_ascii=False)}\n\n"
-            return
-        except Exception as exc:
-            logger.exception("Local chat stream failed")
-            yield f"data: {json.dumps({'type': 'error', 'detail': 'Chat backend unavailable'}, ensure_ascii=False)}\n\n"
-            return
-        for piece in _stream_display_chunks(payload["reply"]):
-            yield f"data: {json.dumps({'type': 'delta', 'text': piece}, ensure_ascii=False)}\n\n"
-            await asyncio.sleep(0.015)
-        yield f"data: {json.dumps({'type': 'progress', 'percent': 100, 'detail': 'Đã hoàn tất'}, ensure_ascii=False)}\n\n"
-        yield f"data: {json.dumps({'type': 'answer', 'reply': payload['reply'], 'sources': payload['sources'], 'summary': payload['summary'], 'appropriate': payload['appropriate'], 'lang': payload['lang']}, ensure_ascii=False)}\n\n"
+            task = asyncio.create_task(asyncio.to_thread(_local_chat_payload, body, request, cancellation))
+            percent = 5
+            while not task.done():
+                if cancellation.is_set() or await request.is_disconnected():
+                    cancellation.set()
+                    task.cancel()
+                    return
+                yield f"data: {json.dumps({'type': 'progress', 'percent': percent, 'detail': 'Rightly đang tra cứu'}, ensure_ascii=False)}\n\n"
+                percent = min(90, percent + 10)
+                await asyncio.sleep(1.0)
+            try:
+                payload = task.result()
+            except HTTPException as exc:
+                if exc.status_code != 499:
+                    yield f"data: {json.dumps({'type': 'error', 'detail': exc.detail}, ensure_ascii=False)}\n\n"
+                return
+            except Exception:
+                logger.exception("Local chat stream failed")
+                yield f"data: {json.dumps({'type': 'error', 'detail': 'Chat backend unavailable'}, ensure_ascii=False)}\n\n"
+                return
+            if cancellation.is_set():
+                return
+            for piece in _stream_display_chunks(payload["reply"]):
+                if cancellation.is_set() or await request.is_disconnected():
+                    return
+                yield f"data: {json.dumps({'type': 'delta', 'text': piece}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.015)
+            if cancellation.is_set():
+                return
+            yield f"data: {json.dumps({'type': 'progress', 'percent': 100, 'detail': 'Đã hoàn tất'}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'type': 'answer', 'reply': payload['reply'], 'sources': payload['sources'], 'summary': payload['summary'], 'appropriate': payload['appropriate'], 'lang': payload['lang']}, ensure_ascii=False)}\n\n"
+        finally:
+            with _active_stream_lock:
+                if _active_stream_cancellations.get(body.session_id) is cancellation:
+                    _active_stream_cancellations.pop(body.session_id, None)
 
     return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 

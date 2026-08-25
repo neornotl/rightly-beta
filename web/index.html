@@ -479,6 +479,7 @@
     let mediaRec = null, speechRec = null, chunks = [];
     let callActive = false, callStart = 0, callTimerInt = null, speakerOn = true;
     let answerRun = 0;
+    let activeChatAbort = null;
 
     function setAuthMessage(text, isError=false){
       authMessage.textContent = text || '';
@@ -629,6 +630,19 @@
     });
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }
+
+    async function refreshLocalHealth(){
+      if(window.location.protocol === 'file:') return;
+      try {
+        const r = await fetch('/health', {cache:'no-store'});
+        if(!r.ok) return;
+        const state = await r.json();
+        if(state && state.llm_ready === false){
+          setStatus('AI local chưa sẵn sàng');
+          console.warn('[Rightly] local LLM unavailable:', state.llm_code, state.llm_detail);
+        }
+      } catch(e) { console.debug('[Rightly] local health unavailable', e); }
+    }
 
     function unwrapReply(value){
       if(typeof value !== 'string') return String(value || '');
@@ -909,6 +923,11 @@
       const container = target || messages;
       const disableMic = target ? callMic : mic;
       const thisAnswerRun = ++answerRun;
+      if(activeChatAbort){
+        try { activeChatAbort.abort(); } catch(e) {}
+      }
+      const chatAbort = new AbortController();
+      activeChatAbort = chatAbort;
       disableMic.disabled=true; if(!target){ input.disabled=true; send.disabled=true; send.textContent='...'; }
       let composerReleased = false;
       const releaseComposer = () => {
@@ -946,7 +965,7 @@
       }, 90000); };
       armSafetyTimeout();
       try {
-        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-12)})});
+        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-12)}),signal:chatAbort.signal});
         if(!r.ok) throw new Error('Không thể kết nối');
         const reader=r.body.getReader(), decoder=new TextDecoder(); let buffer='';
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
@@ -1022,7 +1041,9 @@
             }
             else if(data.type==='error') throw new Error(data.detail || 'Server error');
           } }
-      } catch(err) { clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
+      } catch(err) {
+        if(chatAbort.signal.aborted || thisAnswerRun !== answerRun) return;
+        clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
         if (liveRow) liveRow.remove();
         if (!gotAnswer && thisAnswerRun === answerRun) {
           const render = target ? addCall : add;
@@ -1033,7 +1054,11 @@
         }
         setStatus('có lỗi');
         if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
-      } finally { clearTimeout(safetyTimeout); if(target){ if (thisAnswerRun === answerRun) callMic.disabled=false; } else { releaseComposer(); if (thisAnswerRun === answerRun) mic.disabled=false; } }
+      } finally {
+        clearTimeout(safetyTimeout);
+        if(activeChatAbort === chatAbort) activeChatAbort = null;
+        if(target){ if (thisAnswerRun === answerRun) callMic.disabled=false; } else { releaseComposer(); if (thisAnswerRun === answerRun) mic.disabled=false; }
+      }
     }
 
     async function sendText(text){
@@ -1240,6 +1265,8 @@
     try { const saved = localStorage.getItem('rightly.lang'); if (saved && ['auto','vi','en'].includes(saved)) { currentLang = saved; document.querySelectorAll('#langSwitch .lang-btn').forEach(x => x.classList.toggle('active', x.dataset.lang === saved)); } } catch(e){}
     hydrateLocalHistory();
     initAuth();
+    refreshLocalHealth();
+    window.setInterval(refreshLocalHealth, 15000);
 
     // Font size switcher for elderly
     const fontNormal = document.querySelector('#fontNormal'), fontLarge = document.querySelector('#fontLarge');
