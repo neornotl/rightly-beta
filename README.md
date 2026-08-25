@@ -8,8 +8,8 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 
 - **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
 - **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
-- **Nhánh release:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
-- **Repo nền/nghiên cứu:** [neornotl/rightly](https://github.com/neornotl/rightly)
+- **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
+- **Repo release công khai:** [neornotl/rightly/release](https://github.com/neornotl/rightly/tree/release)
 
 ## Tính năng và giới hạn thực tế
 
@@ -31,6 +31,8 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 
 Chi tiết: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
 
+Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
+
 ## Credit
 
 | Thành viên | Vai trò | Email |
@@ -38,4 +40,3 @@ Chi tiết: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
 | Trần Hoàng Sơn | Phát triển sản phẩm | [hoangson24092009vn@gmail.com](mailto:hoangson24092009vn@gmail.com) |
 | Lê Xuân Bách | Pháp lý | [bachlxbach@gmail.com](mailto:bachlxbach@gmail.com) |
 | Trương Quang Minh | Quảng bá và điều phối pilot | [truongquangminh7@gmail.com](mailto:truongquangminh7@gmail.com) |
-
