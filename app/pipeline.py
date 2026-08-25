@@ -64,6 +64,38 @@ logger = logging.getLogger(__name__)
 
 _MIN_QUERY_CHARS = 3
 
+# Standalone greetings are handled locally so they never enter legal RAG and
+# accidentally receive an unrelated law excerpt.  Keep this list deliberately
+# short and exact; longer messages still go through normal safety/routing.
+_SOCIAL_GREETINGS = {
+    "xin chao",
+    "xin chao ban",
+    "chao",
+    "chao ban",
+    "hello",
+    "hi",
+    "hey",
+    "he lo",
+    "he lu",
+    "hula",
+    "ey",
+    "hu",
+    "alo",
+    "a lo",
+    "alo alo",
+    "a lo a lo",
+    "co ai khong",
+    "nghe khong",
+}
+
+
+def _is_social_greeting(text: str) -> bool:
+    """Recognize short standalone greetings before legal retrieval runs."""
+    social = _strip_diacritics(normalize_query(text)).strip()
+    # ASR/browser speech often appends punctuation to a greeting.
+    social = re.sub(r"[.!?,;:]+$", "", social).strip()
+    return social in _SOCIAL_GREETINGS
+
 
 class _MissingAgenticFacts(Exception):
     """Internal control flow for a safe clarification response."""
@@ -392,6 +424,7 @@ def make_asr(settings: Settings) -> BaseASR:
             model_size=settings.whisper_model,
             device=settings.whisper_device,
             language="vi",
+            model_path=settings.whisper_model_path or None,
         )
     return MockASR()
 
@@ -472,7 +505,10 @@ def make_llm(settings: Settings) -> BaseLLM:
             fallback = _build_llm(settings, settings.llm_fallback_backend)
         except RuntimeError:
             fallback = None  # fallback backend not usable: skip silently
-        if fallback is not None and fallback.available:  # type: ignore[attr-defined]
+        # MockLLM is an intentional local safety fallback and does not expose
+        # the provider-specific ``available`` flag.  Treat that adapter as
+        # usable instead of crashing startup while Ollama is warming up.
+        if fallback is not None and getattr(fallback, "available", True):
             from app.llm.fallback import FallbackLLM
 
             return FallbackLLM(primary=llm, fallback=fallback)
@@ -542,6 +578,20 @@ def _build_llm(settings: Settings, backend: str) -> BaseLLM:
 
 
 def make_tts(settings: Settings) -> BaseTTS:
+    if settings.tts_backend == "google":
+        from app.tts.google_cloud_tts import GoogleCloudTTS
+
+        return GoogleCloudTTS(lang="vi")
+    if settings.tts_backend == "piper":
+        from app.tts.piper_tts import PiperTTS
+
+        model_path = settings.piper_model_path
+        if not model_path:
+            model_path = str(settings.resolved_data_dir() / "voices" / "vi_VN-vais1000-medium.onnx")
+        return PiperTTS(
+            model_path=model_path,
+            cache_dir=settings.resolved_results_dir() / "tts_cache",
+        )
     if settings.tts_backend == "edge":
         from app.tts.fallback import TTSFallback
 
@@ -703,14 +753,8 @@ class Pipeline:
                 progress_callback({"stage": stage, "percent": percent, "detail": detail})
 
         progress("received", 8, "Đã nhận câu hỏi")
-        # Greetings and short social messages do not need router/RAG/LLM calls.
-        # Keeping this local also prevents a transient gateway outage from
-        # turning a simple hello into a misleading connection error.
-        social = _strip_diacritics(normalize_query(text)).strip()
-        if social in {"xin chao", "chao", "hello", "hi", "hey", "he lo", "he lu", "hula", "ey", "hu"}:
-            message = "Xin chào! Hôm nay bạn thế nào?"
-            self._append_hybrid_turn(context, text, message)
-            return self._simple_result(session_id, text, message)
+        # The LLM router classifies social language semantically. The exact
+        # greeting matcher is used only inside its failure fallback below.
         progress("safety", 18, "Đang kiểm tra an toàn và phạm vi câu hỏi")
         # Emergency/criminal hard gates always run before the conversational
         # router. General chat must never weaken these protections.
@@ -821,6 +865,8 @@ class Pipeline:
             return {"intent": "consent_yes", "profile_facts": [], "relevant_profile_fields": []}
         if plain in {"khong", "khong dong y"}:
             return {"intent": "consent_no", "profile_facts": [], "relevant_profile_fields": []}
+        if _is_social_greeting(text):
+            return {"intent": "general", "profile_facts": [], "relevant_profile_fields": []}
         return {"intent": "legal", "profile_facts": [], "relevant_profile_fields": []}
 
     _INTAKE_PRONOUNS = re.compile(
@@ -925,6 +971,7 @@ class Pipeline:
         current = answer
         summary = ""
         appropriate: Optional[bool] = None
+        readable: Optional[bool] = None
         note = ""
         revised = False
         revisions_left = max(0, int(self.settings.answer_review_max_revisions))
@@ -948,15 +995,18 @@ class Pipeline:
                 appropriate = (
                     bool(appropriate_raw) if isinstance(appropriate_raw, bool) else None
                 )
+                readable_raw = response.get("readable")
+                readable = bool(readable_raw) if isinstance(readable_raw, bool) else None
                 note = str(response.get("note", "")).strip()
                 self.store.record(
                     session_id,
                     "answer_reviewed",
                     appropriate=appropriate,
+                    readable=readable,
                     note=note[:300],
                     revised=revised,
                 )
-                if appropriate is not False or revisions_left <= 0:
+                if (appropriate is not False and readable is not False) or revisions_left <= 0:
                     break
                 # Not appropriate and budget left -> let the model fix itself.
                 revised_answer = self._revise_answer(
@@ -974,7 +1024,7 @@ class Pipeline:
             return replace(
                 current,
                 summary=summary,
-                appropriate=appropriate,
+                appropriate=False if readable is False else appropriate,
                 review_note=note,
             )
         except Exception:

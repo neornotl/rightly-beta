@@ -57,8 +57,30 @@ def _nvidia_vram_gb() -> float:
         return 0.0
 
 
+def _ollama_path() -> str | None:
+    """Find Ollama even when its installer has not refreshed this process PATH."""
+    found = shutil.which("ollama")
+    if found:
+        return found
+    candidates: list[str] = []
+    for env_name in ("LOCALAPPDATA", "PROGRAMFILES", "PROGRAMFILES(X86)"):
+        base = os.environ.get(env_name)
+        if not base:
+            continue
+        root = os.path.abspath(base)
+        candidates.extend(
+            os.path.join(root, rel)
+            for rel in (
+                "Programs\\Ollama\\ollama.exe",
+                "Ollama\\ollama.exe",
+                "Ollama\\bin\\ollama.exe",
+            )
+        )
+    return next((path for path in candidates if os.path.isfile(path)), None)
+
+
 def _ollama_ready() -> bool:
-    return shutil.which("ollama") is not None or _port_open(11434)
+    return _ollama_path() is not None or _port_open(11434)
 
 
 def _port_open(port: int) -> bool:
@@ -76,6 +98,7 @@ def detect() -> dict:
         "ram_gb": round(_win_ram_gb() if sys.platform == "win32" else 0, 1),
         "gpu_vram_gb": round(_nvidia_vram_gb(), 1),
         "ollama": _ollama_ready(),
+        "ollama_path": _ollama_path(),
     }
     info["recommendation"] = recommend(info)
     return info
@@ -85,18 +108,18 @@ def recommend(info: dict) -> dict:
     ram = info["ram_gb"]
     vram = info["gpu_vram_gb"]
     ollama = info["ollama"]
-    if vram >= 10 and ollama:
+    # Choose the model from hardware even before Ollama is installed; the
+    # one-time installer will install the selected runtime immediately after.
+    if vram >= 10:
         model, note = "qwen2.5:14b-instruct-q4_K_M", "GPU manh - suy luận local tot nhat"
-    elif vram >= 6 and ollama:
+    elif vram >= 6:
         model, note = "qwen2.5:7b-instruct-q4_K_M", "GPU vua - nhanh va chinh xac"
-    elif ram >= 14 and ollama:
+    elif ram >= 14:
         model, note = "qwen2.5:7b-instruct-q4_K_M", "RAM du lon - chay CPU, chinh xac cao (khong can nhanh)"
-    elif ram >= 6 and ollama:
-        model, note = "qwen2.5:3b-instruct-q4_K_M", "May nhe - ban gon thong minh"
     elif ram >= 8:
-        model, note = "", "Chua co Ollama - khuyen nghi cai de chay AI trong may"
+        model, note = "qwen2.5:3b-instruct-q4_K_M", "May nhe - ban gon thong minh"
     else:
-        model, note = "", "May cau hinh thap - dung che do cloud (can API key)"
+        model, note = "", "May cau hinh thap - khong dat yeu cau offline 8GB RAM"
     return {
         "llm_backend": "local" if model else ("gemini" if ram >= 4 else "mock"),
         "ollama_model": model,
@@ -116,7 +139,7 @@ OLLAMA_MODEL={model}
 """
 
 
-def write_env(reco: dict, env_path: str = ".env.local") -> str:
+def write_env(reco: dict, env_path: str = ".rightly-hardware.env") -> str:
     llm_block = ""
     if reco["llm_backend"] == "local":
         pass  # Ollama needs no key
@@ -129,12 +152,17 @@ def write_env(reco: dict, env_path: str = ".env.local") -> str:
         llm_block=llm_block,
         model=reco["ollama_model"] or "qwen2.5:7b-instruct-q4_K_M",
     )
-    with open(env_path, "a", encoding="utf-8") as fh:
-        fh.write("\n" + content)
+    # This is a generated recommendation file, so replace it on each run.
+    # Appending would leave duplicate keys and make the selected model depend
+    # on which dotenv parser happened to read the file last.
+    with open(env_path, "w", encoding="utf-8") as fh:
+        fh.write(content)
     return env_path
 
 
 if __name__ == "__main__":
     import json
 
-    print(json.dumps(detect(), ensure_ascii=False, indent=2))
+    info = detect()
+    print(json.dumps(info, ensure_ascii=False, indent=2))
+    print(f"Wrote hardware recommendation to {write_env(info['recommendation'])}")

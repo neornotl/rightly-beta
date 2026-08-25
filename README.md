@@ -80,6 +80,12 @@ dẫn hành chính thật.
   lần, phần LLM chạy offline. Nếu Ollama chưa sẵn sàng, web vẫn khởi động bằng
   `MockLLM` an toàn thay vì crash.
 - `TTS_BACKEND=edge`: cần `edge-tts`, cần mạng lúc chạy.
+- Cloud voice chỉ dùng Vertex AI Gemini-TTS: cấu hình `VERTEX_TTS_PROJECT`,
+  `VERTEX_TTS_LOCATION` và Service Account/OAuth qua
+  `VERTEX_TTS_SERVICE_ACCOUNT_JSON` hoặc bản base64
+  `VERTEX_TTS_SERVICE_ACCOUNT_JSON_B64` (hoặc `VERTEX_TTS_ACCESS_TOKEN` cho
+  smoke test ngắn). Vertex TTS yêu cầu OAuth và quyền `aiplatform.endpoints.predict`,
+  không dùng `GEMINI_API_KEY`, `GEMINI_TTS_API_KEY` hay API key query parameter.
 - `APP_MODE=cloud`: bật thêm LLM classification trong router (vẫn bị rule
   RED/ORANGE ghi đè).
 
@@ -94,18 +100,21 @@ the runtime manifest, one-time local benchmark, session traces and latency
 under `logs/` and `results/`. It never falls back to cloud. Export consenting
 pilot metrics separately with `python scripts/log_pilot_metrics.py --export`.
 
-### One-click deploy to another machine (Windows)
+### One-click desktop install (Windows 10/11 x64)
 
-Copy the whole folder to the target PC, then
-double-click **`start.bat`**. It:
+Copy the whole folder to the target PC and double-click **`CaiDat-Rightly.bat`**
+once while internet is available. The installer checks the machine, chooses a
+local Ollama model, installs Python/dependencies, downloads the local
+faster-whisper and Piper Vietnamese/English assets, runs LLM/ASR/TTS/health/chat
+smoke tests, builds `dist\Rightly\Rightly.exe`, and creates a Desktop shortcut.
+It does not report success if a required asset or check fails. From then on,
+double-click the **Rightly** shortcut: the native app starts the loopback server,
+waits for `/health`, and only then opens the UI. `start.bat` remains a
+compatibility launcher and also prefers the native `.exe` when present.
 
-1. Creates a local `.venv` and installs `requirements-deploy.txt`.
-2. Creates `.env` from `.env.example` (defaults: LLM `local`/Ollama, ASR
-   `whisper`/faster-whisper, retrieval `bm25` — fully offline).
-3. Detects RAM/CPU/GPU/disk and chooses a fitting local LLM and ASR model.
-4. If `LLM_BACKEND=local`, verifies Ollama is installed and pulls the selected
-   model. If it is unavailable, the API stays online with safe fallbacks.
-5. Starts the FastAPI web server on `http://localhost:8010` and opens the browser.
+The first install needs internet and at least 8 GB RAM plus 25 GB free disk.
+After a successful preflight, local chat, microphone ASR, retrieval, and Piper
+voice work without an internet connection or API key.
 
 Optional feature flags in `.env`:
 - `ASR_BACKEND=whisper` + `WHISPER_MODEL=small` — local Vietnamese speech input.
@@ -143,6 +152,37 @@ code or commit a real `.env`. Redeploy after an environment-variable change.
 `GET /health` reports whether a provider is
 configured, while a provider outage returns `503` with `LLM_UNAVAILABLE`
 instead of silently substituting a canned legal answer.
+
+#### Đăng nhập Google và lưu ngữ cảnh
+
+Rightly dùng **Supabase Auth** để đăng nhập bằng Google (tài khoản Gmail) hoặc
+email/mật khẩu. Đây là OAuth đăng nhập — Rightly không nhận, không lưu mật khẩu
+Google và không gọi Gmail API. Khi người dùng đã đăng nhập, ngữ cảnh hội thoại
+được lưu trong bảng `rightly_context` của Supabase; RLS giới hạn mỗi tài khoản
+chỉ đọc/ghi được dòng của mình. Người chưa đăng nhập vẫn dùng được chat và chỉ
+dùng lịch sử cục bộ trong phiên.
+
+1. Tạo project Supabase, chạy `docs/supabase_context.sql` trong SQL Editor.
+2. Trong **Authentication → Providers**, bật Google; tạo OAuth Client Web trong
+   Google Cloud và đặt callback URL do Supabase cung cấp. Thêm domain Vercel
+   (`https://intel-demo-topaz.vercel.app`) vào Site URL/Redirect URLs.
+3. Thêm vào Vercel **Preview** và **Production**:
+   `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` (hoặc tên cũ
+   `SUPABASE_ANON_KEY`). Chỉ dùng publishable/anon key ở trình duyệt; tuyệt đối
+   không đưa `service_role` key vào repo hay biến frontend.
+4. Redeploy. Nút **Đăng nhập** sẽ hiện Google OAuth và email signup/login; sau
+   khi đăng nhập, các lượt chat mới tự đồng bộ theo chính sách RLS.
+
+Nếu chưa cấu hình Supabase, giao diện vẫn chạy bình thường và nút đăng nhập
+hiển thị trạng thái chưa bật thay vì làm hỏng chat.
+
+#### Bản nộp BTC và bộ cài
+
+`scripts/build_btc_release.ps1` tạo một thư mục/ZIP allowlist, loại `.env`,
+cache, log, kết quả đánh giá, tài liệu người dùng và dữ liệu runtime cá nhân.
+Bộ cài Windows `Rightly-Setup.exe` được đặt trong release asset, còn mã nguồn
+installer vẫn nằm ở `setup_installer.py` và `CaiDat-Rightly.bat`. Không commit
+file `.exe`, ZIP hoặc secret vào nhánh mã nguồn.
 
 ## Data structure
 
@@ -208,7 +248,8 @@ python scripts/preflight.py     # toàn bộ (test+lint+demo+eval+secret scan)
 | Streamlit UI | DONE (tùy chọn) |
 | Eval R1-R4 (synthetic) | DONE |
 | Pilot (8-10 người) | TODO — `docs/pilot_protocol.md` |
-| Deployment | TODO — `docs/deployment_strategy.md` |
+| Deployment | Vercel public demo + Windows installer release |
+| Auth/context | Supabase Auth (Google/email) + RLS schema, cấu hình qua env |
 
 ## License
 

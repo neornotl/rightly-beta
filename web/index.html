@@ -4,9 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rightly - H&#7887;i ph&#225;p lu&#7853;t b&#7857;ng gi&#7885;ng n&#243;i</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
@@ -22,8 +19,10 @@
       --teal: #14532d;
       --good: #2e7d4f;
       --warn: #a16207;
-      --serif: "Source Serif 4", Georgia, "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
-      --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      /* Use fonts that are present on Windows/Android/iOS so Vietnamese
+         diacritics never fall back to a tiny or inconsistent glyph set. */
+      --serif: "Cambria", "Noto Serif", Georgia, "Palatino Linotype", "Times New Roman", serif;
+      --sans: "Segoe UI", "Noto Sans", Arial, sans-serif;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -34,7 +33,7 @@
         radial-gradient(1200px 400px at 50% -120px, #fff 0%, rgba(255,255,255,0) 60%),
         repeating-linear-gradient(0deg, rgba(28,27,24,.012) 0 1px, transparent 1px 4px);
       color: var(--ink);
-      font: 17px/1.75 var(--sans);
+      font: 17px/1.78 var(--sans);
       -webkit-font-smoothing: antialiased;
       transition: font-size .2s ease;
     }
@@ -58,26 +57,26 @@
     .kicker { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); display: block; margin-top: 2px; }
     .spacer { flex: 1; }
     .font-zoom { display: flex; gap: 2px; background: #efece4; border: 1px solid var(--line); border-radius: 3px; padding: 2px; }
-    .font-btn { border: 0; background: transparent; color: var(--ink-2); font-family: var(--sans); font-weight: 600; font-size: 12px; padding: 4px 8px; border-radius: 2px; cursor: pointer; transition: all .2s; }
+    .font-btn { border: 0; background: transparent; color: var(--ink-2); font-family: var(--sans); font-weight: 600; font-size: 13px; min-width: 38px; min-height: 36px; padding: 5px 9px; border-radius: 4px; cursor: pointer; transition: all .2s; }
     .font-btn:hover { background: var(--card); color: var(--verm); }
     .font-btn.active { background: var(--card); color: var(--verm); font-weight: 700; }
     .modes { display: flex; gap: 4px; background: #efece4; border: 1px solid var(--line); border-radius: 3px; padding: 3px; }
     .mode {
       border: 0; background: transparent; color: var(--muted); font-family: var(--sans);
-      font-size: 12px; letter-spacing: .04em; padding: 6px 12px; border-radius: 2px; cursor: pointer; transition: all .2s ease;
+      font-size: 13px; letter-spacing: 0; min-height: 36px; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: all .2s ease;
     }
     .mode.active { background: var(--card); color: var(--verm); font-weight: 600; box-shadow: 0 1px 4px rgba(28,27,24,.12); }
     .mode:hover:not(.active) { color: var(--ink); }
     .lang-switch {
       display: inline-flex; align-items: center; gap: 6px;
       background: #efece4; border: 1px solid var(--line); border-radius: 3px; padding: 3px;
-      font-family: var(--sans); font-size: 11px; letter-spacing: .04em;
+      font-family: var(--sans); font-size: 12px; letter-spacing: 0;
     }
     .lang-switch .flag { color: var(--muted); padding: 0 4px; }
     .lang-btn {
       border: 0; background: transparent; color: var(--muted);
-      font-family: var(--sans); font-size: 11px; letter-spacing: .04em;
-      padding: 5px 10px; border-radius: 2px; cursor: pointer; transition: all .2s ease;
+      font-family: var(--sans); font-size: 12px; letter-spacing: 0;
+      min-height: 36px; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: all .2s ease;
     }
     .lang-btn.active { background: var(--card); color: var(--verm); font-weight: 600; box-shadow: 0 1px 4px rgba(28,27,24,.12); }
     .lang-btn:hover:not(.active) { color: var(--ink); }
@@ -87,6 +86,35 @@
       background: var(--card); white-space: nowrap;
     }
     .status.live::before { content: "● "; color: var(--good); }
+    .auth-area { position: relative; flex: none; }
+    .auth-btn, .auth-user {
+      min-height: 36px; padding: 6px 11px; border: 1px solid var(--line-2); border-radius: 4px;
+      background: var(--card); color: var(--ink-2); font: 600 12px var(--sans); cursor: pointer;
+    }
+    .auth-btn:hover { border-color: var(--verm); color: var(--verm); }
+    .auth-user { display: inline-flex; align-items: center; gap: 7px; cursor: default; }
+    .auth-user button { border: 0; background: transparent; color: var(--verm); font: 600 11px var(--sans); cursor: pointer; padding: 0; }
+    .auth-panel {
+      position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-start; justify-content: center;
+      padding: 12vh 20px 30px; background: rgba(28,27,24,.42); backdrop-filter: blur(3px);
+    }
+    .auth-card { width: min(440px, 100%); background: var(--card); border: 1px solid var(--line-2); border-radius: 8px; box-shadow: 0 18px 50px rgba(28,27,24,.22); padding: 26px; position: relative; }
+    .auth-card h2 { font: 700 25px/1.25 var(--serif); margin: 0 0 8px; color: var(--ink); }
+    .auth-card p { margin: 0 0 18px; color: var(--ink-2); font-size: 14px; line-height: 1.5; }
+    .auth-close { position: absolute; top: 11px; right: 13px; border: 0; background: transparent; color: var(--muted); font-size: 22px; cursor: pointer; }
+    .auth-google, .auth-submit { width: 100%; min-height: 44px; border-radius: 4px; cursor: pointer; font: 600 14px var(--sans); }
+    .auth-google { border: 1px solid var(--line-2); background: #fff; color: var(--ink); }
+    .auth-google:hover { border-color: var(--verm); }
+    .auth-divider { display: flex; align-items: center; gap: 9px; margin: 16px 0; color: var(--muted); font-size: 12px; }
+    .auth-divider::before, .auth-divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+    .auth-card label { display: block; color: var(--ink-2); font-size: 12px; margin: 9px 0 4px; }
+    .auth-card input { width: 100%; border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 11px; background: #fff; font-size: 15px; }
+    .auth-submit { margin-top: 15px; border: 0; background: var(--verm); color: #fff; }
+    .auth-submit:hover { background: var(--verm-d); }
+    .auth-submit.secondary { margin-top: 8px; border: 1px solid var(--line-2); background: transparent; color: var(--ink-2); }
+    .auth-message { min-height: 20px; margin-top: 11px; color: var(--ink-2); font-size: 13px; line-height: 1.45; }
+    .auth-message.error { color: var(--verm-d); }
+    @media (max-width: 760px) { .kicker { display: none; } .auth-btn, .auth-user { padding: 6px 8px; } .status { display: none; } header { padding-left: 14px; padding-right: 14px; gap: 7px; } }
     #messages { flex: 1; overflow-y: auto; padding: 42px 26px 170px; scroll-behavior: smooth; }
     #messages::-webkit-scrollbar { width: 8px; }
     #messages::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
@@ -101,9 +129,9 @@
     .empty p { color: var(--ink-2); font-size: 16px; margin: 0 auto 10px; max-width: 46ch; }
     .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 30px; }
     .chip {
-      font-family: var(--sans); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      font-family: var(--sans); font-size: 13px; letter-spacing: 0;
       background: transparent; border: 1px solid var(--line-2); color: var(--ink-2);
-      padding: 9px 16px; border-radius: 2px; cursor: pointer; transition: all .22s ease;
+      padding: 10px 16px; border-radius: 4px; cursor: pointer; transition: all .22s ease;
     }
     .chip:hover { border-color: var(--verm); color: var(--verm); background: #fff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(180,54,31,.08); }
 
@@ -115,12 +143,12 @@
     .row.assistant .av { background: var(--paper); border: 1px solid var(--line-2); }
     .row.user { justify-content: flex-end; }
     .row.user .av { background: var(--ink); color: #fff; }
-    .row .who { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .row .who { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
     .row.user .who { text-align: right; }
 
     .wrap { max-width: 86%; min-width: 0; }
     .bubble { word-wrap: break-word; }
-    .assistant .bubble { font-size: 16.5px; line-height: 1.75; color: var(--ink); }
+    .assistant .bubble { font-size: 17px; line-height: 1.78; color: var(--ink); overflow-wrap: anywhere; text-wrap: pretty; }
     .assistant .bubble::first-letter { font-family: var(--serif); font-size: 1.5em; color: var(--verm); }
     .assistant .bubble h2, .assistant .bubble h3 { font-family: var(--serif); color: var(--verm-d); line-height: 1.3; margin: 1.1em 0 .4em; }
     .assistant .bubble h2 { font-size: 1.2em; }
@@ -132,10 +160,10 @@
     .assistant .bubble > :last-child { margin-bottom: 0; }
     .user .bubble {
       background: var(--ink); color: #fbfaf6; padding: 13px 18px; border-radius: 3px;
-      font-size: 15.5px; line-height: 1.6; white-space: pre-wrap;
+      font-size: 16px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere;
     }
     .source {
-      font-size: 11px; letter-spacing: .04em; color: var(--muted);
+      font-size: 12px; letter-spacing: .02em; color: var(--muted);
       margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--line);
     }
     .source b { color: var(--teal); font-weight: 600; letter-spacing: .12em; font-size: 10px; }
@@ -148,12 +176,6 @@
     .fit { display: inline-block; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; padding: 3px 10px; border-radius: 2px; margin-top: 10px; }
     .fit.good { background: #eaf3ee; color: var(--good); border: 1px solid #cfe3d6; }
     .fit.warn { background: #fbf1e2; color: var(--warn); border: 1px solid #ecd9b8; }
-    .tts-btn {
-      margin-top: 10px; background: transparent; border: 1px solid var(--line-2); color: var(--teal);
-      font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 12px;
-      border-radius: 2px; cursor: pointer; transition: all .2s ease;
-    }
-    .tts-btn:hover { border-color: var(--teal); background: #f3f8f5; }
 
     .progress {
       display: flex; align-items: center; gap: 14px; margin: 0 0 30px;
@@ -180,7 +202,7 @@
     input { flex: 1; border: 0; outline: 0; padding: 8px 0; font: inherit; font-size: 16px; min-width: 0; background: transparent; color: var(--ink); }
     input::placeholder { color: var(--muted); }
     .icon-btn {
-      width: 40px; height: 40px; border-radius: 50%; padding: 0; flex: none;
+      width: 44px; height: 44px; border-radius: 50%; padding: 0; flex: none;
       display: flex; align-items: center; justify-content: center;
       background: transparent; color: var(--verm); font-size: 18px; cursor: pointer;
       border: 1px solid var(--line-2); transition: all .2s ease;
@@ -197,6 +219,7 @@
     }
     #send:hover { background: var(--verm-d); }
     #send:disabled { opacity: .45; cursor: default; }
+    button:focus-visible, input:focus-visible { outline: 3px solid rgba(180,54,31,.42); outline-offset: 2px; }
     .tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 10px; }
     .tools label { font-size: 11px; letter-spacing: .08em; color: var(--muted); display: flex; gap: 7px; align-items: center; cursor: pointer; }
     .tools label input { accent-color: var(--verm); }
@@ -243,7 +266,6 @@
     #callMessages .user .bubble { background: rgba(243,239,228,.14); color: #fff; }
     #callMessages .summary { background: rgba(63,181,154,.10); border-color: rgba(63,181,154,.35); color: #d9eee7; }
     #callMessages .source { color: rgba(243,239,228,.5); border-top-color: rgba(243,239,228,.14); }
-    #callMessages .tts-btn { color: #9fe0cf; border-color: rgba(63,181,154,.5); }
     #callMessages .progress { color: rgba(243,239,228,.6); }
     #callMessages .track { background: rgba(243,239,228,.25); }
     #callMessages .bar { background: #7fd4bf; }
@@ -268,14 +290,42 @@
     @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
 
     @media (max-width: 600px) {
-      .shell { max-width: 100%; }
-      header { padding: 12px 14px 10px; gap: 10px; }
+      .shell { max-width: 100%; min-height: 100dvh; }
+      header {
+        display: grid; grid-template-columns: 1fr auto;
+        grid-template-areas: "brand brand" "font lang" "modes modes";
+        padding: 12px 14px 10px; gap: 8px 10px;
+      }
+      header > div:first-child { grid-area: brand; }
+      .brand { font-size: 23px; }
       .kicker { display: none; }
-      #messages { padding: 26px 16px 150px; }
-      .wrap { max-width: 92%; }
-      form { padding: 10px 16px 16px; }
-      .status { display: none; }
-      .modes { margin-left: auto; }
+      .spacer, .status { display: none; }
+      .font-zoom { grid-area: font; justify-self: start; }
+      .lang-switch { grid-area: lang; justify-self: end; }
+      .modes { grid-area: modes; width: 100%; }
+      .mode { flex: 1; min-height: 42px; font-size: 13px; }
+      .font-btn, .lang-btn { min-height: 40px; }
+      #messages { padding: 22px 14px calc(190px + env(safe-area-inset-bottom)); }
+      .row { gap: 9px; margin-bottom: 24px; }
+      .row .av { width: 28px; height: 28px; font-size: 12px; }
+      .wrap { max-width: calc(100% - 37px); }
+      .assistant .bubble { font-size: 17px; line-height: 1.78; }
+      .user .bubble { font-size: 16px; padding: 12px 15px; }
+      .empty { margin: 4vh auto 0; padding: 0 4px; }
+      .empty h1 { font-size: clamp(31px, 10vw, 42px); line-height: 1.13; }
+      .empty p { font-size: 16px; line-height: 1.65; }
+      .chips { gap: 8px; margin-top: 24px; }
+      .chip { flex: 1 1 calc(50% - 8px); font-size: 13px; padding: 11px 10px; min-height: 44px; }
+      form {
+        width: 100%; padding: 9px 12px calc(12px + env(safe-area-inset-bottom));
+        background: linear-gradient(transparent, var(--paper) 24%);
+      }
+      .composer { gap: 8px; padding: 8px 8px 8px 10px; border-radius: 12px; }
+      input { font-size: 17px; min-height: 42px; }
+      .icon-btn { width: 44px; height: 44px; }
+      #send { min-height: 44px; padding: 10px 16px; border-radius: 10px; }
+      .tools { padding: 7px 2px 0; justify-content: flex-end; }
+      .clear { font-size: 11px; }
     }
   </style>
 </head>
@@ -302,6 +352,10 @@
         <button class="mode" id="modeCall" type="button">📞 Cuộc gọi</button>
       </nav>
       <div class="status" id="status">sẵn sàng</div>
+      <div class="auth-area">
+        <button class="auth-btn" id="authOpen" type="button">Đăng nhập</button>
+        <span class="auth-user hidden" id="authUser"><span id="authUserLabel"></span><button id="authSignOut" type="button">Thoát</button></span>
+      </div>
     </header>
 
     <section id="messages">
@@ -324,11 +378,29 @@
         <button id="send">Gửi</button>
       </div>
       <div class="tools">
-        <label><input type="checkbox" id="speak" checked> Đọc câu trả lời</label>
         <button class="clear" type="button" id="clear">Xóa hội thoại</button>
       </div>
     </form>
   </main>
+
+  <section id="authPanel" class="auth-panel hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <button class="auth-close" id="authClose" type="button" aria-label="Đóng">×</button>
+      <h2 id="authTitle">Đăng nhập Rightly</h2>
+      <p id="authIntro">Đăng nhập để lưu và khôi phục ngữ cảnh hội thoại của riêng bạn trên các thiết bị.</p>
+      <button class="auth-google" id="authGoogle" type="button">🔐 Tiếp tục với Google</button>
+      <div class="auth-divider">hoặc email</div>
+      <form id="authForm">
+        <label for="authEmail">Email</label>
+        <input id="authEmail" type="email" autocomplete="email" required placeholder="ban@example.com">
+        <label for="authPassword">Mật khẩu (ít nhất 8 ký tự)</label>
+        <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required>
+        <button class="auth-submit" id="authSignIn" type="submit">Đăng nhập bằng email</button>
+        <button class="auth-submit secondary" id="authSignUp" type="button">Tạo tài khoản mới</button>
+      </form>
+      <div class="auth-message" id="authMessage" role="status"></div>
+    </div>
+  </section>
 
   <!-- Call mode overlay -->
   <section id="callScreen" class="hidden">
@@ -367,24 +439,198 @@
     </div>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const messages = document.querySelector('#messages'), empty = document.querySelector('#empty');
     const input = document.querySelector('#input'), send = document.querySelector('#send');
-    const mic = document.querySelector('#mic'), speakBox = document.querySelector('#speak');
+    const mic = document.querySelector('#mic');
     const status = document.querySelector('#status');
     const callScreen = document.querySelector('#callScreen'), callMessages = document.querySelector('#callMessages');
     const callMic = document.querySelector('#callMic'), callSpeaker = document.querySelector('#callSpeaker');
     const callEnd = document.querySelector('#callEnd'), callTimer = document.querySelector('#callTimer');
     const callState = document.querySelector('#callState'), callStatus = document.querySelector('#callStatus');
     const modeChat = document.querySelector('#modeChat'), modeCall = document.querySelector('#modeCall');
-    let sessionId = crypto.randomUUID();
+    const authOpen = document.querySelector('#authOpen'), authPanel = document.querySelector('#authPanel');
+    const authClose = document.querySelector('#authClose'), authUser = document.querySelector('#authUser');
+    const authUserLabel = document.querySelector('#authUserLabel'), authSignOut = document.querySelector('#authSignOut');
+    const authGoogle = document.querySelector('#authGoogle'), authForm = document.querySelector('#authForm');
+    const authSignUp = document.querySelector('#authSignUp'), authMessage = document.querySelector('#authMessage');
+    const authEmail = document.querySelector('#authEmail');
+    let supabaseClient = null, currentUser = null;
+    let sessionId = (() => {
+      try { return localStorage.getItem('rightly.session') || crypto.randomUUID(); }
+      catch(e){ return crypto.randomUUID(); }
+    })();
+    try { localStorage.setItem('rightly.session', sessionId); } catch(e){}
     const chatHistory = [];
     const emptyChatTemplate = messages.innerHTML;
     const synth = window.speechSynthesis;
     let mediaRec = null, speechRec = null, chunks = [];
     let callActive = false, callStart = 0, callTimerInt = null, speakerOn = true;
+    let answerRun = 0;
+
+    function setAuthMessage(text, isError=false){
+      authMessage.textContent = text || '';
+      authMessage.classList.toggle('error', !!isError);
+    }
+
+    function updateAuthUi(){
+      const signedIn = !!currentUser;
+      authOpen.classList.toggle('hidden', signedIn);
+      authUser.classList.toggle('hidden', !signedIn);
+      if (signedIn) {
+        const name = currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name);
+        authUserLabel.textContent = String(name || currentUser.email || 'Đã đăng nhập').slice(0, 28);
+      }
+    }
+
+    function openAuth(){
+      authPanel.classList.remove('hidden');
+      setAuthMessage(supabaseClient ? '' : 'Đăng nhập chưa được bật trên bản triển khai này. Hãy điền SUPABASE_URL và SUPABASE_PUBLISHABLE_KEY trên Vercel.');
+      if (supabaseClient) authGoogle.disabled = false;
+      authEmail.focus();
+    }
+
+    function closeAuth(){ authPanel.classList.add('hidden'); }
+
+    async function loadCloudContext(){
+      if (!supabaseClient || !currentUser || chatHistory.length) return;
+      try {
+        const {data, error} = await supabaseClient.from('rightly_context')
+          .select('turns').eq('session_id', sessionId).maybeSingle();
+        if (error || !data || !Array.isArray(data.turns) || !data.turns.length) return;
+        chatHistory.splice(0, chatHistory.length, ...data.turns.slice(-12));
+        for (const item of chatHistory) {
+          if (item && (item.role === 'user' || item.role === 'assistant') && item.content) {
+            renderBubble(item.role, item.content, {speakable:item.role === 'assistant'}, messages);
+          }
+        }
+        const emptyNode = document.querySelector('#empty'); if (emptyNode) emptyNode.remove();
+      } catch (e) { console.debug('[Rightly] cloud context unavailable', e); }
+    }
+
+    async function saveCloudContext(){
+      if (!supabaseClient || !currentUser || !chatHistory.length) return;
+      try {
+        await supabaseClient.from('rightly_context').upsert({
+          user_id: currentUser.id,
+          session_id: sessionId,
+          turns: chatHistory.slice(-100),
+          updated_at: new Date().toISOString()
+        }, {onConflict: 'user_id,session_id'});
+      } catch (e) { console.debug('[Rightly] cloud context save unavailable', e); }
+    }
+
+    async function initAuth(){
+      updateAuthUi();
+      try {
+        const response = await fetch('/api/config', {cache: 'no-store'});
+        const config = await response.json();
+        const sb = config && config.supabase;
+        if (!sb || !sb.enabled || !sb.url || !sb.publishableKey || !window.supabase) {
+          authGoogle.disabled = true;
+          return;
+        }
+        supabaseClient = window.supabase.createClient(sb.url, sb.publishableKey, {
+          auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}
+        });
+        const {data} = await supabaseClient.auth.getSession();
+        currentUser = data && data.session ? data.session.user : null;
+        updateAuthUi();
+        await loadCloudContext();
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          currentUser = session ? session.user : null;
+          updateAuthUi();
+          if (currentUser) setTimeout(loadCloudContext, 0);
+        });
+      } catch (e) {
+        authGoogle.disabled = true;
+        console.debug('[Rightly] Supabase auth unavailable', e);
+      }
+    }
+
+    authOpen.addEventListener('click', openAuth);
+    authClose.addEventListener('click', closeAuth);
+    authPanel.addEventListener('click', e => { if (e.target === authPanel) closeAuth(); });
+    authGoogle.addEventListener('click', async () => {
+      if (!supabaseClient) { setAuthMessage('Chưa có cấu hình Supabase cho trang này.', true); return; }
+      authGoogle.disabled = true; setAuthMessage('Đang chuyển sang Google…');
+      const {error} = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google', options: {redirectTo: window.location.origin}
+      });
+      if (error) { authGoogle.disabled = false; setAuthMessage('Không thể đăng nhập bằng Google. Hãy kiểm tra cấu hình OAuth.', true); }
+    });
+    authForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!supabaseClient) { setAuthMessage('Chưa có cấu hình Supabase cho trang này.', true); return; }
+      const email = document.querySelector('#authEmail').value.trim();
+      const password = document.querySelector('#authPassword').value;
+      setAuthMessage('Đang xử lý…');
+      const {error} = await supabaseClient.auth.signInWithPassword({email, password});
+      if (error) { setAuthMessage('Email hoặc mật khẩu chưa đúng, hoặc tài khoản chưa được bật.', true); return; }
+      setAuthMessage('Đăng nhập thành công.'); closeAuth();
+    });
+    authSignUp.addEventListener('click', async () => {
+      if (!supabaseClient) { setAuthMessage('Chưa có cấu hình Supabase cho trang này.', true); return; }
+      const email = document.querySelector('#authEmail').value.trim();
+      const password = document.querySelector('#authPassword').value;
+      if (!email || password.length < 8) { setAuthMessage('Nhập email và mật khẩu ít nhất 8 ký tự.', true); return; }
+      setAuthMessage('Đang tạo tài khoản…');
+      const {data, error} = await supabaseClient.auth.signUp({email, password});
+      if (error) { setAuthMessage('Chưa tạo được tài khoản. Hãy kiểm tra email và thử lại.', true); return; }
+      if (data.session) { closeAuth(); } else { setAuthMessage('Tài khoản đã tạo. Hãy mở email để xác nhận rồi đăng nhập.'); }
+    });
+    authSignOut.addEventListener('click', async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      currentUser = null; updateAuthUi();
+    });
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }
+
+    function unwrapReply(value){
+      if(typeof value !== 'string') return String(value || '');
+      const trimmed = value.trim();
+      if(!trimmed.startsWith('{')) return value;
+      try {
+        const obj = JSON.parse(trimmed);
+        for(const key of ['answer_text','answer','reply','response']){
+          if(typeof obj[key] === 'string' && obj[key].trim()) return unwrapReply(obj[key]);
+        }
+      } catch(e){}
+      return value;
+    }
+
+    function sanitizeReply(value){
+      // Providers occasionally serialize an empty citation as the literal
+      // string "null". Keep the answer, but never show that placeholder.
+      return unwrapReply(value)
+        .replace(/^\s*Trích dẫn:\s*(?:null|undefined|none|n\/a|na)\s*$/gim, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    function cleanSources(value){
+      const items = Array.isArray(value) ? value : (value ? [value] : []);
+      return items.map(item => String(item || '').trim())
+        .filter(item => item && !/^(?:null|undefined|none|n\/a|na)$/i.test(item));
+    }
+
+    async function hydrateLocalHistory(){
+      if(window.location.protocol === 'file:') return;
+      try {
+        const r = await fetch('/api/local-memory?session_id=' + encodeURIComponent(sessionId));
+        if(!r.ok) return;
+        const payload = await r.json();
+        if(!payload.available || !Array.isArray(payload.history) || payload.history.length === 0) return;
+        chatHistory.splice(0, chatHistory.length, ...payload.history.slice(-12));
+        for(const item of chatHistory){
+          if(item && (item.role === 'user' || item.role === 'assistant') && item.content){
+            renderBubble(item.role, item.content, {speakable:item.role === 'assistant'}, messages);
+          }
+        }
+        const emptyNode = document.querySelector('#empty'); if(emptyNode) emptyNode.remove();
+      } catch(e) { console.debug('[Rightly] local history unavailable', e); }
+    }
 
     function renderInlineMarkdown(text){
       return text
@@ -421,10 +667,11 @@
       const bubble=document.createElement('div'); bubble.className='bubble';
       if(role === 'assistant') bubble.innerHTML=renderMarkdown(text); else bubble.textContent=text;
       wrap.append(who, bubble);
-      if (opts.summary) { const s=document.createElement('div'); s.className='summary'; s.innerHTML='<b>Tóm tắt</b>'+opts.summary.replace(/</g,'&lt;'); wrap.append(s); }
+      const safeSummary = typeof opts.summary === 'string' && !/^(?:null|undefined|none|n\/a|na)$/i.test(opts.summary.trim()) ? opts.summary.trim() : '';
+      if (safeSummary) { const s=document.createElement('div'); s.className='summary'; s.innerHTML='<b>Tóm tắt</b>'+safeSummary.replace(/</g,'&lt;'); wrap.append(s); }
       if (opts.appropriate === false) { const f=document.createElement('div'); f.className='fit warn'; f.textContent='⚠ Câu trả lời có thể chưa khớp hoàn toàn với câu hỏi.'; wrap.append(f); }
-      if (opts.sources && opts.sources.length) { const src=document.createElement('div'); src.className='source'; src.innerHTML='<b>Nguồn: </b>'+opts.sources.join(' · ').replace(/</g,'&lt;'); wrap.append(src); }
-      if (opts.speakable) { const b=document.createElement('button'); b.className='tts-btn'; b.textContent='🔊 Đọc lại lời'; b.onclick=()=>speak(text); wrap.append(b); }
+      const safeSources = cleanSources(opts.sources);
+      if (safeSources.length) { const src=document.createElement('div'); src.className='source'; src.innerHTML='<b>Nguồn: </b>'+safeSources.join(' · ').replace(/</g,'&lt;'); wrap.append(src); }
       row.append(av, wrap);
       container.append(row); container.scrollTop=container.scrollHeight;
       return row;
@@ -440,11 +687,28 @@
 
     let currentAudio = null;
     let speakSeq = 0;
+    let ttsAbort = null;
+    let currentAudioResolve = null;
+    let currentSpeechResolve = null;
 
     function stopSpeak(){
       speakSeq++;
+      if (ttsAbort) {
+        try { ttsAbort.abort(); } catch(e) {}
+        ttsAbort = null;
+      }
       if (synth) {
         try { synth.cancel(); } catch(e){}
+      }
+      if (currentAudioResolve) {
+        const resolve = currentAudioResolve;
+        currentAudioResolve = null;
+        try { resolve(false); } catch(e) {}
+      }
+      if (currentSpeechResolve) {
+        const resolve = currentSpeechResolve;
+        currentSpeechResolve = null;
+        try { resolve(false); } catch(e) {}
       }
       if (currentAudio) {
         try {
@@ -453,6 +717,50 @@
         } catch(e){}
         currentAudio = null;
       }
+    }
+
+    async function fetchTtsAudio(text, lang, seq, signal){
+      if (seq !== speakSeq) return null;
+      try {
+        const r = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text, lang}),
+          signal
+        });
+        if (seq !== speakSeq || !r.ok) return null;
+        const blob = await r.blob();
+        return blob.size > 200 ? blob : null;
+      } catch(e) {
+        return null;
+      }
+    }
+
+    function playTtsAudio(blob, seq){
+      return new Promise(resolve => {
+        if (!blob || seq !== speakSeq) { resolve(false); return; }
+        const url = URL.createObjectURL(blob);
+        const au = new Audio(url);
+        let settled = false;
+        const finish = ok => {
+          if (settled) return;
+          settled = true;
+          if (currentAudio === au) currentAudio = null;
+          if (currentAudioResolve === cancel) currentAudioResolve = null;
+          URL.revokeObjectURL(url);
+          resolve(ok && seq === speakSeq);
+        };
+        const cancel = () => finish(false);
+        currentAudio = au;
+        currentAudioResolve = cancel;
+        // A small rate increase removes the sluggish feel without the harsh
+        // 1.25x sound reported in the screenshot. Keep the natural pitch.
+        au.playbackRate = 1.05;
+        if ('preservesPitch' in au) au.preservesPitch = true;
+        au.onended = () => finish(true);
+        au.onerror = () => finish(false);
+        au.play().catch(() => finish(false));
+      });
     }
 
     function detectLang(text){
@@ -480,105 +788,122 @@
         || null;
     }
 
+    function splitSpeech(text, maxChars=220){
+      const clean = String(text || '').replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').replace(/Trích dẫn:.*$/i, '').trim();
+      if(!clean) return [];
+      const sentences = clean.match(/[^.!?。！？]+[.!?。！？]?/g) || [clean];
+      const chunks=[];
+      for(const sentence of sentences){
+        let part=sentence.trim();
+        while(part.length > maxChars){
+          let cut = part.lastIndexOf(' ', maxChars);
+          if(cut < Math.floor(maxChars*0.55)) cut=maxChars;
+          chunks.push(part.slice(0,cut).trim()); part=part.slice(cut).trim();
+        }
+        if(part) chunks.push(part);
+      }
+      return chunks;
+    }
+
+    function browserSpeakChunk(text, lang){
+      return new Promise(resolve => {
+        if(!synth){ resolve(); return; }
+        let settled = false;
+        const finish = ok => {
+          if (settled) return;
+          settled = true;
+          if (currentSpeechResolve === cancel) currentSpeechResolve = null;
+          resolve(ok);
+        };
+        const cancel = () => finish(false);
+        currentSpeechResolve = cancel;
+        try {
+          synth.cancel();
+          const v = pickVoice(lang);
+          const u = new SpeechSynthesisUtterance(text);
+          if(v){ u.voice=v; u.lang=v.lang; } else u.lang = lang === 'en' ? 'en-US' : 'vi-VN';
+          u.rate=1.0; u.pitch=1.0; u.onend=()=>finish(true); u.onerror=()=>finish(false); u.oncancel=()=>finish(false); synth.speak(u);
+        } catch(e){ finish(false); }
+      });
+    }
+
     async function speak(text, lang){
       if (!text || !text.trim()) return;
       stopSpeak();
       const mySeq = ++speakSeq;
       const useLang = lang || detectLang(text);
-
-      // Auto-listen after TTS finishes in Call Mode
-      function triggerAutoListen() {
+      const chunksToSpeak = splitSpeech(text);
+      if (!chunksToSpeak.length) return;
+      const controller = new AbortController();
+      ttsAbort = controller;
+      const triggerAutoListen = () => {
         if (callActive && speakerOn) {
           if (callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
-          setTimeout(() => {
-            if (callActive && !callMic.disabled) {
-              startMicFlow(callMessages);
-            }
-          }, 800);
+          setTimeout(() => { if (callActive && !callMic.disabled) startMicFlow(callMessages); }, 800);
         }
+      };
+      // Generate the next clip while the current one is playing. Each clip
+      // remains short enough for the server timeout, while playback becomes a
+      // continuous queue instead of a series of five-second network gaps.
+      let nextPromise = fetchTtsAudio(chunksToSpeak[0], useLang, mySeq, controller.signal);
+      for(let i = 0; i < chunksToSpeak.length; i++){
+        if(mySeq !== speakSeq) return;
+        const blob = await nextPromise;
+        if(mySeq !== speakSeq) return;
+        const nextIndex = i + 1;
+        nextPromise = nextIndex < chunksToSpeak.length
+          ? fetchTtsAudio(chunksToSpeak[nextIndex], useLang, mySeq, controller.signal)
+          : Promise.resolve(null);
+        const played = blob ? await playTtsAudio(blob, mySeq) : false;
+        if(mySeq !== speakSeq) return;
+        if(!played) await browserSpeakChunk(chunksToSpeak[i], useLang);
       }
-
-      // Clean text for speech
-      const cleanText = text.replace(/[*_#`~]/g, '').replace(/https?:\/\/\S+/g, '').replace(/Trích dẫn:.*$/i, '').trim();
-      if (!cleanText) return;
-      const spokenChunk = cleanText.slice(0, 140);
-
-      // 1) Primary: Server-side TTS endpoint (works on Vercel or local)
-      const ttsEndpoint = (window.location.protocol === 'file:' ? 'https://intel-demo-topaz.vercel.app' : '') + '/api/tts';
-      try {
-        const r = await fetch(ttsEndpoint, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({text: spokenChunk, lang: useLang})
-        });
-        if (mySeq !== speakSeq) return;
-        if (r.ok) {
-          const blob = await r.blob();
-          if (blob.size > 200) {
-            const url = URL.createObjectURL(blob);
-            const au = new Audio(url);
-            currentAudio = au;
-            au.onended = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); triggerAutoListen(); };
-            au.onerror = () => { if (currentAudio === au) currentAudio = null; URL.revokeObjectURL(url); };
-            await au.play();
-            return;
-          }
-        }
-      } catch(e) {}
-
-      if (mySeq !== speakSeq) return;
-      // 2) Secondary: Direct Google Translate TTS Audio (100% natural Vietnamese voice)
-      try {
-        const tl = useLang === 'en' ? 'en' : 'vi';
-        const directUrl = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=' + tl + '&q=' + encodeURIComponent(spokenChunk);
-        const directAu = new Audio(directUrl);
-        currentAudio = directAu;
-        directAu.onended = () => { if (currentAudio === directAu) currentAudio = null; triggerAutoListen(); };
-        directAu.onerror = () => { if (currentAudio === directAu) currentAudio = null; };
-        await directAu.play();
-        return;
-      } catch(e) {}
-
-      if (mySeq !== speakSeq) return;
-      // 3) Tertiary Fallback: Browser Web Speech Synthesis
-      if (!synth) return;
-      try {
-        synth.cancel();
-        const v = pickVoice(useLang);
-        const u = new SpeechSynthesisUtterance(cleanText);
-        if (v) { u.voice = v; u.lang = v.lang; }
-        else { u.lang = useLang === 'en' ? 'en-US' : 'vi-VN'; }
-        u.rate = 0.92;
-        u.pitch = 1.0;
-        u.onend = () => { triggerAutoListen(); };
-        synth.speak(u);
-      } catch(e) {}
+      if(ttsAbort === controller) ttsAbort = null;
+      if(mySeq === speakSeq) triggerAutoListen();
     }
 
     async function streamAnswer(text, target, onAnswer){
       const container = target || messages;
       const disableMic = target ? callMic : mic;
+      const thisAnswerRun = ++answerRun;
       disableMic.disabled=true; if(!target){ input.disabled=true; send.disabled=true; send.textContent='...'; }
+      let composerReleased = false;
+      const releaseComposer = () => {
+        if (target || composerReleased || thisAnswerRun !== answerRun) return;
+        composerReleased = true;
+        input.disabled = false;
+        send.disabled = false;
+        send.textContent = 'Gửi';
+        input.focus();
+      };
       setStatus('đang xử lý');
       if (target && callState) callState.textContent = '⚖ Đang tra cứu nguồn luật...';
       const reqLang = currentLang === 'auto' ? detectLang(text) : currentLang;
       const box=progressBox(container);
       let gotAnswer = false;
+      let streamedReply = '';
+      let liveRow = null;
+      let earlyVoiceText = '';
+      let earlyVoicePromise = null;
       // Safety timeout: if no answer within 30s, show friendly fallback
-      const safetyTimeout = setTimeout(() => {
+      let safetyTimeout;
+      const armSafetyTimeout = () => { clearTimeout(safetyTimeout); safetyTimeout = setTimeout(() => {
+        if (thisAnswerRun !== answerRun) return;
         if (!gotAnswer && box.parentNode) {
           box.remove();
+          if (liveRow) liveRow.remove();
           const render = target ? addCall : add;
           const msg = 'Dạ, Rightly chưa tìm được câu trả lời. Bác thử hỏi lại nhé.';
           render('assistant', msg, {speakable: !target});
           if (target && speakerOn) speak(msg);
-          else if (!target && speakBox.checked) speak(msg);
+          else if (!target) speak(msg);
           setStatus('sẵn sàng');
           if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
         }
-      }, 30000);
+      }, 90000); };
+      armSafetyTimeout();
       try {
-        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-6)})});
+        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-12)})});
         if(!r.ok) throw new Error('Không thể kết nối');
         const reader=r.body.getReader(), decoder=new TextDecoder(); let buffer='';
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
@@ -591,6 +916,7 @@
               console.warn('[Rightly] SSE JSON parse error, skipping chunk:', raw.substring(0, 120), parseErr);
               continue;
             }
+            armSafetyTimeout();
             if(data.type==='progress'){
               const bar = box.querySelector('.bar');
               const stage = box.querySelector('.stage');
@@ -599,36 +925,72 @@
               setStatus(data.detail||'đang xử lý');
               if (target && callState) callState.textContent = '⚖ ' + (data.detail || 'Đang tra cứu...');
             }
+            else if(data.type==='delta'){
+              const delta = String(data.text || '');
+              if(!delta) continue;
+              streamedReply += delta;
+              const visibleReply = sanitizeReply(streamedReply);
+              if(!liveRow){
+                liveRow = (target ? addCall : add)('assistant', visibleReply, {streaming:true});
+              } else {
+                const liveBubble = liveRow.querySelector('.bubble');
+                if(liveBubble) liveBubble.innerHTML = renderMarkdown(visibleReply);
+                container.scrollTop = container.scrollHeight;
+              }
+              // Start the first complete sentence while the model is still
+              // generating. The rest is queued after the final answer so the
+              // user hears one voice, earlier, without two readers colliding.
+              if(!target && !earlyVoicePromise){
+                const firstSentence = streamedReply.match(/^[\s\S]{48,}?[.!?。！？](?=\s|$)/);
+                if(firstSentence){
+                  earlyVoiceText = firstSentence[0].trim();
+                  earlyVoicePromise = speak(earlyVoiceText, reqLang);
+                }
+              }
+              if (target && callState) callState.textContent = '⚖ Rightly đang trả lời...';
+            }
             else if(data.type==='ack'){
               if (target && callState) callState.textContent = '⚖ ' + (data.text || 'Đang tra cứu nguồn luật...');
-              if (data.text && ((target && speakerOn) || (!target && speakBox.checked))) {
-                speak(data.text, 'vi');
-              }
             }
-            else if(data.type==='answer'){ gotAnswer = true; clearTimeout(safetyTimeout); box.remove(); const reply=data.reply||'Mình chưa có câu trả lời.';
+            else if(data.type==='answer'){ gotAnswer = true; clearTimeout(safetyTimeout); box.remove(); if(liveRow) liveRow.remove(); const reply=sanitizeReply(data.reply)||sanitizeReply(streamedReply)||'Mình chưa có câu trả lời.';
               const replyLang = data.lang || detectLang(reply);
               const render = target ? addCall : add;
               render('assistant',reply,{summary:data.summary,appropriate:data.appropriate,sources:data.sources,speakable:!target});
               chatHistory.push({role:'user',content:text},{role:'assistant',content:reply});
-              if(chatHistory.length>6) chatHistory.splice(0,chatHistory.length-6);
+              if(chatHistory.length>12) chatHistory.splice(0,chatHistory.length-12);
+              saveCloudContext();
               if(onAnswer){ onAnswer(reply, replyLang); }
-              if(!target && speakBox.checked) speak(reply, replyLang);
-              else if(target && speakerOn) speak(reply, replyLang);
+              // The text is ready now; do not make the user wait for TTS.
+              releaseComposer();
+              if(!target && thisAnswerRun === answerRun){
+                const rest = earlyVoiceText && reply.startsWith(earlyVoiceText)
+                  ? reply.slice(earlyVoiceText.length).trim()
+                  : reply;
+                if(earlyVoicePromise && rest){
+                  earlyVoicePromise.then(() => {
+                    if(thisAnswerRun === answerRun) speak(rest, replyLang);
+                  });
+                } else if(!earlyVoicePromise){
+                  speak(reply, replyLang);
+                }
+              } else if(target && speakerOn && thisAnswerRun === answerRun) speak(reply, replyLang);
               setStatus('sẵn sàng');
               if (target && callState) callState.textContent = '🔊 Đang đọc câu trả lời...';
             }
             else if(data.type==='error') throw new Error(data.detail || 'Server error');
           } }
       } catch(err) { clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
-        if (!gotAnswer) {
+        if (liveRow) liveRow.remove();
+        if (!gotAnswer && thisAnswerRun === answerRun) {
           const render = target ? addCall : add;
           render('assistant',msg,{speakable:!target});
           if(target && speakerOn) speak(msg);
-          else if(!target && speakBox.checked) speak(msg);
+          else if(!target) speak(msg);
+          releaseComposer();
         }
         setStatus('có lỗi');
         if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
-      } finally { clearTimeout(safetyTimeout); if(target){ callMic.disabled=false; } else { input.disabled=false; mic.disabled=false; send.disabled=false; send.textContent='Gửi'; input.focus(); } }
+      } finally { clearTimeout(safetyTimeout); if(target){ if (thisAnswerRun === answerRun) callMic.disabled=false; } else { releaseComposer(); if (thisAnswerRun === answerRun) mic.disabled=false; } }
     }
 
     async function sendText(text){
@@ -641,8 +1003,11 @@
 
     document.querySelector('#clear').addEventListener('click', () => {
       stopSpeak();
+      const oldSession = sessionId;
       chatHistory.length = 0;
       sessionId = crypto.randomUUID();
+      try { localStorage.setItem('rightly.session', sessionId); } catch(e){}
+      fetch('/api/local-memory?session_id=' + encodeURIComponent(oldSession), {method:'DELETE'}).catch(()=>{});
       messages.innerHTML = emptyChatTemplate;
       setStatus('sẵn sàng');
       input.focus();
@@ -651,6 +1016,7 @@
     messages.addEventListener('click', e => { const chip = e.target.closest('.chip'); if(!chip) return; const q = chip.dataset.q; if(!q) return; stopSpeak(); sendText(q); });
 
     function startMicFlow(target){
+      stopSpeak();
       const btn = target ? callMic : mic;
       const render = target ? addCall : add;
       const listening = render('assistant', '🎙 Đang nghe... bạn nói đi nhé.');
@@ -659,29 +1025,45 @@
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         let settled = false;
+        let finalParts = [];
+        let latestText = '';
+        let silenceTimer = null;
         recognition.lang = currentLang === 'en' ? 'en-US' : 'vi-VN';
-        recognition.interimResults = false;
-        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.continuous = true;
         const reset = () => {
+          if(silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
           if (speechRec === recognition) speechRec = null;
           btn.classList.remove('rec'); btn.textContent='🎙';
         };
-        recognition.onstart = () => { btn.classList.add('rec'); btn.textContent='⏹'; setStatus('đang nghe...'); };
-        recognition.onresult = async event => {
+        const finish = async () => {
           if (settled) return;
-          settled = true; reset(); listening.remove();
-          const heard = (event.results[0][0].transcript || '').trim();
+          settled = true; reset();
+          try { recognition.stop(); } catch(e){}
+          listening.remove();
+          const heard = (finalParts.join(' ') || latestText).replace(/\s+/g, ' ').trim();
           if (!heard) { render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng'); return; }
           if (target && callState) callState.textContent = '✨ Đã nghe: ' + heard.substring(0, 40) + (heard.length > 40 ? '...' : '');
           render('user', heard);
-          // Auto-ack: immediate friendly response before pipeline runs
-          const ackMsgs = ['Dạ, Rightly đang tra cứu cho bác...', 'Dạ, để Rightly tìm hiểu nhé...', 'Vâng ạ, Rightly đang xem...'];
-          const ackText = ackMsgs[Math.floor(Math.random() * ackMsgs.length)];
-          if (target && callState) callState.textContent = '⚖ ' + ackText;
           await streamAnswer(heard, target);
+        };
+        recognition.onstart = () => { btn.classList.add('rec'); btn.textContent='⏹'; setStatus('đang nghe...'); };
+        recognition.onresult = event => {
+          if (settled) return;
+          const parts = [];
+          for(let i=event.resultIndex; i<event.results.length; i++){
+            const text = (event.results[i][0].transcript || '').trim();
+            if(!text) continue;
+            parts.push(text);
+            if(event.results[i].isFinal) finalParts.push(text);
+          }
+          latestText = parts.join(' ') || latestText;
+          if(silenceTimer) clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(finish, 1200);
         };
         recognition.onerror = event => {
           if (settled) return;
+          if(event.error === 'aborted') return;
           settled = true; reset(); listening.remove();
           const message = event.error === 'no-speech'
             ? 'Mình chưa nghe thấy tiếng nói. Bác thử nói gần micro hơn rồi bấm lại nhé.'
@@ -689,11 +1071,7 @@
           render('assistant', message); setStatus('có lỗi');
         };
         recognition.onend = () => {
-          reset();
-          if (!settled) {
-            settled = true; listening.remove();
-            render('assistant','Mình chưa nghe rõ, bạn nói lại giúp mình nhé.'); setStatus('sẵn sàng');
-          }
+          if (!settled) finish();
         };
         speechRec = recognition;
         try { recognition.start(); } catch(err) { recognition.onerror({error:'start_failed'}); }
@@ -718,7 +1096,8 @@
           const blob = new Blob(chunks, {type:mime});
           console.log('[Rightly] recording blob:', blob.size, 'bytes, mime:', mime);
           try {
-            const tr=await fetch('/api/voice/transcribe?ext='+ext,{method:'POST',headers:{'Content-Type':mime},body:blob});
+            const voiceLang = currentLang === 'auto' ? 'auto' : currentLang;
+            const tr=await fetch('/api/voice/transcribe?ext='+ext+'&lang='+encodeURIComponent(voiceLang),{method:'POST',headers:{'Content-Type':mime},body:blob});
             if(!tr.ok){ const err=await tr.json().catch(()=>({})); throw new Error('Transcribe HTTP '+tr.status+' '+JSON.stringify(err)); }
             const tx=await tr.json();
             const heard=(tx.transcript||'').trim();
@@ -756,11 +1135,13 @@
     mic.addEventListener('click', () => {
       if (speechRec) { speechRec.stop(); return; }
       if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
+      stopSpeak();
       startMicFlow(null);
     });
     callMic.addEventListener('click', () => {
       if (speechRec) { speechRec.stop(); return; }
       if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
+      stopSpeak();
       startMicFlow(callMessages);
     });
 
@@ -814,6 +1195,8 @@
       });
     });
     try { const saved = localStorage.getItem('rightly.lang'); if (saved && ['auto','vi','en'].includes(saved)) { currentLang = saved; document.querySelectorAll('#langSwitch .lang-btn').forEach(x => x.classList.toggle('active', x.dataset.lang === saved)); } } catch(e){}
+    hydrateLocalHistory();
+    initAuth();
 
     // Font size switcher for elderly
     const fontNormal = document.querySelector('#fontNormal'), fontLarge = document.querySelector('#fontLarge');

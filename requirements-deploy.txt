@@ -1,5 +1,5 @@
 # Rightly - offline one-click deploy dependencies.
-# Install via start.bat (or: pip install -r requirements-deploy.txt)
+# Installed automatically by CaiDat-Rightly.bat (or: pip install -r requirements-deploy.txt)
 # Everything here runs locally; no cloud API is required.
 
 # Web server (HTML UI at http://localhost:8010)
@@ -24,3 +24,9 @@ numpy>=1.26
 requests>=2.31
 edge-tts>=6.1.0
 gTTS>=2.5.0
+piper-tts>=1.2.0
+cryptography>=42.0
+
+# Native desktop wrapper (the installer builds Rightly.exe after preflight).
+pyinstaller>=6.0
+pywebview>=5.0

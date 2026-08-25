@@ -1,5 +1,0 @@
-Đây là thư mục TÀI LIỆU CỦA BẠN.
-
-Kéo thả file .txt / .md / .pdf / .docx vào đây,
-khởi động lại Rightly là AI tự đọc và dùng được ngay.
-(File HUONG-DAN.txt này sẽ bị bỏ qua, không cần xóa)

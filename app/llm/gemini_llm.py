@@ -75,7 +75,7 @@ class GeminiLLM(BaseLLM):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
     ) -> dict:
         if not self.available:

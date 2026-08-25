@@ -133,31 +133,41 @@ class LocalLLM(BaseLLM):
         self,
         query: str,
         chunks: list[RetrievedChunk],
-        max_chars: int = 2000,
+        max_chars: int = 4000,
         history: Optional[list[dict]] = None,
+        system_prompt: Optional[str] = None,
     ) -> dict:
         if not self.available:
             raise LLMError(
                 f"Local LLM unreachable at {self.base_url}. Start Ollama "
                 f"('ollama serve') and pull the model ('ollama pull {self.model}')."
             )
-        context = "\n\n".join(
-            f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
-        )
         history_block = format_history(history)
-        user = (
-            (f"{history_block}\n\n" if history_block else "")
-            + f"Câu hỏi: {query}\n\n"
-            f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
-            f"Giới hạn câu trả lời: {max_chars} ký tự."
-        )
+        if system_prompt:
+            # Router/general/agentic calls provide their own JSON contract.
+            # Keep the user's text verbatim instead of wrapping it in the
+            # legal-answer prompt, otherwise "alo" can be misread as a law
+            # question before the local model gets a chance to classify it.
+            user = ((f"{history_block}\n\n" if history_block else "") + query)
+            active_system = system_prompt
+        else:
+            context = "\n\n".join(
+                f"[source_id={c.source_id}|chunk_id={c.chunk_id}]\n{c.text}" for c in chunks
+            )
+            user = (
+                (f"{history_block}\n\n" if history_block else "")
+                + f"Câu hỏi: {query}\n\n"
+                f"Các đoạn nguồn (chỉ được dùng các source_id này):\n{context}\n\n"
+                f"Giới hạn câu trả lời: {max_chars} ký tự."
+            )
+            active_system = _SYSTEM
         client = self._get_client()
         try:
             text = retry_transient(
                 lambda: self._generate(
                     client,
                     [
-                        {"role": "system", "content": _SYSTEM},
+                        {"role": "system", "content": active_system},
                         {"role": "user", "content": user},
                     ],
                     temperature=0.2,

@@ -1,0 +1,3 @@
+# OAuth credentials for Vertex AI Gemini-TTS.
+google-auth>=2.0,<3.0
+requests>=2.31

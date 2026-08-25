@@ -253,7 +253,10 @@ EVIDENCE (các đoạn văn bản pháp luật được cung cấp):
 Hãy suy luận và trả lời theo JSON schema. Nội dung answer_text bắt buộc theo đúng bố cục sau:
 1. Mở đầu lịch sự bằng "Dạ," rồi đưa kết luận trực tiếp trong 1-2 câu.
 2. "Căn cứ và giải thích:" — xuống dòng, liệt kê rules/điều kiện/phép tính bằng "- "; phải ghi rõ tên loại văn bản, số/ký hiệu và Điều/Khoản nếu evidence cung cấp.
-3. "Kết luận:" — chốt lại kết quả và giới hạn trong 1-2 câu.
+3. Sau mỗi quy định, giải thích ngắn quy định đó có nghĩa gì với trường hợp người hỏi. Thuật ngữ pháp lý phải được giải thích bằng từ đời thường.
+4. Nếu có nhiều điều kiện hoặc bước làm, tách thành các mục/gạch đầu dòng, mỗi ý chỉ một việc.
+5. "Kết luận:" — chốt lại kết quả và giới hạn trong 1-2 câu.
+Trả lời đủ ý, thường khoảng 120-350 từ tùy độ phức tạp (đây không phải giới hạn cứng), không cắt ngang câu hoặc kết thúc bằng dấu ba chấm.
 Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa ví dụ trong văn bản thành facts của người dân.
 {{
   "answer_text": "string",
@@ -278,7 +281,7 @@ Không chào xã giao dài dòng, không nhắc lại câu hỏi, không đưa v
             response = self.llm.generate_answer(
                 query=user_prompt,
                 chunks=chunks,
-                max_chars=2000,
+                max_chars=4000,
                 history=None,
                 system_prompt=AGENTIC_REASONING_SYSTEM,
             )

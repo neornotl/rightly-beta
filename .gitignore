@@ -28,6 +28,9 @@ data/logs/
 data/private_cache/
 data/eval/
 data/chunks/*.npz
+data/chunks/user_chunks.jsonl
+data/user_registry.json
+data/.ingested_state.json
 logs/
 results/
 *.log
@@ -81,7 +84,18 @@ RIGHTLY_SCHOLARSHIP_INTRO.md
 Thumbs.db
 .vercel
 .env*
+.rightly-hardware.env
 
 dist/
 build/
 *.spec
+release/
+*.zip
+
+# User-provided documents stay on the local installation, never in Git.
+TaiLieuCuaToi/*
+
+# The small synthetic fixture is part of the testable demo; generated/runtime
+# chunks and user documents remain excluded above.
+!data/sources/
+!data/sources/*.md
