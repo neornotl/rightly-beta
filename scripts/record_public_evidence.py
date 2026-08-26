@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,9 +27,31 @@ PROMPTS = [
 ]
 
 
+def _probe(path: Path) -> dict[str, object]:
+    """Return stable, inspectable media facts; fail if ffprobe is unavailable."""
+    raw = subprocess.check_output(
+        ["ffprobe", "-v", "error", "-show_entries",
+         "format=duration,size:stream=codec_name,codec_type,width,height,r_frame_rate",
+         "-of", "json", str(path)], text=True,
+    )
+    info = json.loads(raw)
+    stream = next((s for s in info.get("streams", []) if s.get("codec_type") == "video"), {})
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size_bytes": path.stat().st_size,
+        "duration_seconds": float(info.get("format", {}).get("duration", 0)),
+        "codec": stream.get("codec_name"),
+        "width": stream.get("width"),
+        "height": stream.get("height"),
+        "frame_rate": stream.get("r_frame_rate"),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default="evidence/2026-08/01-public-semantic-grounding.webm")
+    parser.add_argument("--mp4", default=None, help="MP4 derivative (default: same path with .mp4)")
     parser.add_argument("--headed", action="store_true")
     args = parser.parse_args()
     out = Path(args.out).resolve()
@@ -87,14 +110,29 @@ def main() -> int:
     generated = Path(video_path)
     if generated.resolve() != out.resolve():
         generated.replace(out)
-    digest = hashlib.sha256(out.read_bytes()).hexdigest()
+    mp4 = Path(args.mp4).resolve() if args.mp4 else out.with_suffix(".mp4")
+    # Keep conversion reproducible and explicit: the checked MP4 is H.264,
+    # while WebM remains the raw Playwright capture for local provenance.
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(out), "-c:v", "libx264", "-preset", "medium",
+         "-crf", "28", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(mp4)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    revision_timestamp = subprocess.check_output(
+        ["git", "show", "-s", "--format=%cI", "HEAD"], text=True
+    ).strip()
     metadata = {
-        "artifact": str(out),
-        "sha256": digest,
+        "webm": _probe(out),
+        "mp4": _probe(mp4),
         "started_utc": started.isoformat(),
-        "url": URL,
+        "source_production_url": URL,
+        "source_git_revision": revision,
+        "source_git_revision_timestamp": revision_timestamp,
         "context": "fresh, no storage state, service workers blocked",
-        "network": "public production (not offline test)",
+        "network": "public production only; not an offline, ASR, TTS, or microphone test",
         "prompts": results,
         "form_responses_opened": False,
         "login_used": False,

@@ -1,0 +1,51 @@
+{
+  "webm": {
+    "path": "C:\\Users\\laptopppp\\RightlyWorktrees\\record-public-evidence-20260826\\evidence\\2026-08\\01-public-semantic-grounding.webm",
+    "sha256": "002e191d1185185848b229754b12d17d857ce553cf69ada25754071ecf4072c8",
+    "size_bytes": 2090693,
+    "duration_seconds": 23.0,
+    "codec": "vp8",
+    "width": 1280,
+    "height": 720,
+    "frame_rate": "25/1"
+  },
+  "mp4": {
+    "path": "C:\\Users\\laptopppp\\RightlyWorktrees\\record-public-evidence-20260826\\evidence\\2026-08\\01-public-semantic-grounding.mp4",
+    "sha256": "19694e343dad7b0c7f96d80de17a76d831d563b857b4190489915e013325e59f",
+    "size_bytes": 655363,
+    "duration_seconds": 23.0,
+    "codec": "h264",
+    "width": 1280,
+    "height": 720,
+    "frame_rate": "25/1"
+  },
+  "started_utc": "2026-08-26T05:07:06.112590+00:00",
+  "source_production_url": "https://intel-demo-topaz.vercel.app/",
+  "source_git_revision": "756f7430de7fac9a461e852aff38deaddc86e8bf",
+  "source_git_revision_timestamp": "2026-08-26T12:03:27+07:00",
+  "context": "fresh, no storage state, service workers blocked",
+  "network": "public production only; not an offline, ASR, TTS, or microphone test",
+  "prompts": [
+    {
+      "prompt": "quy dinh khi vuot den do",
+      "visible_answer_chars": 378,
+      "has_source_label": true,
+      "contains_raw_json": false
+    },
+    {
+      "prompt": "muc phat vuot den do xe may",
+      "visible_answer_chars": 762,
+      "has_source_label": true,
+      "contains_raw_json": false
+    },
+    {
+      "prompt": "1+4-3+7=?",
+      "visible_answer_chars": 49,
+      "has_source_label": true,
+      "contains_raw_json": false
+    }
+  ],
+  "form_responses_opened": false,
+  "login_used": false,
+  "pii_expected": false
+}
