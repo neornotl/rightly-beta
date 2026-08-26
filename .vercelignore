@@ -16,7 +16,17 @@ __pycache__/
 tests/
 docs/
 scripts/
-app/
+# The public function imports these dependency-free safety gates. Keep the
+# local runtime excluded while explicitly packaging only the two small modules
+# needed by the Vercel handler.
+app/*
+!app/
+!app/__init__.py
+app/safety/*
+!app/safety/
+!app/safety/__init__.py
+!app/safety/materiality.py
+!app/safety/rules.py
 release/
 Bach-Xuan/
 legal-sources/
