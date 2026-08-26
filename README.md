@@ -37,6 +37,7 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 | Trạng thái | Phạm vi |
 | --- | --- |
 | **Available** | Chat web, truy xuất nguồn, semantic routing giới hạn, xử lý câu không dấu, stream SSE, bộ tính toán an toàn, local installer/preflight theo cấu hình máy |
+| **Post-submission source integration** | Local hybrid retrieval ưu tiên OpenVINO CPU cho E5-small, có preflight bắt buộc và fallback PyTorch ở chế độ `auto`; chưa nằm trong bộ cài v0.18 đã phát hành |
 | **Pilot / cần xác minh thiết bị** | Microphone và TTS trên từng Chrome/Edge; offline đầy đủ sau khi cài đủ model; hiệu năng trên nhiều cấu hình Windows |
 | **Future** | Đánh giá độ đúng pháp lý độc lập quy mô lớn, mở rộng dữ liệu địa phương, hotline/telecom và đồng bộ cloud tự nguyện |
 
@@ -78,9 +79,12 @@ Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layo
 The [isolated OpenVINO E5-small benchmark](benchmarks/openvino-e5-results-2026-08.md)
 measured approximately **1.62–1.76×** lower query-encoding latency across three
 series on one Intel Core i7-10510U test machine, with equivalent embeddings and
-100% top-10 overlap on five probes. This is experimental post-submission CPU
-evidence, not a claim of production integration, legal-accuracy improvement, or
-GPU/NPU acceleration.
+100% top-10 overlap on five probes. The local source pipeline now has a
+post-submission OpenVINO CPU integration: the one-click setup downloads E5,
+exports a local IR, builds the dense cache with that IR, and fails preflight if
+the explicit OpenVINO backend cannot answer a probe. This source change is not
+retroactively part of the submitted clip or the already-published v0.18 binary,
+and it is not a legal-accuracy, GPU, NPU, ASR, TTS, or LLM acceleration claim.
 
 ## Credit
 

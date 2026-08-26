@@ -5,6 +5,8 @@ with a disk cache of precomputed embeddings."""
 from __future__ import annotations
 
 import math
+import logging
+import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -22,6 +24,7 @@ _QUERY_PREFIX = "query: "
 _PASSAGE_PREFIX = "passage: "
 _EMB_MODEL = "intfloat/multilingual-e5-small"
 _RERANK_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+logger = logging.getLogger(__name__)
 
 # Answerability gate thresholds, calibrated on the real corpus (8 demo
 # queries). In-corpus queries score >= one threshold; out-of-corpus queries
@@ -170,9 +173,30 @@ class DenseIndex:
 
     def _load_model(self):
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
+            backend = os.environ.get("RIGHTLY_EMBEDDING_BACKEND", "auto").strip().lower()
+            if backend not in {"auto", "openvino", "pytorch"}:
+                raise ValueError("RIGHTLY_EMBEDDING_BACKEND must be auto, openvino, or pytorch")
+            if backend in {"auto", "openvino"}:
+                try:
+                    from app.retrieval.openvino_e5 import OpenVINOE5Encoder
 
-            self._model = SentenceTransformer(self.model_name)
+                    self._model = OpenVINOE5Encoder(
+                        os.environ.get("RIGHTLY_E5_MODEL_PATH", "data/models/multilingual-e5-small"),
+                        os.environ.get("RIGHTLY_E5_OPENVINO_PATH", "data/models/openvino/e5-small.xml"),
+                        int(os.environ.get("RIGHTLY_OPENVINO_THREADS", "4")),
+                    )
+                    logger.info("Dense retrieval uses OpenVINO CPU")
+                    return self._model
+                except Exception as exc:
+                    if backend == "openvino":
+                        raise RuntimeError(f"OpenVINO embedding backend unavailable: {exc}") from exc
+                    logger.warning("OpenVINO embeddings unavailable (%s); using PyTorch fallback", exc)
+            from sentence_transformers import SentenceTransformer
+            model_path = os.environ.get("RIGHTLY_E5_MODEL_PATH", self.model_name)
+            self._model = SentenceTransformer(
+                model_path,
+                local_files_only=os.environ.get("OFFLINE_MODE", "").lower() in {"1", "true", "yes", "on"},
+            )
         return self._model
 
     def _build(self) -> None:
