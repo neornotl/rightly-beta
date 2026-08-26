@@ -31,7 +31,7 @@ APP_EXE_NAME = "Rightly.exe"
 # Bump whenever bundled runtime scripts change. Existing installs then receive
 # the fixed installer/bootstrap code on the next run without rebuilding venv or
 # redownloading already-installed models.
-INSTALLER_MARKER = "rightly-installer-v17"
+INSTALLER_MARKER = "rightly-installer-v18"
 INSTALL_RETRIES = 6
 INSTALL_RETRY_DELAY_S = 8
 ASSET_MANIFEST_NAME = "asset_manifest.json"
