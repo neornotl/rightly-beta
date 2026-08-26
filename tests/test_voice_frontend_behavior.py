@@ -12,9 +12,9 @@ def test_auto_language_handles_diacritic_free_vietnamese_transcript():
     start = source.index("function detectLang(text){")
     end = source.index("function pickVoice(lang){", start)
     fn = source[start:end]
-    script = fn + "\nconsole.log(JSON.stringify([detectLang('quy dinh khi vuot den do'), detectLang('what is the legal process'), detectLang('hello')]));"
+    script = fn + "\nconsole.log(JSON.stringify([detectLang('quy dinh khi vuot den do'), detectLang('câu hỏi có dấu'), detectLang('What do I need to do?'), detectLang('May I ask a question?'), detectLang('what is the legal process'), detectLang('hello')]));"
     result = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=True)
-    assert json.loads(result.stdout) == ["vi", "en", "vi"]
+    assert json.loads(result.stdout) == ["vi", "vi", "en", "en", "en", "vi"]
 
 
 def test_voice_has_single_generation_and_abort_guards():

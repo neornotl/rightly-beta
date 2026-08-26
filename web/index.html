@@ -828,8 +828,9 @@
       // Auto mode must not treat Vietnamese speech transcripts without
       // diacritics as English. These high-signal function/legal words cover
       // common ASR output while leaving ordinary English sentences intact.
-      const viWords = new Set(['quy','dinh','phap','luat','vuot','den','do','xe','may','muc','phat','tro','cap','bhyt','nghi','huu','thu','tuc','nguoi','duoc','khong','bao','nhieu','hom','nay']);
-      if(words.some(w => viWords.has(w.toLowerCase().replace(/[^a-z0-9]/g,'')))) return 'vi';
+      const viWords = new Set(['quy','dinh','phap','luat','vuot','muc','phat','tro','cap','bhyt','nghi','huu','thu','tuc','nguoi','duoc','khong','bao','nhieu','hom','nay']);
+      const viScore = words.reduce((score, word) => score + (viWords.has(word.toLowerCase().replace(/[^a-z0-9]/g,'')) ? 1 : 0), 0);
+      if(viScore >= 1) return 'vi';
       const latinWords = words.filter(w => /^[A-Za-z0-9.,!?;:'"()-]+$/.test(w));
       if(latinWords.length >= 2) return 'en';
       return 'vi';
