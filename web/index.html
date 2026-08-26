@@ -322,7 +322,7 @@
         background: linear-gradient(transparent, var(--paper) 24%);
       }
       .composer { gap: 8px; padding: 8px 8px 8px 10px; border-radius: 12px; }
-      input { font-size: 17px; min-height: 42px; }
+      .composer input { min-width: 0; flex: 1 1 auto; font-size: 17px; min-height: 42px; }
       .icon-btn { width: 44px; height: 44px; }
       #send { min-height: 44px; padding: 10px 16px; border-radius: 10px; }
       .tools { padding: 7px 2px 0; justify-content: flex-end; }
@@ -352,7 +352,7 @@
         <button class="mode active" id="modeChat" type="button">💬 Chat</button>
         <button class="mode" id="modeCall" type="button">📞 Cuộc gọi</button>
       </nav>
-      <div class="status" id="status">sẵn sàng</div>
+      <div class="status" id="status" role="status" aria-live="polite" aria-atomic="true">sẵn sàng</div>
       <div class="auth-area">
         <button class="auth-btn" id="authOpen" type="button">Đăng nhập</button>
         <span class="auth-user hidden" id="authUser">
@@ -379,9 +379,9 @@
 
     <form id="form">
       <div class="composer">
-        <button type="button" class="icon-btn" id="mic" title="Nói">🎙</button>
-        <input id="input" autocomplete="off" placeholder="Nhập tin nhắn cho Rightly...">
-        <button id="send">Gửi</button>
+        <button type="button" class="icon-btn" id="mic" title="Nói" aria-label="Nói câu hỏi">🎙</button>
+        <input id="input" type="text" autocomplete="off" aria-label="Tin nhắn" placeholder="Nhập tin nhắn cho Rightly...">
+        <button id="send" type="submit">Gửi</button>
       </div>
       <div class="tools">
         <button class="clear" type="button" id="clear">Xóa hội thoại</button>
