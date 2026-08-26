@@ -40,7 +40,7 @@ if str(ROOT) not in sys.path:
 # The public Vercel handler must enforce the same outbound-privacy rule as the
 # local pipeline.  Keep this import dependency-free (the scrubber is stdlib
 # only) so every configured cloud LLM receives the protected text.
-from app.privacy.scrubber import scrub_outbound
+from api.privacy_scrubber import scrub_outbound
 
 # Secrets must be configured in Vercel Environment Variables.  Do not add a
 # source-code fallback: it would be public in Git and impossible to rotate

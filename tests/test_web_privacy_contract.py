@@ -4,8 +4,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from api.privacy_scrubber import scrub_outbound as vercel_scrub
+from app.privacy.scrubber import scrub_outbound as local_scrub
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_vercel_scrubber_matches_local_privacy_contract():
+    samples = [
+        "CCCD 012345678901, email a@example.com",
+        "Gọi 0912 345 678 tại nhà số 12 đường Lê Lợi",
+        "Hồ sơ NC1234567 và mã abcdefghijklmnopqrstuvwxyz",
+    ]
+    assert [vercel_scrub(s) for s in samples] == [local_scrub(s) for s in samples]
 
 
 def test_cloud_context_is_opt_in_and_can_be_deleted():
