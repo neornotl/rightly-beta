@@ -6,6 +6,7 @@ only when Vertex TTS OAuth credentials are configured.
 """
 
 import ast
+import ipaddress
 import json
 import time
 import uuid
@@ -512,6 +513,31 @@ def _rate_check(ip: str) -> tuple[bool, int, str | None]:
     return True, remaining, warn
 
 
+def _rate_limit_key(headers) -> tuple[str, str]:
+    """Return a validated client key and PII-safe provenance label.
+
+    Vercel supplies ``x-vercel-forwarded-for`` from the platform.  The other
+    headers are compatibility fallbacks for local/proxy deployments, but
+    values are always parsed as IP addresses and the IP is never logged.
+    """
+    candidates = (
+        ("vercel_forwarded", "x-vercel-forwarded-for"),
+        ("real_ip", "x-real-ip"),
+        ("forwarded", "x-forwarded-for"),
+    )
+    for source, header_name in candidates:
+        raw = str(headers.get(header_name, "") or "")
+        for item in raw.split(","):
+            value = item.strip()
+            if not value:
+                continue
+            try:
+                return str(ipaddress.ip_address(value)), source
+            except ValueError:
+                continue
+    return "anon", "missing"
+
+
 def _extract_json_obj(s: str):
     """Pull the first balanced {...} object even when strings contain raw
     newlines (models emit unescaped control chars despite JSON mime)."""
@@ -836,9 +862,10 @@ class handler(BaseHTTPRequestHandler):
             "retrieval_ms": getattr(self, "_retrieval_ms", None),
             "provider_ms": getattr(self, "_provider_ms", None),
             "ttfb_ms": getattr(self, "_ttfb_ms", None),
+            "rate_limit_source": getattr(self, "_rate_limit_source", None),
         }, ensure_ascii=False), flush=True)
 
-    def _send(self, status, content_type, body):
+    def _send(self, status, content_type, body, *, retry_after: int | None = None):
         self._request_log(status)
         if isinstance(body, str):
             body = body.encode("utf-8")
@@ -847,6 +874,8 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("x-rightly-build", "v3-loosefield")
+        if retry_after is not None:
+            self.send_header("Retry-After", str(max(0, int(retry_after))))
         self.end_headers()
         self.wfile.write(body)
 
@@ -922,8 +951,8 @@ class handler(BaseHTTPRequestHandler):
         if path not in {"/api/chat", "/api/chat/stream"}:
             self._send(404, "application/json", '{"detail":"Not found"}')
             return
-        client_ip = self.headers.get("x-forwarded-for", "").split(",")[0].strip() or "anon"
-        allowed, _remaining, warn = _rate_check(client_ip)
+        client_key, self._rate_limit_source = _rate_limit_key(self.headers)
+        allowed, _remaining, warn = _rate_check(client_key)
         if not allowed:
             self._send(
                 429,
@@ -936,6 +965,7 @@ class handler(BaseHTTPRequestHandler):
                     },
                     ensure_ascii=False,
                 ),
+                retry_after=3600,
             )
             return
         text = str(payload.get("text", "")).strip()[:1200]

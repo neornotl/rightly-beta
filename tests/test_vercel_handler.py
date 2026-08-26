@@ -32,8 +32,8 @@ def _post_handler(path: str, payload: dict):
     request.headers = {"Content-Length": str(len(raw))}
     request.rfile = BytesIO(raw)
     sent = {}
-    request._send = lambda status, content_type, body: sent.update(
-        status=status, content_type=content_type, body=body
+    request._send = lambda status, content_type, body, **kwargs: sent.update(
+        status=status, content_type=content_type, body=body, **kwargs
     )
     return request, sent
 
@@ -44,8 +44,8 @@ def _raw_post_handler(path: str, body: bytes, content_type: str = "application/o
     request.headers = {"Content-Length": str(len(body)), "Content-Type": content_type}
     request.rfile = BytesIO(body)
     sent = {}
-    request._send = lambda status, content_type, response_body: sent.update(
-        status=status, content_type=content_type, body=response_body
+    request._send = lambda status, content_type, response_body, **kwargs: sent.update(
+        status=status, content_type=content_type, body=response_body, **kwargs
     )
     return request, sent
 
@@ -316,6 +316,35 @@ def test_vercel_rate_limit_blocks_after_cap(monkeypatch):
             sent429 = sent
     assert statuses == [200, 200, 429]
     assert "vượt số lượt" in json.loads(sent429["body"])["detail"]
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected_key", "expected_source"),
+    [
+        ({"x-vercel-forwarded-for": "203.0.113.7"}, "203.0.113.7", "vercel_forwarded"),
+        ({"x-real-ip": "2001:db8::7"}, "2001:db8::7", "real_ip"),
+        ({"x-forwarded-for": "not-an-ip, 198.51.100.8"}, "198.51.100.8", "forwarded"),
+        ({"x-vercel-forwarded-for": "not-an-ip", "x-real-ip": "also-bad"}, "anon", "missing"),
+    ],
+)
+def test_rate_limit_key_uses_valid_platform_ip_without_logging_it(headers, expected_key, expected_source):
+    key, source = index._rate_limit_key(headers)
+    assert (key, source) == (expected_key, expected_source)
+
+
+def test_rate_limit_buckets_are_independent_and_429_has_retry_after(monkeypatch):
+    monkeypatch.setattr(index, "RATE_LIMIT_PER_IP", 1)
+    index._RL_HITS.clear()
+    assert index._rate_check("203.0.113.1")[0]
+    assert not index._rate_check("203.0.113.1")[0]
+    assert index._rate_check("203.0.113.2")[0]
+
+    request, sent = _post_handler("/api/chat", {"text": "xin chào"})
+    request.headers["x-vercel-forwarded-for"] = "203.0.113.3"
+    index._RL_HITS["203.0.113.3"] = [__import__("time").monotonic()]
+    request.do_POST()
+    assert sent["status"] == 429
+    assert sent["retry_after"] == 3600
 
 
 def test_vercel_handler_has_no_embedded_provider_key():
