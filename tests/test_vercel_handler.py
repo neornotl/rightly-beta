@@ -273,7 +273,10 @@ def test_vercel_tries_pateway_when_groq_fails(monkeypatch):
 
     monkeypatch.setattr(index, "urlopen", call_provider)
 
-    assert index.handler._ask_api("Xin chào", "vi") == "Pateway answer"
+    reply = index.handler._ask_api("Xin chào", "vi")
+    assert reply == "Pateway answer"
+    assert reply.provider == "pateway"
+    assert reply.model == index.PATEWAY_MODEL
     assert len(calls) == 2
 
 
@@ -296,7 +299,10 @@ def test_vercel_tries_gemini_first_when_configured(monkeypatch):
 
     monkeypatch.setattr(index, "urlopen", call_provider)
 
-    assert index.handler._ask_api("Xin chào", "vi") == "Gemini answer"
+    reply = index.handler._ask_api("Xin chào", "vi")
+    assert reply == "Gemini answer"
+    assert reply.provider == "gemini"
+    assert reply.model == index.GEMINI_MODEL
     assert len(calls) == 1
     assert "gemini-2.5-flash" in calls[0]
 
@@ -399,7 +405,18 @@ def test_chat_direct_answers_skip_provider_and_never_return_raw_json(monkeypatch
 
     body = json.loads(sent["body"])
     assert sent["status"] == 200
-    assert body == {"reply": "Kết quả là 9.", "sources": ["Tính toán cơ bản"], "lang": "vi"}
+    assert body["reply"] == "Kết quả là 9."
+    assert body["sources"] == ["Tính toán cơ bản"]
+    assert body["lang"] == "vi"
+    assert body["metadata"] == {
+        "request_id": body["metadata"]["request_id"],
+        "provider": "deterministic",
+        "model": "rule-based",
+        "corpus_version": "not_queried",
+        "server_latency_ms": body["metadata"]["server_latency_ms"],
+    }
+    assert len(body["metadata"]["request_id"]) == 32
+    assert body["metadata"]["server_latency_ms"] >= 0
 
 
 def test_stream_direct_answer_delta_join_equals_final_answer(monkeypatch):
@@ -418,6 +435,68 @@ def test_stream_direct_answer_delta_join_equals_final_answer(monkeypatch):
     assert sent["status"] == 200
     assert delta_text == final["reply"]
     assert "loại phương tiện" in final["reply"]
+    assert final["metadata"]["provider"] == "deterministic"
+    assert final["metadata"]["corpus_version"] == "not_queried"
+
+
+def test_chat_response_metadata_records_actual_provider_model_corpus_and_server_latency(monkeypatch):
+    """External pilot captures can reproduce the response execution context."""
+    monkeypatch.setattr(index, "RATE_LIMIT_PER_IP", 99)
+    monkeypatch.setattr(index, "RATE_LIMIT_WARN_AT", 2)
+    monkeypatch.setattr(index, "_corpus_version", lambda: "sha256:pilotfixture")
+    monkeypatch.setattr(
+        index,
+        "_grounded_search",
+        lambda *_args, **_kwargs: [
+            {
+                "cid": "source::c001",
+                "sid": "source",
+                "title": "Nguồn thử",
+                "text": "Đoạn nguồn thử có dữ kiện cần thiết.",
+                "score": 1.0,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        index.handler,
+        "_ask_api",
+        lambda *_args, **_kwargs: index.ProviderReply("Câu trả lời có căn cứ.", "groq", "test-model"),
+    )
+    request, sent = _post_handler("/api/chat", {"text": "Thủ tục thử nghiệm", "lang": "vi"})
+
+    request.do_POST()
+
+    body = json.loads(sent["body"])
+    metadata = body["metadata"]
+    assert sent["status"] == 200
+    assert metadata["provider"] == "groq"
+    assert metadata["model"] == "test-model"
+    assert metadata["corpus_version"] == "sha256:pilotfixture"
+    assert len(metadata["request_id"]) == 32
+    assert metadata["server_latency_ms"] >= 0
+
+
+def test_health_exposes_configured_models_and_the_shipped_corpus_version(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "test-gemini-key")
+    monkeypatch.setattr(index, "GEMINI_MODEL", "gemini-test")
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "GROQ_MODEL", "groq-test")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
+    monkeypatch.setattr(index, "PATEWAY_MODEL", "pateway-test")
+    monkeypatch.setattr(index, "_corpus_version", lambda: "sha256:healthfixture")
+    request = object.__new__(index.handler)
+    request.path = "/health"
+    sent = {}
+    request._send = lambda status, content_type, body, **_kwargs: sent.update(
+        status=status, content_type=content_type, body=body
+    )
+
+    request.do_GET()
+
+    body = json.loads(sent["body"])
+    assert sent["status"] == 200
+    assert body["models"] == {"gemini": "gemini-test", "groq": "groq-test", "pateway": "pateway-test"}
+    assert body["corpus_version"] == "sha256:healthfixture"
 
 
 def test_weather_is_explicitly_out_of_scope_not_random_legal_guidance():

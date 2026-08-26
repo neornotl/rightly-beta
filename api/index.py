@@ -6,6 +6,7 @@ only when Vertex TTS OAuth credentials are configured.
 """
 
 import ast
+import hashlib
 import ipaddress
 import json
 import time
@@ -44,6 +45,14 @@ if str(ROOT) not in sys.path:
 # local pipeline.  Keep this import dependency-free (the scrubber is stdlib
 # only) so every configured cloud LLM receives the protected text.
 from api.privacy_scrubber import scrub_outbound
+from app.safety.materiality import assess_materiality
+from app.safety.rules import (
+    check_rules,
+    has_danger_context,
+    has_legal_info_intent,
+    is_soft_topic_emergency,
+    normalize_query,
+)
 
 # Secrets must be configured in Vercel Environment Variables.  Do not add a
 # source-code fallback: it would be public in Git and impossible to rotate
@@ -118,6 +127,8 @@ MAX_JSON_BYTES = 512 * 1024
 # Grounds the public web app on the real legal corpus without any heavy deps.
 # ---------------------------------------------------------------------------
 _RAG: dict | None = None
+_CORPUS_VERSION: str | None = None
+_VERIFIED_LAW_REFERENCES: frozenset[str] | None = None
 _RAG_STOP = {
     "toi", "ban", "ong", "ba", "chu", "co", "chau", "em", "anh", "chi", "cua",
     "va", "voi", "la", "thi", "ma", "de", "cho", "tai", "o", "khong", "phai",
@@ -129,6 +140,81 @@ _RAG_STOP = {
 
 
 _BASIC_MATH_RE = re.compile(r"^[0-9\s+\-*/().xX×:=?]+$")
+_CITED_LEGAL_REFERENCE_RE = re.compile(
+    r"(?:nghi\s+dinh|nd|thong\s+tu|tt|quyet\s+dinh|luat)\s*"
+    r"(?:so)?\s*(\d{1,4})/(20\d\d)",
+    re.IGNORECASE,
+)
+
+
+def _verified_law_references() -> frozenset[str]:
+    """Load reference numbers from the checked source registry, once.
+
+    The public handler does not accept a legal citation merely because it has
+    a plausible shape.  This small registry is not exposed to clients and is
+    used only to decide whether a user-supplied reference can be verified.
+    """
+    global _VERIFIED_LAW_REFERENCES
+    if _VERIFIED_LAW_REFERENCES is not None:
+        return _VERIFIED_LAW_REFERENCES
+    references: set[str] = set()
+    try:
+        data = json.loads((ROOT / "data" / "law_status.json").read_text(encoding="utf-8"))
+        for source in data.get("sources", {}).values():
+            match = re.search(r"(\d{1,4})/(20\d\d)", str(source.get("ky_hieu", "")))
+            if match:
+                references.add(f"{int(match.group(1))}/{match.group(2)}")
+    except (OSError, ValueError, AttributeError):
+        pass
+    _VERIFIED_LAW_REFERENCES = frozenset(references)
+    return _VERIFIED_LAW_REFERENCES
+
+
+def _unverifiable_legal_reference(text: str) -> bool:
+    """Whether a cited law/decree reference is absent from the verified corpus."""
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    cited = _CITED_LEGAL_REFERENCE_RE.findall(folded)
+    if not cited:
+        return False
+    verified = _verified_law_references()
+    # An unavailable registry cannot validate a citation, so do not imply it
+    # is genuine. This is safer than silently swapping in a different source.
+    return not verified or any(f"{int(number)}/{year}" not in verified for number, year in cited)
+
+
+def _public_preflight_gate(text: str):
+    """Return a no-provider public safety decision, if one is already clear.
+
+    Material clarifications, active emergencies and unverifiable citations are
+    all answered before retrieval/model execution.  The returned modes never
+    carry legal sources, because none was used to produce the response.
+    """
+    query = normalize_query(str(text or ""))
+    hits = check_rules(query)
+    has_danger = bool(hits.emergency or hits.violence)
+    topic_only = is_soft_topic_emergency(hits)
+    if has_danger and not (topic_only and has_legal_info_intent(query) and not has_danger_context(query)):
+        return (
+            "emergency",
+            "Tôi không phải dịch vụ cấp cứu. Nếu bạn hoặc người khác đang gặp nguy hiểm, hãy gọi ngay 115 hoặc số khẩn cấp tại địa phương, đồng thời nhờ người ở gần hỗ trợ. Tôi không thể thay thế trợ giúp y tế hay khẩn cấp trực tiếp.",
+        )
+    if _unverifiable_legal_reference(text):
+        return (
+            "abstain",
+            "Tôi chưa xác minh được văn bản pháp luật với số và năm bạn nêu trong kho nguồn chính thức. Tôi không thể xác nhận hoặc dùng tham chiếu đó; bạn có thể cung cấp liên kết chính thức hoặc tra cứu tại cơ quan có thẩm quyền.",
+        )
+    materiality = assess_materiality(text)
+    if materiality is not None and materiality.action == "clarify":
+        return "clarify", materiality.message
+    return None
+
+
+def _post_retrieval_materiality_gate(text: str, hits: list[dict]):
+    """Abstain only after checking whether a direct supporting excerpt exists."""
+    materiality = assess_materiality(text, hits)
+    if materiality is not None and materiality.action == "abstain":
+        return "abstain", materiality.message
+    return None
 
 
 def _basic_math_reply(text: str, lang: str) -> str | None:
@@ -290,6 +376,67 @@ def _rag() -> dict:
             )
             _RAG = {"N": 0}
     return _RAG
+
+
+def _corpus_version() -> str:
+    """Return a stable identifier for the exact shipped RAG artifact.
+
+    A reviewer needs to be able to tie a response to a corpus without seeing
+    document text or any private configuration.  The identifier is cached per
+    warm instance and is derived from both compressed RAG artifacts, so it
+    changes when either the index or the source excerpts change.
+    """
+    global _CORPUS_VERSION
+    if _CORPUS_VERSION is not None:
+        return _CORPUS_VERSION
+
+    configured = os.getenv("RIGHTLY_CORPUS_VERSION", "").strip()
+    if configured and re.fullmatch(r"[A-Za-z0-9._:-]{1,120}", configured):
+        _CORPUS_VERSION = configured
+        return _CORPUS_VERSION
+
+    digest = hashlib.sha256()
+    try:
+        base = Path(__file__).resolve().parent / "rag"
+        for name in ("index.json.gz", "texts.json.gz"):
+            with (base / name).open("rb") as fh:
+                for block in iter(lambda: fh.read(1024 * 1024), b""):
+                    digest.update(block)
+        _CORPUS_VERSION = "sha256:" + digest.hexdigest()[:16]
+    except OSError:
+        # Do not manufacture a version when the deployment is missing its
+        # corpus.  The regular retrieval error path remains responsible for
+        # degrading safely.
+        _CORPUS_VERSION = "unavailable"
+    return _CORPUS_VERSION
+
+
+class ProviderReply(str):
+    """A string response annotated with the provider actually used.
+
+    Subclassing ``str`` keeps the existing provider callers and test doubles
+    backwards-compatible, while allowing the HTTP boundary to expose factual
+    run metadata.  This metadata never contains credentials or prompt text.
+    """
+
+    def __new__(cls, text: str, provider: str, model: str):
+        value = super().__new__(cls, text)
+        value.provider = provider
+        value.model = model
+        return value
+
+
+def _reply_execution_metadata(reply: object) -> tuple[str, str | None]:
+    """Read safe execution metadata from a provider response or a test stub."""
+    provider = getattr(reply, "provider", "unknown")
+    model = getattr(reply, "model", None)
+    if provider not in {"gemini", "groq", "pateway", "deterministic"}:
+        provider = "unknown"
+    if model is not None:
+        model = str(model)
+        if not re.fullmatch(r"[A-Za-z0-9._:/-]{1,120}", model):
+            model = "configured"
+    return provider, model
 
 
 def _bm25_search(query: str, top_k: int = 6) -> list[dict]:
@@ -851,6 +998,76 @@ def _scrub_cloud_history(history: object) -> list[dict[str, str]]:
 
 
 class handler(BaseHTTPRequestHandler):
+    def _response_metadata(
+        self,
+        *,
+        provider: str = "unknown",
+        model: str | None = None,
+        corpus_used: bool = False,
+    ) -> dict[str, object]:
+        """Build reviewer-safe metadata for one HTTP response.
+
+        ``server_latency_ms`` is measured immediately before serialising the
+        response.  It therefore excludes browser/network time but includes
+        retrieval and provider waiting time.  It is intentionally a response
+        field (rather than a log-only metric) so an external reviewer can
+        reproduce a run from one captured JSON object.
+        """
+        started = getattr(self, "_request_started", None)
+        latency_ms = (
+            round((time.perf_counter() - started) * 1000, 1)
+            if started is not None
+            else None
+        )
+        safe_provider = provider if provider in {"gemini", "groq", "pateway", "deterministic"} else "unknown"
+        safe_model = str(model) if model is not None else None
+        if safe_model is not None and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,120}", safe_model):
+            safe_model = "configured"
+        return {
+            "request_id": getattr(self, "_request_id", None),
+            "provider": safe_provider,
+            "model": safe_model,
+            "corpus_version": _corpus_version() if corpus_used else "not_queried",
+            "server_latency_ms": latency_ms,
+        }
+
+    def _send_gated_chat(self, path: str, reply: str, decision: str, lang: str, warn: str | None, *, corpus_used: bool) -> None:
+        """Send a deterministic safety decision without citations or an LLM call."""
+        reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
+        metadata = self._response_metadata(
+            provider="deterministic", model="safety-gate", corpus_used=corpus_used
+        )
+        if path == "/api/chat/stream":
+            events = [
+                {"type": "progress", "percent": 100, "detail": "Đã hoàn tất"},
+                {"type": "delta", "text": reply},
+                {
+                    "type": "answer",
+                    "reply": reply,
+                    # A safety gate must never attach lexical retrieval noise
+                    # as if it supported an abstention or emergency response.
+                    "sources": [],
+                    "decision": decision,
+                    "summary": "",
+                    "appropriate": decision != "emergency",
+                    "lang": reply_lang,
+                    "metadata": metadata,
+                },
+            ]
+            body = "".join(f"data: {json.dumps(event, ensure_ascii=False)}\n\n" for event in events)
+            self._send(200, "text/event-stream", body)
+            return
+        body = {
+            "reply": reply,
+            "sources": [],
+            "decision": decision,
+            "lang": reply_lang,
+            "metadata": metadata,
+        }
+        if warn:
+            body["rate_warning"] = warn
+        self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
+
     def _request_log(self, status: int) -> None:
         started = getattr(self, "_request_started", time.perf_counter())
         print(json.dumps({
@@ -873,7 +1090,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("x-rightly-build", "v3-loosefield")
+        self.send_header("x-rightly-build", "v4-observable")
         if retry_after is not None:
             self.send_header("Retry-After", str(max(0, int(retry_after))))
         self.end_headers()
@@ -894,6 +1111,12 @@ class handler(BaseHTTPRequestHandler):
                 "runtime": "public-api",
                 "llm_configured": bool(providers),
                 "providers": providers,
+                "models": {
+                    **({"gemini": GEMINI_MODEL} if GEMINI_KEY else {}),
+                    **({"groq": GROQ_MODEL} if GROQ_KEY else {}),
+                    **({"pateway": PATEWAY_MODEL} if PATEWAY_KEY else {}),
+                },
+                "corpus_version": _corpus_version(),
                 "auth_configured": bool(SUPABASE_URL and SUPABASE_PUBLIC_KEY),
             }))
             return
@@ -973,6 +1196,11 @@ class handler(BaseHTTPRequestHandler):
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
+        preflight = _public_preflight_gate(text)
+        if preflight:
+            decision, message = preflight
+            self._send_gated_chat(path, message, decision, lang, warn, corpus_used=False)
+            return
         direct = _direct_public_reply(text, lang)
         if direct:
             reply, sources_out = direct
@@ -984,12 +1212,30 @@ class handler(BaseHTTPRequestHandler):
                 events = [
                     {"type": "progress", "percent": 100, "detail": "Đã hoàn tất"},
                     {"type": "delta", "text": reply},
-                    {"type": "answer", "reply": reply, "sources": sources_out, "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
+                    {
+                        "type": "answer",
+                        "reply": reply,
+                        "sources": sources_out,
+                        "decision": "guide",
+                        "summary": "",
+                        "appropriate": True,
+                        "lang": reply_lang,
+                        "metadata": self._response_metadata(
+                            provider="deterministic", model="rule-based", corpus_used=False
+                        ),
+                    },
                 ]
                 body = "".join(f"data: {json.dumps(event, ensure_ascii=False)}\n\n" for event in events)
                 self._send(200, "text/event-stream", body)
             else:
-                body = {"reply": reply, "sources": sources_out, "lang": reply_lang}
+                body = {
+                    "reply": reply,
+                    "sources": sources_out,
+                    "lang": reply_lang,
+                    "metadata": self._response_metadata(
+                        provider="deterministic", model="rule-based", corpus_used=False
+                    ),
+                }
                 if warn:
                     body["rate_warning"] = warn
                 self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
@@ -1012,6 +1258,11 @@ class handler(BaseHTTPRequestHandler):
         retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
         self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
+        post_retrieval_gate = _post_retrieval_materiality_gate(text, rag_hits)
+        if post_retrieval_gate:
+            decision, message = post_retrieval_gate
+            self._send_gated_chat(path, message, decision, lang, warn, corpus_used=bool(rag_hits))
+            return
         sources_out: list[str] = ["Văn bản pháp luật"]
         if text:
             try:
@@ -1047,6 +1298,7 @@ class handler(BaseHTTPRequestHandler):
             reply = self._fallback(text, lang)
             rag_hits = []
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
+        provider, model = _reply_execution_metadata(reply)
         # Final safety net: any provider that wrapped its answer in a JSON
         # envelope gets unwrapped so the UI never shows raw JSON.
         if reply.lstrip().startswith("{"):
@@ -1059,12 +1311,30 @@ class handler(BaseHTTPRequestHandler):
         if path == "/api/chat/stream":
             events = [
                 {"type": "progress", "percent": 100, "detail": "Rightly AI"},
-                {"type": "answer", "reply": reply, "sources": sources_out, "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
+                {
+                    "type": "answer",
+                    "reply": reply,
+                    "sources": sources_out,
+                    "decision": "guide",
+                    "summary": "",
+                    "appropriate": True,
+                    "lang": reply_lang,
+                    "metadata": self._response_metadata(
+                        provider=provider, model=model, corpus_used=bool(rag_hits)
+                    ),
+                },
             ]
             body = "".join(f"data: {json.dumps(e, ensure_ascii=False)}\n\n" for e in events)
             self._send(200, "text/event-stream", body)
         elif path == "/api/chat":
-            body = {"reply": reply, "sources": sources_out, "lang": reply_lang}
+            body = {
+                "reply": reply,
+                "sources": sources_out,
+                "lang": reply_lang,
+                "metadata": self._response_metadata(
+                    provider=provider, model=model, corpus_used=bool(rag_hits)
+                ),
+            }
             if warn:
                 body["rate_warning"] = warn
             self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
@@ -1086,6 +1356,11 @@ class handler(BaseHTTPRequestHandler):
         retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
         self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
+        post_retrieval_gate = _post_retrieval_materiality_gate(text, rag_hits)
+        if post_retrieval_gate:
+            decision, message = post_retrieval_gate
+            self._send_gated_chat("/api/chat/stream", message, decision, lang, warn, corpus_used=bool(rag_hits))
+            return
         sources_out: list[str] = ["Văn bản pháp luật"]
         aug_text = text
         if rag_hits:
@@ -1135,6 +1410,7 @@ class handler(BaseHTTPRequestHandler):
             self._flush_stream_buffer()
             return
 
+        provider, model = _reply_execution_metadata(reply)
         reply = reply.strip()
         if reply.startswith("{"):
             fixed = _pick_answer(_extract_json_obj(reply)) or _loose_field(reply)
@@ -1156,6 +1432,9 @@ class handler(BaseHTTPRequestHandler):
                 "appropriate": True,
                 "lang": reply_lang,
                 "rate_warning": warn,
+                "metadata": self._response_metadata(
+                    provider=provider, model=model, corpus_used=bool(rag_hits)
+                ),
             }
         )
         if hasattr(self, "wfile"):
@@ -1565,7 +1844,7 @@ class handler(BaseHTTPRequestHandler):
                     call_prompt, outbound_text, outbound_history, stream_callback=stream_callback
                 )
                 if reply_text:
-                    return reply_text
+                    return ProviderReply(reply_text, "gemini", GEMINI_MODEL)
                 failures.append({"provider": "gemini", "code": "empty_response"})
             except Exception as exc:
                 _log_provider_failure("gemini", exc)
@@ -1584,7 +1863,7 @@ class handler(BaseHTTPRequestHandler):
                             stream_callback=stream_callback,
                         )
                         if reply_text:
-                            return reply_text
+                            return ProviderReply(reply_text, "gemini", "gemini-2.5-flash")
                     except Exception as fallback_exc:
                         _log_provider_failure("gemini_flash_fallback", fallback_exc)
                         failures.append(
@@ -1621,7 +1900,7 @@ class handler(BaseHTTPRequestHandler):
                     data = json.loads(response.read().decode("utf-8"))
                 content = data["choices"][0]["message"]["content"]
                 if isinstance(content, str) and content.strip():
-                    return content.strip()
+                    return ProviderReply(content.strip(), "groq", GROQ_MODEL)
                 failures.append({"provider": "groq", "code": "empty_response"})
             except Exception as exc:
                 _log_provider_failure("groq", exc)
@@ -1664,7 +1943,7 @@ class handler(BaseHTTPRequestHandler):
                     data = json.loads(response.read().decode("utf-8"))
                 content = data["choices"][0]["message"]["content"]
                 if isinstance(content, str) and content.strip():
-                    return content.strip()
+                    return ProviderReply(content.strip(), "pateway", PATEWAY_MODEL)
                 failures.append({"provider": "pateway", "code": "empty_response"})
             except Exception as exc:
                 _log_provider_failure("pateway", exc)

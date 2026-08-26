@@ -63,6 +63,29 @@ class Policy:
         "khác hoặc liên hệ bộ phận một cửa của xã để được hỗ trợ."
     )
 
+    def material_clarify_decision(self, message: str) -> SafetyDecision:
+        """Ask for a fact that can change the legal answer."""
+        return SafetyDecision(
+            zone=Zone.YELLOW,
+            action=Action.CLARIFY,
+            reason_codes=[
+                ReasonCode.AMBIGUOUS_QUERY.value,
+                ReasonCode.MATERIAL_FACT_MISSING.value,
+            ],
+            user_message=message,
+            requires_human=False,
+        )
+
+    def abstain_decision(self, message: str) -> SafetyDecision:
+        """Abstain when retrieved context does not directly support the ask."""
+        return SafetyDecision(
+            zone=Zone.ORANGE,
+            action=Action.REFUSE,
+            reason_codes=[ReasonCode.INSUFFICIENT_SOURCE.value],
+            user_message=message,
+            requires_human=False,
+        )
+
     def emergency_decision(self) -> SafetyDecision:
         return SafetyDecision(
             zone=Zone.RED,

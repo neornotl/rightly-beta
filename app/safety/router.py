@@ -32,10 +32,11 @@ from app.safety.rules import (
     is_soft_topic_emergency,
     normalize_query,
 )
+from app.safety.materiality import assess_materiality
 from app.schemas import RetrievedChunk, SafetyDecision, Zone
 
 _CITED_DECREE_RE = re.compile(
-    r"(?:nghị\s+định|nđ|thông\s+tư|tt|quyết\s+định|luật)\s*(?:số|so)?\s*(\d{1,4})/(20\d\d)",
+    r"(?:nghị\s+định|nghi\s+dinh|nđ|nd|thông\s+tư|thong\s+tu|tt|quyết\s+định|quyet\s+dinh|luật|luat)\s*(?:số|so)?\s*(\d{1,4})/(20\d\d)",
     re.IGNORECASE,
 )
 
@@ -177,10 +178,20 @@ class SafetyRouter:
             return self.policy.out_of_scope_decision(), query
 
         if not require_evidence:
+            materiality = assess_materiality(query)
+            if materiality is not None:
+                if materiality.action == "clarify":
+                    return self.policy.material_clarify_decision(materiality.message), query
+                return self.policy.abstain_decision(materiality.message), query
             return self.policy.safe_decision(), query
 
         # 5. Retrieval sufficiency.
         sufficient = [c for c in chunks if c.score >= self.min_score]
+        materiality = assess_materiality(query, sufficient)
+        if materiality is not None:
+            if materiality.action == "clarify":
+                return self.policy.material_clarify_decision(materiality.message), query
+            return self.policy.abstain_decision(materiality.message), query
         if not sufficient:
             return self.policy.insufficient_decision(), query
 

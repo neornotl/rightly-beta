@@ -26,6 +26,7 @@ from app.asr.base import BaseASR
 from app.asr.mock_asr import MockASR
 from app.config import Settings
 from app.dialogue.state_machine import State
+from app.evidence_contract import validate_evidence_contract
 from app.llm.base import BaseLLM
 from app.llm.prompts import (
     ANSWER_REVIEW_SYSTEM,
@@ -779,6 +780,14 @@ class Pipeline:
                     event["stage"], event["percent"], event["detail"]
                 ),
             )
+        if preflight.action == Action.CLARIFY:
+            # Material-fact clarification is deterministic and complete at
+            # preflight.  Avoid the hybrid classifier, retrieval, and answer
+            # generation until the user supplies the missing fact.
+            self._append_hybrid_turn(context, text, preflight.user_message)
+            return self._simple_decision_result(
+                session_id, text, preflight, preflight.user_message
+            )
         progress("classify", 30, "Đang xác định cách hỗ trợ phù hợp")
         turn = self._classify_hybrid_turn(text, context)
         intent = turn.get("intent", "legal")
@@ -1423,6 +1432,16 @@ class Pipeline:
             chunks: list[RetrievedChunk] = []
             query_analysis = None
             lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+        elif decision.action == Action.CLARIFY:
+            # Material-fact clarification is a complete turn.  Do not spend
+            # retrieval or LLM budget generating an answer before the user
+            # supplies the fact that can change the legal result.
+            chunks = []
+            query_analysis = None
+            lat["safety_ms"] = round((time.perf_counter() - t0) * 1000.0, 1)
+            return self._simple_decision_result(
+                session_id, query.text, decision, decision.user_message
+            )
         else:
             query_analysis = self.agentic_retriever.analyze_query(query.text)
             self.agentic_retriever.last_analysis = query_analysis
@@ -1533,6 +1552,16 @@ class Pipeline:
         faq_answered = ""
         if self.faq is not None:
             faq_hit = self.faq.answer(query.text)
+            # A curated FAQ cannot override a material-fact clarification:
+            # the answer may change with payment channel, benefit group,
+            # measurement range, or work conditions.
+            if faq_hit is not None and "MATERIAL_FACT_MISSING" in decision.reason_codes:
+                self.store.record(
+                    session_id,
+                    "faq_blocked_by_materiality_gate",
+                    faq_id=faq_hit.faq_id,
+                )
+                faq_hit = None
             if faq_hit is not None and (
                 _is_personalized_rule_query(query.text)
                 or _needs_retirement_gender_clarification(query_analysis, query.text)
@@ -1628,6 +1657,17 @@ class Pipeline:
                     
                     # Build answer from reasoning result
                     raw_ids = list(dict.fromkeys(str(s) for s in (reasoning_result.source_ids or [])))
+                    # A backend may echo every retrieved source even though its
+                    # structured reasoning selected only one or two as support.
+                    # Keep the public citation set tied to the selected evidence
+                    # instead of presenting retrieval noise as authority.
+                    selected_evidence = list(
+                        dict.fromkeys(str(s) for s in (reasoning_result.evidence_used or []))
+                    )
+                    if selected_evidence:
+                        raw_ids = [sid for sid in raw_ids if sid in set(selected_evidence)]
+                        if not raw_ids:
+                            raw_ids = selected_evidence[:]
                     answer = GroundedAnswer(
                         answer_text=str(reasoning_result.answer_text or "").strip(),
                         spoken_citation=str(reasoning_result.spoken_citation or "").strip(),
@@ -1662,7 +1702,40 @@ class Pipeline:
                                 key_claims=list(reasoning_result.key_claims),
                             )
                             answer = None
-                    elif reasoning_result.missing_facts and reasoning_result.confidence == "low":
+                    # Validate source identifiers before the evidence-content
+                    # contract.  An unknown/expired citation must retain the
+                    # precise citation decision (rather than being collapsed
+                    # into a generic insufficient-evidence result because its
+                    # source text cannot be found).
+                    if answer is not None and not is_demo_corpus and self.validator is not None:
+                        pre_verdict = self.validator.validate(
+                            answer, {c.source_id for c in agentic_chunks}
+                        )
+                        if not pre_verdict.ok:
+                            outdated = any(i.kind == "outdated" for i in pre_verdict.issues)
+                            decision = self.router.policy.citation_decision(outdated=outdated)
+                            self.store.record(
+                                session_id,
+                                "citation_rejected",
+                                issues=[vars(i) for i in pre_verdict.issues],
+                            )
+                            answer = None
+                    if answer is not None and not is_demo_corpus:
+                        contract_issues = validate_evidence_contract(
+                            query.text,
+                            answer,
+                            agentic_chunks,
+                            evidence_used=selected_evidence,
+                        )
+                        if contract_issues:
+                            decision = self.router.policy.insufficient_decision()
+                            self.store.record(
+                                session_id,
+                                "answer_evidence_contract_rejected",
+                                issues=contract_issues,
+                            )
+                            answer = None
+                    if answer is not None and reasoning_result.missing_facts and reasoning_result.confidence == "low":
                         decision = self.router.policy.insufficient_decision()
                         self.store.record(
                             session_id,

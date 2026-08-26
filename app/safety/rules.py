@@ -10,6 +10,7 @@ Vietnamese-speaking safety expert before pilot (docs/responsible_ai.md).
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 _EMERGENCY_PATTERNS = [
@@ -388,26 +389,34 @@ def check_rules(normalized_text: str) -> RuleHits:
     """Run all rule groups on normalized (lowercased) Vietnamese text."""
     hits = RuleHits()
     text = normalized_text.casefold()
+    # Speech recognition and keyboard input often omit Vietnamese tones.  Run
+    # the same conservative rules against a tone-folded shadow string so a
+    # phrase such as ``dau tim`` still reaches the emergency gate.
+    plain = _strip_diacritics(text)
+
+    def matches(pattern: str) -> bool:
+        return _match(pattern, text) or _match(_strip_diacritics(pattern), plain)
+
     for i, pat in enumerate(_EMERGENCY_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.emergency.append(pat)
     for i, pat in enumerate(_VIOLENCE_THREAT_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.violence.append(pat)
     for i, pat in enumerate(_CRIMINAL_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.criminal.append(pat)
     for i, pat in enumerate(_FAKE_LAW_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.fake_law.append(pat)
     for i, pat in enumerate(_LEGAL_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.legal.append(pat)
     for i, pat in enumerate(_OUT_OF_SCOPE_PATTERNS):
-        if _match(pat, text):
+        if matches(pat):
             hits.out_of_scope.append(pat)
     for i, pat in enumerate(_DOUBT_WORDS):
-        if _match(pat, text):
+        if matches(pat):
             hits.ambiguous.append(pat)
     return hits
 
@@ -415,6 +424,13 @@ def check_rules(normalized_text: str) -> RuleHits:
 def normalize_query(text: str) -> str:
     """Lowercase + collapse whitespace (diacritics preserved)."""
     return " ".join(text.casefold().split())
+
+
+def _strip_diacritics(text: str) -> str:
+    """Fold Vietnamese tones for safety matching only."""
+    text = text.replace("đ", "d").replace("Đ", "D")
+    text = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
 
 
 def is_soft_topic_emergency(hits: RuleHits) -> bool:
@@ -437,7 +453,8 @@ def _is_topic_pattern(pattern: str) -> bool:
 def has_legal_info_intent(normalized_text: str) -> bool:
     """True when the query reads as a legal-information/procedural request."""
     text = normalized_text.casefold()
-    return any(pat.search(text) for pat in _COMPILED_LEGAL_INFO)
+    plain = _strip_diacritics(text)
+    return any(pat.search(text) or pat.search(plain) for pat in _COMPILED_LEGAL_INFO)
 
 
 def has_procedural_intent(normalized_text: str) -> bool:
@@ -449,7 +466,8 @@ def has_procedural_intent(normalized_text: str) -> bool:
     off-scope topic is not promoted to an answerable legal question.
     """
     text = normalized_text.casefold()
-    return any(pat.search(text) for pat in _COMPILED_PROCEDURAL)
+    plain = _strip_diacritics(text)
+    return any(pat.search(text) or pat.search(plain) for pat in _COMPILED_PROCEDURAL)
 
 
 def has_danger_context(normalized_text: str) -> bool:
@@ -458,4 +476,5 @@ def has_danger_context(normalized_text: str) -> bool:
     Overrides the legal-info downgrade so genuine emergencies stay RED.
     """
     text = normalized_text.casefold()
-    return any(pat.search(text) for pat in _COMPILED_DANGER)
+    plain = _strip_diacritics(text)
+    return any(pat.search(text) or pat.search(plain) for pat in _COMPILED_DANGER)
