@@ -7,6 +7,8 @@ only when Vertex TTS OAuth credentials are configured.
 
 import ast
 import json
+import time
+import uuid
 import math
 import os
 import re
@@ -107,6 +109,7 @@ except ValueError:
 RATE_LIMIT_PER_IP = int(os.getenv("RATE_LIMIT_PER_IP", "20"))
 RATE_LIMIT_WARN_AT = float(os.getenv("RATE_LIMIT_WARN_AT", "0.8"))
 _RL_HITS: dict[str, list[float]] = {}
+MAX_AUDIO_BYTES = 20 * 1024 * 1024
 
 # ---------------------------------------------------------------------------
 # Compact BM25 retrieval pack (built by scripts/build_vercel_rag.py).
@@ -821,7 +824,21 @@ def _scrub_cloud_history(history: object) -> list[dict[str, str]]:
 
 
 class handler(BaseHTTPRequestHandler):
+    def _request_log(self, status: int) -> None:
+        started = getattr(self, "_request_started", time.perf_counter())
+        print(json.dumps({
+            "event": "request",
+            "request_id": getattr(self, "_request_id", "unknown"),
+            "route": self.path.split("?", 1)[0],
+            "status": int(status),
+            "latency_ms": round((time.perf_counter() - started) * 1000, 1),
+            "retrieval_ms": getattr(self, "_retrieval_ms", None),
+            "provider_ms": getattr(self, "_provider_ms", None),
+            "ttfb_ms": getattr(self, "_ttfb_ms", None),
+        }, ensure_ascii=False), flush=True)
+
     def _send(self, status, content_type, body):
+        self._request_log(status)
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
@@ -872,11 +889,19 @@ class handler(BaseHTTPRequestHandler):
         self._send(200, "text/html; charset=utf-8", page)
 
     def do_POST(self):
+        self._request_started = time.perf_counter()
+        self._request_id = uuid.uuid4().hex
         path = self.path.split("?", 1)[0]
         try:
             length = int(self.headers.get("Content-Length", "0"))
-        except ValueError:
+        except (TypeError, ValueError):
             self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
+            return
+        if length < 0:
+            self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
+            return
+        if path == "/api/voice/transcribe" and length > MAX_AUDIO_BYTES:
+            self._send(413, "application/json", '{"detail":"Audio quá lớn; giới hạn là 20 MB."}')
             return
         raw = self.rfile.read(length) if length else b"{}"
         if path == "/api/voice/transcribe":
@@ -950,7 +975,9 @@ class handler(BaseHTTPRequestHandler):
         # Keep enough distinct excerpts for age/benefit questions: the most
         # relevant eligibility clause can sit just below the first six BM25
         # hits because the corpus contains many cross-references.
+        retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
+        self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
         sources_out: list[str] = ["Văn bản pháp luật"]
         if text:
             try:
@@ -966,7 +993,9 @@ class handler(BaseHTTPRequestHandler):
                         f"liên hệ cơ quan có thẩm quyền. Kết thúc bằng dòng: "
                         f"Trích dẫn: <tên các văn bản đã dùng>."
                     )
+                provider_started = time.perf_counter()
                 reply = self._ask_api(aug_text, lang, history)
+                self._provider_ms = round((time.perf_counter() - provider_started) * 1000, 1)
             except LLMUnavailableError:
                 self._send(
                     503,
@@ -1020,7 +1049,9 @@ class handler(BaseHTTPRequestHandler):
 
     def _stream_chat(self, text: str, history, lang: str, warn: str | None) -> None:
         """Stream Gemini deltas while preserving the final answer contract."""
+        retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
+        self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
         sources_out: list[str] = ["Văn bản pháp luật"]
         aug_text = text
         if rag_hits:
@@ -1050,10 +1081,14 @@ class handler(BaseHTTPRequestHandler):
         def on_delta(delta: str) -> None:
             nonlocal streamed
             streamed = True
+            if not hasattr(self, "_ttfb_ms"):
+                self._ttfb_ms = round((time.perf_counter() - self._request_started) * 1000, 1)
             self._stream_event({"type": "delta", "text": delta})
 
         try:
+            provider_started = time.perf_counter()
             reply = self._ask_api(aug_text, lang, history, stream_callback=on_delta)
+            self._provider_ms = round((time.perf_counter() - provider_started) * 1000, 1)
         except LLMUnavailableError:
             self._stream_event(
                 {"type": "error", "detail": "Dịch vụ trả lời AI đang tạm thời bận. Vui lòng thử lại sau ít phút."}
@@ -1072,11 +1107,9 @@ class handler(BaseHTTPRequestHandler):
             if fixed:
                 reply = fixed
         reply = _sanitize_reply_text(reply)
-        # Groq/Pateway/local test doubles are one-shot. Still reveal their
-        # result in small readable pieces so the UI keeps one SSE contract.
-        if not streamed:
-            for piece in _display_chunks(reply):
-                self._stream_event({"type": "delta", "text": piece})
+        # Groq/Pateway are one-shot providers and do not expose upstream
+        # deltas. Do not manufacture fake token deltas: the frontend receives
+        # the completed answer event after the truthful progress event.
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
         self._stream_event({"type": "progress", "percent": 100, "detail": "Đã hoàn tất"})
         self._stream_event(
@@ -1091,6 +1124,8 @@ class handler(BaseHTTPRequestHandler):
                 "rate_warning": warn,
             }
         )
+        if hasattr(self, "wfile"):
+            self._request_log(200)
         self._flush_stream_buffer()
 
     def _transcribe_audio(self, audio: bytes):
