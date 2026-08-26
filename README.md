@@ -59,6 +59,8 @@ Các cải tiến sau ngày nộp hồ sơ được ghi nhận minh bạch là *
 
 Đọc các file `requirements*.txt`, hướng dẫn trong [`docs/`](docs/) và các script setup trước khi chạy. Không commit API key, service-account JSON hoặc dữ liệu người dùng.
 
+Để kiểm tra nhanh bản public và metadata bộ cài mà không cần API key, model hay tải asset, chạy [`scripts/smoke_public_release.py`](scripts/smoke_public_release.py). Hướng dẫn và các hợp đồng được kiểm tra: [`docs/public-smoke-test.md`](docs/public-smoke-test.md).
+
 ## Pilot
 
 - **Public pilot:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform), 56 phản hồi tại snapshot ngày 26/08/2026.
