@@ -21,7 +21,7 @@ from urllib.request import Request, urlopen
 
 
 DEFAULT_BASE_URL = "https://intel-demo-topaz.vercel.app"
-DEFAULT_RELEASE_API = "https://api.github.com/repos/neornotl/rightly/releases/tags/v0.18.0-pilot"
+DEFAULT_RELEASE_API = "https://api.github.com/repos/neornotl/rightly/releases/tags/v0.19.0-openvino"
 USER_AGENT = "Rightly-Public-Smoke/1.0 (+https://github.com/neornotl/rightly)"
 RAW_ENVELOPE_RE = re.compile(r"^\s*\{\s*\"(?:answer_text|answer|reply|response)\"\s*:", re.I)
 BAD_REPLY_RE = re.compile(r"(?:trích dẫn|citation)\s*:\s*(?:null|undefined|none|n/?a)\b", re.I)
@@ -138,7 +138,7 @@ def check_release(release_api: str) -> Check:
     url = str(installer.get("browser_download_url", ""))
     ok = (
         status == 200
-        and data.get("tag_name") == "v0.18.0-pilot"
+        and data.get("tag_name") == "v0.19.0-openvino"
         and bool(data.get("prerelease"))
         and int(installer.get("size", 0) or 0) > 0
         and url.startswith("https://github.com/")
