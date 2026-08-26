@@ -14,11 +14,13 @@ Trong khoảng 3 phút, có thể mở [bản web](https://intel-demo-topaz.verc
 
 ## Pilot
 
-Pilot dùng để quan sát khả năng sử dụng, độ rõ của câu trả lời, trải nghiệm giọng nói và lỗi thực tế. Snapshot ngày 26/08/2026 gồm 56 phản hồi public và 5 hồ sơ private pilot. Đây là bằng chứng trải nghiệm người dùng, không phải benchmark độc lập về độ đúng pháp lý; người dùng vẫn cần kiểm tra nguồn chính thức.
+Pilot là chương trình đang diễn ra để quan sát khả năng sử dụng, độ rõ của câu trả lời, trải nghiệm giọng nói và lỗi thực tế. Biểu mẫu public được mở trực tiếp từ giao diện app; snapshot ngày 26/08/2026 gồm 56 phản hồi public và 5 hồ sơ private pilot. Đây là bằng chứng trải nghiệm tại thời điểm snapshot, không phải tổng cuối cùng hay benchmark độc lập về độ đúng pháp lý; người dùng vẫn cần kiểm tra nguồn chính thức.
 
 ### Public pilot
 
-[Mở biểu mẫu public](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform)
+[Mở biểu mẫu public đang diễn ra](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform)
+
+Biểu mẫu cũng có nút **Góp ý trải nghiệm** trong giao diện web, mở ở tab mới. Analytics có thể tăng sau snapshot; khi báo cáo phải ghi rõ ngày snapshot và không gọi 56 (hoặc mốc cũ như 51) là tổng cuối cùng.
 
 Kết quả tổng hợp, cơ cấu mẫu và feedback-to-fix được ghi tại [`pilot-results-2026-08.md`](pilot-results-2026-08.md). Dữ liệu phản hồi thô do chủ biểu mẫu quản lý và có thể cung cấp cho ban giám khảo theo kênh kiểm soát phù hợp.
 
