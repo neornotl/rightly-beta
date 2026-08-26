@@ -35,8 +35,11 @@ Flags:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -70,6 +73,53 @@ PIPER_EN_VOICES_URL = (
     "/lessac/medium/en_US-lessac-medium"
 )
 VOICES_DIR = ROOT / "data" / "voices"
+ASSET_MANIFEST_PATH = ROOT / "scripts" / "asset_manifest.json"
+
+
+def _asset_sha256(url: str, target: Path) -> str | None:
+    """Read an explicitly verified hash; absent entries remain unverifiable."""
+    try:
+        manifest = json.loads(ASSET_MANIFEST_PATH.read_text(encoding="utf-8"))
+        entry = manifest.get("assets", {}).get(target.name) or manifest.get("assets", {}).get(url)
+        digest = str(entry.get("sha256", "")).strip().lower() if isinstance(entry, dict) else ""
+        return digest if re.fullmatch(r"[0-9a-f]{64}", digest) else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _asset_verification_summary() -> tuple[int, str]:
+    """Report only hashes actually recorded by the release publisher.
+
+    An empty manifest is intentionally *not* treated as a successful checksum
+    check. Downloads remain resumable, but the installer tells the operator
+    that cryptographic verification has not yet been configured.
+    """
+    try:
+        manifest = json.loads(ASSET_MANIFEST_PATH.read_text(encoding="utf-8"))
+        assets = manifest.get("assets", {})
+        verified = sum(
+            isinstance(entry, dict)
+            and bool(re.fullmatch(r"[0-9a-f]{64}", str(entry.get("sha256", "")).lower()))
+            for entry in assets.values()
+        )
+        if verified:
+            return verified, f"SHA-256 verification configured for {verified} direct asset(s)."
+        return 0, "WARNING: asset manifest has no publisher-verified SHA-256 values. Downloads are resumable but NOT checksum-verified."
+    except (OSError, ValueError, TypeError):
+        return 0, "WARNING: asset manifest is unavailable. Downloads are resumable but NOT checksum-verified."
+
+
+def _verify_sha256(path: Path, expected: str) -> None:
+    actual = hashlib.sha256()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(1024 * 1024), b""):
+            actual.update(block)
+    got = actual.hexdigest().lower()
+    if got != expected.lower():
+        raise RuntimeError(
+            f"Kiểm tra toàn vẹn thất bại cho {path.name}: nhận {got}, "
+            f"mong đợi {expected.lower()}. File bị loại bỏ; hãy chạy lại để tải lại."
+        )
 
 TIMEOUT_S = 3600
 
@@ -204,11 +254,20 @@ def _run_resumable(cmd: list[str], label: str, *, probe_url: str | None = None) 
     raise subprocess.CalledProcessError(last_code, cmd)
 
 
-def _download_resumable(url: str, target: Path) -> None:
+def _download_resumable(url: str, target: Path, *, expected_sha256: str | None = None) -> None:
     """Download one HTTP asset with Range resume and atomic completion."""
     if target.exists() and target.stat().st_size > 0:
-        print(f"   {target.name} already present")
-        return
+        if expected_sha256:
+            try:
+                _verify_sha256(target, expected_sha256)
+            except RuntimeError:
+                target.unlink()
+            else:
+                print(f"   {target.name} already present (SHA-256 OK)")
+                return
+        else:
+            print(f"   {target.name} already present")
+            return
 
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
@@ -240,6 +299,12 @@ def _download_resumable(url: str, target: Path) -> None:
                 and (expected_size is None or part.stat().st_size >= expected_size)
             ):
                 os.replace(part, target)
+                if expected_sha256:
+                    try:
+                        _verify_sha256(target, expected_sha256)
+                    except RuntimeError:
+                        target.unlink(missing_ok=True)
+                        raise
                 print(f"   saved {target.name}")
                 return
             if expected_size is not None:
@@ -474,7 +539,7 @@ def download_piper_voice(args: argparse.Namespace) -> None:
         for suffix in (".onnx", ".onnx.json"):
             url = base_url + suffix
             target = VOICES_DIR / f"{voice_name}{suffix}"
-            _download_resumable(url, target)
+            _download_resumable(url, target, expected_sha256=_asset_sha256(url, target))
 
 
 # ---------------------------------------------------------------- env
@@ -557,12 +622,15 @@ def main() -> int:
 
     _check_hardware_requirements()
 
+    verified_assets, verification_note = _asset_verification_summary()
+
     print(
         "\nRightly offline bootstrap - downloads everything ONCE into this "
         "machine's local cache (models, voices, embeddings).\n"
         "Nothing is uploaded anywhere; after this finishes the demo runs "
         "100% offline.\n"
     )
+    print(verification_note)
     if not (args.all or args.deps or args.ollama or args.asr or args.embeddings or args.piper):
         args.all = True
 
@@ -579,8 +647,11 @@ def main() -> int:
         download_piper_voice(args)
     write_env(args)
 
+    completion = "Full offline stack is ready on this machine."
+    if not verified_assets:
+        completion += " Asset checksum verification is NOT configured; see docs/installer-integrity.md before a production release."
     print(
-        "\n=== DONE. Full offline stack is ready on this machine. ===\n"
+        f"\n=== DONE. {completion} ===\n"
         "Next steps:\n"
         "  1. python scripts/check_local_llm.py\n"
         "  2. python scripts/run_mock_demo.py   (LLM_BACKEND=local from .env)\n"

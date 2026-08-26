@@ -5,7 +5,10 @@ The request path uses the Python standard library; ``google-auth`` is imported
 only when Vertex TTS OAuth credentials are configured.
 """
 
+import ast
 import json
+import time
+import uuid
 import math
 import os
 import re
@@ -33,6 +36,13 @@ except ImportError as exc:  # Keep chat/health usable when auth package is absen
     _GOOGLE_AUTH_IMPORT_ERROR = str(exc)
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# The public Vercel handler must enforce the same outbound-privacy rule as the
+# local pipeline.  Keep this import dependency-free (the scrubber is stdlib
+# only) so every configured cloud LLM receives the protected text.
+from api.privacy_scrubber import scrub_outbound
 
 # Secrets must be configured in Vercel Environment Variables.  Do not add a
 # source-code fallback: it would be public in Git and impossible to rotate
@@ -99,6 +109,8 @@ except ValueError:
 RATE_LIMIT_PER_IP = int(os.getenv("RATE_LIMIT_PER_IP", "20"))
 RATE_LIMIT_WARN_AT = float(os.getenv("RATE_LIMIT_WARN_AT", "0.8"))
 _RL_HITS: dict[str, list[float]] = {}
+MAX_AUDIO_BYTES = 20 * 1024 * 1024
+MAX_JSON_BYTES = 512 * 1024
 
 # ---------------------------------------------------------------------------
 # Compact BM25 retrieval pack (built by scripts/build_vercel_rag.py).
@@ -113,6 +125,132 @@ _RAG_STOP = {
     "can", "muon", "hoi", "giup", "khi", "vao", "ra", "len", "xuong", "di",
     "lai", "xem", "con", "deu", "moi", "nguoi", "the", "lam",
 }
+
+
+_BASIC_MATH_RE = re.compile(r"^[0-9\s+\-*/().xX×:=?]+$")
+
+
+def _basic_math_reply(text: str, lang: str) -> str | None:
+    """Return a deterministic answer for a short, harmless arithmetic query.
+
+    A calculator is both faster and more reliable than asking a legal LLM to
+    infer arithmetic intent.  The AST allow-list deliberately rejects names,
+    attribute access, exponentiation and every non-arithmetic expression.
+    """
+    candidate = str(text or "").strip()
+    if not candidate or len(candidate) > 80 or not _BASIC_MATH_RE.fullmatch(candidate):
+        return None
+    candidate = candidate.rstrip("=? ").replace("×", "*").replace("x", "*").replace("X", "*").replace(":", "/")
+    if not candidate:
+        return None
+    try:
+        tree = ast.parse(candidate, mode="eval")
+    except SyntaxError:
+        return None
+
+    def evaluate(node):
+        if isinstance(node, ast.Expression):
+            return evaluate(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+            return node.value
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = evaluate(node.operand)
+            return value if isinstance(node.op, ast.UAdd) else -value
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+            left, right = evaluate(node.left), evaluate(node.right)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            if right == 0:
+                raise ZeroDivisionError
+            return left / right
+        raise ValueError("not basic arithmetic")
+
+    try:
+        result = evaluate(tree)
+    except (ValueError, ZeroDivisionError, OverflowError):
+        return None
+    if not isinstance(result, (int, float)) or not math.isfinite(result):
+        return None
+    rendered = str(int(result)) if float(result).is_integer() else f"{result:.10g}"
+    return f"The result is {rendered}." if lang == "en" else f"Kết quả là {rendered}."
+
+
+def _red_light_intent(text: str) -> bool:
+    """Recognise the red-light traffic intent, including unaccented typos.
+
+    This is deliberately bounded: it requires both a traffic-light signal and
+    a violation/action cue, so a merely similar individual word cannot route a
+    general legal question incorrectly.  It is a deterministic safety net;
+    normal retrieval and the LLM remain responsible for all other questions.
+    """
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    folded = re.sub(r"(.)\1{1,}", r"\1", folded)
+    tokens = re.findall(r"[a-z0-9]+", folded)
+    if not tokens:
+        return False
+
+    def near(*targets: str) -> bool:
+        from difflib import SequenceMatcher
+
+        for token in tokens:
+            for target in targets:
+                if token == target:
+                    return True
+                if len(target) >= 4 and len(token) >= 4 and SequenceMatcher(None, token, target).ratio() >= 0.82:
+                    return True
+        return False
+
+    signal = (near("den") and near("do")) or (near("den") and near("tin", "hieu")) or (near("tin") and near("hieu"))
+    action = near("vuot", "chap", "hanh", "vi pham", "xu phat", "phat")
+    return signal and action
+
+
+def _vehicle_group(text: str) -> str | None:
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    if re.search(r"\b(?:xe\s*)?(?:may|mo\s*to|gan\s*may)\b", folded):
+        return "motorcycle"
+    if re.search(r"\b(?:o\s*to|oto|xe\s*hoi|xe\s*tai|xe\s*buyt)\b", folded):
+        return "car"
+    if re.search(r"\b(?:xe\s*dap|xe\s*tho\s*so)\b", folded):
+        return "non_motor"
+    return None
+
+
+def _direct_public_reply(text: str, lang: str) -> tuple[str, list[str]] | None:
+    """Fast, no-provider responses for intents where ambiguity is known."""
+    arithmetic = _basic_math_reply(text, lang)
+    if arithmetic:
+        return arithmetic, ["Tính toán cơ bản"]
+    if _red_light_intent(text) and not _vehicle_group(text):
+        if lang == "en":
+            reply = (
+                "**There are rules and penalties for running a red light, but the exact penalty depends on the vehicle.** "
+                "Please tell me whether it was a motorcycle/moped, car, bicycle or another vehicle. "
+                "The general rule is that failing to obey a traffic signal is a violation; Rightly needs the vehicle type before giving a specific penalty.\n\n"
+                "Citation: Decree 168/2024/ND-CP."
+            )
+        else:
+            reply = (
+                "**Có quy định xử phạt hành vi vượt đèn đỏ, nhưng mức phạt phụ thuộc vào loại phương tiện.** "
+                "Bạn đang đi xe máy/xe gắn máy, ô tô, xe đạp/xe thô sơ hay phương tiện khác? "
+                "Nguyên tắc chung là không chấp hành hiệu lệnh đèn tín hiệu giao thông là vi phạm; cần xác định loại xe trước khi áp mức phạt cụ thể.\n\n"
+                "Trích dẫn: Nghị định 168/2024/NĐ-CP."
+            )
+        return reply, ["Nghị định 168/2024/NĐ-CP"]
+    folded = unicodedata_normalize(str(text or "").replace("đ", "d").replace("Đ", "D"))
+    if re.search(r"\b(?:thoi\s*tiet|weather|nhiet\s*do|mua\s*hom\s*nay)\b", folded):
+        reply = (
+            "Rightly is a legal and administrative assistant, so I cannot verify weather information. "
+            "Please use a weather service for current conditions."
+            if lang == "en"
+            else "Rightly chuyên hỗ trợ pháp luật và thủ tục hành chính nên không thể xác minh thông tin thời tiết hiện tại. Bạn hãy xem dịch vụ dự báo thời tiết để có dữ liệu chính xác nhé."
+        )
+        return reply, ["Phạm vi hỗ trợ của Rightly"]
+    return None
 
 
 def _rag_norm_tokens(text: str) -> list[str]:
@@ -230,11 +368,19 @@ def _grounded_search(query: str, top_k: int = 8) -> list[dict]:
         expansions.append(
             "doi tuong dieu kien huong tro cap huu tri xa hoi tu du 75 tuoi ho ngheo ho can ngheo"
         )
-    if ("den do" in folded or "tin hieu" in folded) and (
-        "xe may" in folded or "mo to" in folded
-    ):
+    red_light = _red_light_intent(text)
+    vehicle = _vehicle_group(text)
+    if red_light and vehicle == "motorcycle":
         expansions.append(
             "muc phat vuot den do xu phat xe mo to xe gan may khong chap hanh hieu lenh den tin hieu giao thong 4.000.000 6.000.000"
+        )
+    elif red_light and vehicle == "car":
+        expansions.append(
+            "muc phat vuot den do xu phat xe o to khong chap hanh hieu lenh den tin hieu giao thong nghi dinh 168 2024"
+        )
+    elif red_light:
+        expansions.append(
+            "khong chap hanh hieu lenh den tin hieu giao thong xu phat nghi dinh 168 2024"
         )
 
     merged: dict[str, dict] = {}
@@ -279,7 +425,7 @@ def _grounded_search(query: str, top_k: int = 8) -> list[dict]:
                 },
             )
             break
-    if "den do" in folded and ("xe may" in folded or "mo to" in folded):
+    if red_light and vehicle == "motorcycle":
         rag = _rag()
         by_cid = {m.get("cid"): m for m in rag.get("meta", [])}
         # The shipped Nghị định 168 pack has the motorcycle red-light clause
@@ -511,6 +657,10 @@ def _gemini_reply(
     stream_callback=None,
 ) -> str:
     """One Gemini call through stdlib only; raises on any failure."""
+    # ``_gemini_reply`` is also useful in focused tests and maintenance tools,
+    # so defend the provider boundary here as well as in ``_ask_api``.
+    text = scrub_outbound(str(text))
+    history = _scrub_cloud_history(history)
     key = str(GEMINI_KEY).strip()
     model = (model_override or GEMINI_MODEL).strip()
     if key.startswith("AQ."):
@@ -653,8 +803,43 @@ def _normalise_history(raw_history: object) -> list[dict[str, str]]:
     return history
 
 
+def _scrub_cloud_history(history: object) -> list[dict[str, str]]:
+    """Return a provider-safe copy without changing browser/local history.
+
+    This is deliberately an ephemeral copy: the original request payload is
+    still used for local retrieval and is never mutated before a UI response is
+    sent.  All three cloud providers consume only this return value.
+    """
+    if not isinstance(history, list):
+        return []
+    safe_history: list[dict[str, str]] = []
+    for turn in history[-12:]:
+        if not isinstance(turn, dict):
+            continue
+        role = str(turn.get("role", "")).lower()
+        content = str(turn.get("content", "")).strip()
+        if role not in {"user", "assistant"} or not content:
+            continue
+        safe_history.append({"role": role, "content": scrub_outbound(content)[:1200]})
+    return safe_history
+
+
 class handler(BaseHTTPRequestHandler):
+    def _request_log(self, status: int) -> None:
+        started = getattr(self, "_request_started", time.perf_counter())
+        print(json.dumps({
+            "event": "request",
+            "request_id": getattr(self, "_request_id", "unknown"),
+            "route": self.path.split("?", 1)[0],
+            "status": int(status),
+            "latency_ms": round((time.perf_counter() - started) * 1000, 1),
+            "retrieval_ms": getattr(self, "_retrieval_ms", None),
+            "provider_ms": getattr(self, "_provider_ms", None),
+            "ttfb_ms": getattr(self, "_ttfb_ms", None),
+        }, ensure_ascii=False), flush=True)
+
     def _send(self, status, content_type, body):
+        self._request_log(status)
         if isinstance(body, str):
             body = body.encode("utf-8")
         self.send_response(status)
@@ -705,11 +890,22 @@ class handler(BaseHTTPRequestHandler):
         self._send(200, "text/html; charset=utf-8", page)
 
     def do_POST(self):
+        self._request_started = time.perf_counter()
+        self._request_id = uuid.uuid4().hex
         path = self.path.split("?", 1)[0]
         try:
             length = int(self.headers.get("Content-Length", "0"))
-        except ValueError:
+        except (TypeError, ValueError):
             self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
+            return
+        if length < 0:
+            self._send(400, "application/json", '{"detail":"Invalid Content-Length"}')
+            return
+        if path == "/api/voice/transcribe" and length > MAX_AUDIO_BYTES:
+            self._send(413, "application/json", '{"detail":"Audio quá lớn; giới hạn là 20 MB."}')
+            return
+        if path in {"/api/chat", "/api/chat/stream"} and length > MAX_JSON_BYTES:
+            self._send(413, "application/json", '{"detail":"Dữ liệu chat quá lớn; giới hạn là 512 KiB."}')
             return
         raw = self.rfile.read(length) if length else b"{}"
         if path == "/api/voice/transcribe":
@@ -747,6 +943,27 @@ class handler(BaseHTTPRequestHandler):
         lang = str(payload.get("lang", "auto")).lower()
         if lang not in ("vi", "en", "auto"):
             lang = "auto"
+        direct = _direct_public_reply(text, lang)
+        if direct:
+            reply, sources_out = direct
+            reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
+            if path == "/api/chat/stream":
+                # A deterministic answer is already complete.  Emit it as a
+                # single delta so concatenating deltas is byte-for-byte equal
+                # to the final answer event, just like the client contract.
+                events = [
+                    {"type": "progress", "percent": 100, "detail": "Đã hoàn tất"},
+                    {"type": "delta", "text": reply},
+                    {"type": "answer", "reply": reply, "sources": sources_out, "decision": "guide", "summary": "", "appropriate": True, "lang": reply_lang},
+                ]
+                body = "".join(f"data: {json.dumps(event, ensure_ascii=False)}\n\n" for event in events)
+                self._send(200, "text/event-stream", body)
+            else:
+                body = {"reply": reply, "sources": sources_out, "lang": reply_lang}
+                if warn:
+                    body["rate_warning"] = warn
+                self._send(200, "application/json", json.dumps(body, ensure_ascii=False))
+            return
         stream_impl = getattr(getattr(self, "_ask_api", None), "__func__", getattr(self, "_ask_api", None))
         if (
             path == "/api/chat/stream"
@@ -762,7 +979,9 @@ class handler(BaseHTTPRequestHandler):
         # Keep enough distinct excerpts for age/benefit questions: the most
         # relevant eligibility clause can sit just below the first six BM25
         # hits because the corpus contains many cross-references.
+        retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
+        self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
         sources_out: list[str] = ["Văn bản pháp luật"]
         if text:
             try:
@@ -778,7 +997,9 @@ class handler(BaseHTTPRequestHandler):
                         f"liên hệ cơ quan có thẩm quyền. Kết thúc bằng dòng: "
                         f"Trích dẫn: <tên các văn bản đã dùng>."
                     )
+                provider_started = time.perf_counter()
                 reply = self._ask_api(aug_text, lang, history)
+                self._provider_ms = round((time.perf_counter() - provider_started) * 1000, 1)
             except LLMUnavailableError:
                 self._send(
                     503,
@@ -832,7 +1053,9 @@ class handler(BaseHTTPRequestHandler):
 
     def _stream_chat(self, text: str, history, lang: str, warn: str | None) -> None:
         """Stream Gemini deltas while preserving the final answer contract."""
+        retrieval_started = time.perf_counter()
         rag_hits = _grounded_search(text, top_k=8) if text else []
+        self._retrieval_ms = round((time.perf_counter() - retrieval_started) * 1000, 1)
         sources_out: list[str] = ["Văn bản pháp luật"]
         aug_text = text
         if rag_hits:
@@ -862,10 +1085,14 @@ class handler(BaseHTTPRequestHandler):
         def on_delta(delta: str) -> None:
             nonlocal streamed
             streamed = True
+            if not hasattr(self, "_ttfb_ms"):
+                self._ttfb_ms = round((time.perf_counter() - self._request_started) * 1000, 1)
             self._stream_event({"type": "delta", "text": delta})
 
         try:
+            provider_started = time.perf_counter()
             reply = self._ask_api(aug_text, lang, history, stream_callback=on_delta)
+            self._provider_ms = round((time.perf_counter() - provider_started) * 1000, 1)
         except LLMUnavailableError:
             self._stream_event(
                 {"type": "error", "detail": "Dịch vụ trả lời AI đang tạm thời bận. Vui lòng thử lại sau ít phút."}
@@ -884,11 +1111,9 @@ class handler(BaseHTTPRequestHandler):
             if fixed:
                 reply = fixed
         reply = _sanitize_reply_text(reply)
-        # Groq/Pateway/local test doubles are one-shot. Still reveal their
-        # result in small readable pieces so the UI keeps one SSE contract.
-        if not streamed:
-            for piece in _display_chunks(reply):
-                self._stream_event({"type": "delta", "text": piece})
+        # Groq/Pateway are one-shot providers and do not expose upstream
+        # deltas. Do not manufacture fake token deltas: the frontend receives
+        # the completed answer event after the truthful progress event.
         reply_lang = lang if lang in ("vi", "en") else self._detect_lang(reply)
         self._stream_event({"type": "progress", "percent": 100, "detail": "Đã hoàn tất"})
         self._stream_event(
@@ -903,6 +1128,8 @@ class handler(BaseHTTPRequestHandler):
                 "rate_warning": warn,
             }
         )
+        if hasattr(self, "wfile"):
+            self._request_log(200)
         self._flush_stream_buffer()
 
     def _transcribe_audio(self, audio: bytes):
@@ -1247,6 +1474,11 @@ class handler(BaseHTTPRequestHandler):
 
     @classmethod
     def _ask_api(cls, text, lang, history=None, stream_callback=None):
+        # Preserve the raw question/history for local RAG and the browser, but
+        # never let a cloud provider see that raw copy.  Each provider below
+        # uses these ephemeral redacted values only.
+        outbound_text = scrub_outbound(str(text))
+        outbound_history = _scrub_cloud_history(history)
         if lang == "en":
             system_prompt = (
                 "You are Rightly, a Vietnamese legal & administrative assistant. Reply in English. "
@@ -1300,7 +1532,7 @@ class handler(BaseHTTPRequestHandler):
         if GEMINI_KEY:
             try:
                 reply_text = _gemini_reply(
-                    call_prompt, text, history, stream_callback=stream_callback
+                    call_prompt, outbound_text, outbound_history, stream_callback=stream_callback
                 )
                 if reply_text:
                     return reply_text
@@ -1316,8 +1548,8 @@ class handler(BaseHTTPRequestHandler):
                     try:
                         reply_text = _gemini_reply(
                             call_prompt,
-                            text,
-                            history,
+                            outbound_text,
+                            outbound_history,
                             model_override="gemini-2.5-flash",
                             stream_callback=stream_callback,
                         )
@@ -1338,8 +1570,8 @@ class handler(BaseHTTPRequestHandler):
                     "model": GROQ_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        *(history or []),
-                        {"role": "user", "content": text},
+                        *outbound_history,
+                        {"role": "user", "content": outbound_text},
                     ],
                     "temperature": 0.2,
                     "max_tokens": 900,
@@ -1372,7 +1604,7 @@ class handler(BaseHTTPRequestHandler):
             try:
                 history_text = "\n".join(
                     f"{'Người dân' if turn['role'] == 'user' else 'Rightly'}: {turn['content']}"
-                    for turn in (history or [])
+                    for turn in outbound_history
                 )
                 payload = {
                     "model": PATEWAY_MODEL,
@@ -1382,7 +1614,7 @@ class handler(BaseHTTPRequestHandler):
                             "content": (
                                 f"{system_prompt}\n\n"
                                 + (f"Hội thoại trước đó:\n{history_text}\n\n" if history_text else "")
-                                + f"Người dân nhắn: {text}\nTrả lời:"
+                                + f"Người dân nhắn: {outbound_text}\nTrả lời:"
                             ),
                         },
                     ],

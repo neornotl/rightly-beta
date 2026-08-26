@@ -500,6 +500,15 @@ def make_retriever(settings: Settings) -> Retriever:
 
 def make_llm(settings: Settings) -> BaseLLM:
     llm = _build_llm(settings, settings.llm_backend)
+    # Local mode is offline-first.  Never mask a stopped Ollama process or a
+    # missing model by falling through to MockLLM (or any other backend).
+    if settings.llm_backend == "local":
+        if settings.llm_fallback_backend:
+            logger.warning(
+                "Ignoring LLM_FALLBACK_BACKEND=%s in local mode; local AI readiness must be explicit.",
+                settings.llm_fallback_backend,
+            )
+        return llm
     if settings.llm_fallback_backend:
         try:
             fallback = _build_llm(settings, settings.llm_fallback_backend)
@@ -565,14 +574,11 @@ def _build_llm(settings: Settings, backend: str) -> BaseLLM:
             max_retries=settings.llm_max_retries,
             backoff_seconds=settings.llm_retry_backoff_seconds,
         )
-        if not llm.available:
-            logger.warning(
-                "Local LLM unavailable at %s; using deterministic MockLLM until "
-                "Ollama is started and %s is pulled.",
-                settings.ollama_base_url,
-                settings.ollama_model,
-            )
-            return MockLLM()
+        # Do not silently replace the installed local model with MockLLM.
+        # A plausible-looking canned answer masks a broken Ollama service or
+        # missing model and makes an offline install impossible to diagnose.
+        # LocalLLM turns that state into a recoverable LLMError and /health
+        # exposes the exact readiness status to the UI and installer.
         return llm
     return MockLLM()
 

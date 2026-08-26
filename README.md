@@ -1,15 +1,15 @@
-# Rightly — release
+# Rightly — release v0.18.0-pilot
 
 Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Người dùng có thể nhập câu hỏi bằng chữ hoặc giọng nói; hệ thống tìm nguồn trong kho dữ liệu đã cấu hình rồi tạo câu trả lời dễ đọc, kèm nguồn khi có bằng chứng phù hợp.
 
-> **Trạng thái:** bản release pilot dùng để trình diễn và đánh giá. Rightly vẫn là MVP, không phải dịch vụ pháp lý chính thức.
+> **Trạng thái:** bản pilot phát hành để đánh giá. Đây vẫn là MVP/bản thử nghiệm, không phải dịch vụ pháp lý chính thức.
 
 ## Sản phẩm đang chạy
 
 - **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.17.0](https://github.com/neornotl/rightly-beta/releases/tag/v0.17.0-pilot)
-- **Mã nguồn release:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
-- **Mã nguồn phát triển:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
+- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.18.0](https://github.com/neornotl/rightly/releases/tag/v0.18.0-pilot)
+- **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
+- **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
 - **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
 
 ## Tính năng và giới hạn thực tế
@@ -19,12 +19,15 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 - Truy xuất văn bản nguồn, safety routing và câu trả lời có trích nguồn khi tìm được evidence.
 - TTS dùng backend cloud hoặc local theo cấu hình. Chế độ local/offline cần cài đủ model và thư viện; không mặc định có nghĩa là offline hoàn toàn.
 - Bản cài pilot tự nhận diện RAM/CPU/GPU, chọn model 3B hoặc 7B theo ngưỡng phần cứng, tải tiếp sau lỗi mạng và chỉ mở ứng dụng sau preflight LLM/ASR/TTS/health. Yêu cầu hiện tại: Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet trong lần cài đầu.
+- Bộ cài chỉ nói “đã kiểm tra SHA-256” khi release publisher đã ghi hash chính thức trong [`scripts/asset_manifest.json`](scripts/asset_manifest.json). Hiện manifest chưa có hash, nên preflight hiện cảnh báo rõ: runtime có thể sẵn sàng nhưng asset tải xuống chưa được chứng thực mật mã. Xem TODO phát hành tại [`docs/installer-integrity.md`](docs/installer-integrity.md).
 - Câu hỏi tiếng Việt không dấu được mở rộng sang thuật ngữ pháp lý chuẩn trước khi truy xuất; phép tính ngắn được xử lý tất định thay vì giao cho LLM.
+- Đăng nhập web **không** tự đọc hoặc ghi lịch sử cloud. Người dùng phải bấm “Đồng bộ: Tắt” và xác nhận rõ ràng trước khi đồng bộ; có nút “Xóa cloud” để xóa toàn bộ lịch sử của tài khoản. Mẫu RLS và retention 90 ngày nằm tại [`docs/supabase_context.sql`](docs/supabase_context.sql).
+- Trước khi một câu hỏi hoặc lịch sử đi tới Gemini, Groq hoặc Pateway, Rightly thay các định danh có độ tin cậy cao (email, số điện thoại, CCCD/CMND, hộ chiếu, địa chỉ có mốc đường/phố) bằng nhãn ẩn danh. Bản hiển thị và truy xuất cục bộ không bị sửa.
 - Nguồn có thể thiếu hoặc chậm cập nhật. Không dùng kết quả như tư vấn pháp lý cuối cùng; hãy kiểm tra với cơ quan có thẩm quyền.
 
-## Cài đặt và phát triển
+## Chạy và phát triển
 
-Người dùng Windows có thể tải một file `Rightly-Setup.exe` từ release ở trên. Nhà phát triển đọc các file `requirements*.txt`, hướng dẫn trong [`docs/`](docs/) và các script setup trước khi chạy. Không commit API key, service-account JSON hoặc dữ liệu người dùng.
+Đọc các file `requirements*.txt`, hướng dẫn trong [`docs/`](docs/) và các script setup trước khi chạy. Không commit API key, service-account JSON hoặc dữ liệu người dùng.
 
 ## Pilot
 

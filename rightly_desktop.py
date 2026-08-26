@@ -8,6 +8,7 @@ then hosts the existing web UI in a native WebView window.
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 import sys
 import time
@@ -32,10 +33,20 @@ def _root() -> Path:
 
 
 def _health(port: int = 8010) -> bool:
+    """Require the full launch contract, not just a responding HTTP server.
+
+    Cloud-mode deployments report ``llm_ready=true`` with ``not_local``;
+    offline installs report it only after the selected Ollama model is ready.
+    This single predicate therefore avoids opening a blank/inoperative local
+    window without incorrectly blocking a configured cloud runtime.
+    """
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=2) as response:
-            return response.status == 200
-    except (OSError, urllib.error.URLError):
+            if response.status != 200:
+                return False
+            payload = json.loads(response.read().decode("utf-8"))
+            return payload.get("status") == "ok" and payload.get("llm_ready") is True
+    except (OSError, urllib.error.URLError, UnicodeDecodeError, json.JSONDecodeError):
         return False
 
 

@@ -94,6 +94,7 @@
     .auth-btn:hover { border-color: var(--verm); color: var(--verm); }
     .auth-user { display: inline-flex; align-items: center; gap: 7px; cursor: default; }
     .auth-user button { border: 0; background: transparent; color: var(--verm); font: 600 11px var(--sans); cursor: pointer; padding: 0; }
+    .auth-user button.cloud-danger { color: var(--verm-d); }
     .auth-panel {
       position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-start; justify-content: center;
       padding: 12vh 20px 30px; background: rgba(28,27,24,.42); backdrop-filter: blur(3px);
@@ -321,7 +322,7 @@
         background: linear-gradient(transparent, var(--paper) 24%);
       }
       .composer { gap: 8px; padding: 8px 8px 8px 10px; border-radius: 12px; }
-      input { font-size: 17px; min-height: 42px; }
+      .composer input { min-width: 0; flex: 1 1 auto; font-size: 17px; min-height: 42px; }
       .icon-btn { width: 44px; height: 44px; }
       #send { min-height: 44px; padding: 10px 16px; border-radius: 10px; }
       .tools { padding: 7px 2px 0; justify-content: flex-end; }
@@ -351,10 +352,15 @@
         <button class="mode active" id="modeChat" type="button">💬 Chat</button>
         <button class="mode" id="modeCall" type="button">📞 Cuộc gọi</button>
       </nav>
-      <div class="status" id="status">sẵn sàng</div>
+      <div class="status" id="status" role="status" aria-live="polite" aria-atomic="true">sẵn sàng</div>
       <div class="auth-area">
         <button class="auth-btn" id="authOpen" type="button">Đăng nhập</button>
-        <span class="auth-user hidden" id="authUser"><span id="authUserLabel"></span><button id="authSignOut" type="button">Thoát</button></span>
+        <span class="auth-user hidden" id="authUser">
+          <span id="authUserLabel"></span>
+          <button id="cloudSync" type="button" title="Chọn có đồng ý lưu lịch sử lên tài khoản hay không">Đồng bộ: Tắt</button>
+          <button class="cloud-danger" id="cloudDelete" type="button" title="Xóa toàn bộ lịch sử đã lưu trên tài khoản">Xóa cloud</button>
+          <button id="authSignOut" type="button">Thoát</button>
+        </span>
       </div>
     </header>
 
@@ -373,9 +379,9 @@
 
     <form id="form">
       <div class="composer">
-        <button type="button" class="icon-btn" id="mic" title="Nói">🎙</button>
-        <input id="input" autocomplete="off" placeholder="Nhập tin nhắn cho Rightly...">
-        <button id="send">Gửi</button>
+        <button type="button" class="icon-btn" id="mic" title="Nói" aria-label="Nói câu hỏi">🎙</button>
+        <input id="input" type="text" autocomplete="off" aria-label="Tin nhắn" placeholder="Nhập tin nhắn cho Rightly...">
+        <button id="send" type="submit">Gửi</button>
       </div>
       <div class="tools">
         <button class="clear" type="button" id="clear">Xóa hội thoại</button>
@@ -387,7 +393,7 @@
     <div class="auth-card">
       <button class="auth-close" id="authClose" type="button" aria-label="Đóng">×</button>
       <h2 id="authTitle">Đăng nhập Rightly</h2>
-      <p id="authIntro">Đăng nhập để lưu và khôi phục ngữ cảnh hội thoại của riêng bạn trên các thiết bị.</p>
+      <p id="authIntro">Đăng nhập không tự lưu hội thoại. Sau khi đăng nhập, bạn có thể tự chọn bật đồng bộ lịch sử trên tài khoản.</p>
       <button class="auth-google" id="authGoogle" type="button">🔐 Tiếp tục với Google</button>
       <div class="auth-divider">hoặc email</div>
       <form id="authForm">
@@ -453,10 +459,15 @@
     const authOpen = document.querySelector('#authOpen'), authPanel = document.querySelector('#authPanel');
     const authClose = document.querySelector('#authClose'), authUser = document.querySelector('#authUser');
     const authUserLabel = document.querySelector('#authUserLabel'), authSignOut = document.querySelector('#authSignOut');
+    const cloudSync = document.querySelector('#cloudSync'), cloudDelete = document.querySelector('#cloudDelete');
     const authGoogle = document.querySelector('#authGoogle'), authForm = document.querySelector('#authForm');
     const authSignUp = document.querySelector('#authSignUp'), authMessage = document.querySelector('#authMessage');
     const authEmail = document.querySelector('#authEmail');
     let supabaseClient = null, currentUser = null;
+    // Cloud history is opt-in for this browser session.  It deliberately does
+    // not persist across sign-out/reload, so logging in alone can never upload
+    // or fetch a conversation.
+    let cloudSyncEnabled = false;
     let sessionId = (() => {
       try { return localStorage.getItem('rightly.session') || crypto.randomUUID(); }
       catch(e){ return crypto.randomUUID(); }
@@ -468,6 +479,7 @@
     let mediaRec = null, speechRec = null, chunks = [];
     let callActive = false, callStart = 0, callTimerInt = null, speakerOn = true;
     let answerRun = 0;
+    let activeChatAbort = null;
 
     function setAuthMessage(text, isError=false){
       authMessage.textContent = text || '';
@@ -482,6 +494,8 @@
         const name = currentUser.user_metadata && (currentUser.user_metadata.full_name || currentUser.user_metadata.name);
         authUserLabel.textContent = String(name || currentUser.email || 'Đã đăng nhập').slice(0, 28);
       }
+      cloudSync.textContent = cloudSyncEnabled ? 'Đồng bộ: Bật' : 'Đồng bộ: Tắt';
+      cloudSync.setAttribute('aria-pressed', String(cloudSyncEnabled));
     }
 
     function openAuth(){
@@ -494,7 +508,7 @@
     function closeAuth(){ authPanel.classList.add('hidden'); }
 
     async function loadCloudContext(){
-      if (!supabaseClient || !currentUser || chatHistory.length) return;
+      if (!cloudSyncEnabled || !supabaseClient || !currentUser || chatHistory.length) return;
       try {
         const {data, error} = await supabaseClient.from('rightly_context')
           .select('turns').eq('session_id', sessionId).maybeSingle();
@@ -510,7 +524,7 @@
     }
 
     async function saveCloudContext(){
-      if (!supabaseClient || !currentUser || !chatHistory.length) return;
+      if (!cloudSyncEnabled || !supabaseClient || !currentUser || !chatHistory.length) return;
       try {
         await supabaseClient.from('rightly_context').upsert({
           user_id: currentUser.id,
@@ -537,11 +551,10 @@
         const {data} = await supabaseClient.auth.getSession();
         currentUser = data && data.session ? data.session.user : null;
         updateAuthUi();
-        await loadCloudContext();
         supabaseClient.auth.onAuthStateChange((_event, session) => {
           currentUser = session ? session.user : null;
+          if (!currentUser) cloudSyncEnabled = false;
           updateAuthUi();
-          if (currentUser) setTimeout(loadCloudContext, 0);
         });
       } catch (e) {
         authGoogle.disabled = true;
@@ -582,10 +595,54 @@
     });
     authSignOut.addEventListener('click', async () => {
       if (supabaseClient) await supabaseClient.auth.signOut();
-      currentUser = null; updateAuthUi();
+      currentUser = null; cloudSyncEnabled = false; updateAuthUi();
+    });
+    cloudSync.addEventListener('click', async () => {
+      if (!supabaseClient || !currentUser) { setStatus('Hãy đăng nhập trước khi chọn đồng bộ'); return; }
+      if (cloudSyncEnabled) {
+        cloudSyncEnabled = false;
+        updateAuthUi();
+        setStatus('Đã tắt đồng bộ. Dữ liệu cloud cũ vẫn còn; bấm Xóa cloud nếu muốn xóa.');
+        return;
+      }
+      const accepted = window.confirm(
+        'Bạn đồng ý lưu tối đa 100 lượt hội thoại gần nhất vào tài khoản Rightly để dùng trên thiết bị khác? '
+        + 'Dữ liệu chỉ được lưu sau khi bạn đồng ý và có thể xóa bất cứ lúc nào.'
+      );
+      if (!accepted) return;
+      cloudSyncEnabled = true;
+      updateAuthUi();
+      await loadCloudContext();
+      await saveCloudContext();
+      setStatus('Đã bật đồng bộ cloud');
+    });
+    cloudDelete.addEventListener('click', async () => {
+      if (!supabaseClient || !currentUser) return;
+      const confirmed = window.confirm(
+        'Xóa toàn bộ lịch sử Rightly đã lưu trên cloud của tài khoản này? Hành động này không thể hoàn tác.'
+      );
+      if (!confirmed) return;
+      const {error} = await supabaseClient.from('rightly_context').delete().eq('user_id', currentUser.id);
+      if (error) { setStatus('Chưa xóa được lịch sử cloud'); return; }
+      cloudSyncEnabled = false;
+      updateAuthUi();
+      setStatus('Đã xóa lịch sử cloud và tắt đồng bộ');
     });
 
     function setStatus(t){ status.textContent = t; status.classList.toggle('live', !!t && !t.includes('sẵn sàng') && !t.includes('lỗi')); }
+
+    async function refreshLocalHealth(){
+      if(window.location.protocol === 'file:') return;
+      try {
+        const r = await fetch('/health', {cache:'no-store'});
+        if(!r.ok) return;
+        const state = await r.json();
+        if(state && state.llm_ready === false){
+          setStatus('AI local chưa sẵn sàng');
+          console.warn('[Rightly] local LLM unavailable:', state.llm_code, state.llm_detail);
+        }
+      } catch(e) { console.debug('[Rightly] local health unavailable', e); }
+    }
 
     function unwrapReply(value){
       if(typeof value !== 'string') return String(value || '');
@@ -768,6 +825,12 @@
       const viMarks=/[ăâđêôơưĂÂĐÊÔƠƯáàảãạằẳẵặắấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/;
       if(viMarks.test(text)) return 'vi';
       const words = text.trim().split(/\s+/).filter(Boolean);
+      // Auto mode must not treat Vietnamese speech transcripts without
+      // diacritics as English. These high-signal function/legal words cover
+      // common ASR output while leaving ordinary English sentences intact.
+      const viWords = new Set(['quy','dinh','phap','luat','vuot','muc','phat','tro','cap','bhyt','nghi','huu','thu','tuc','nguoi','duoc','khong','bao','nhieu','hom','nay']);
+      const viScore = words.reduce((score, word) => score + (viWords.has(word.toLowerCase().replace(/[^a-z0-9]/g,'')) ? 1 : 0), 0);
+      if(viScore >= 1) return 'vi';
       const latinWords = words.filter(w => /^[A-Za-z0-9.,!?;:'"()-]+$/.test(w));
       if(latinWords.length >= 2) return 'en';
       return 'vi';
@@ -866,6 +929,11 @@
       const container = target || messages;
       const disableMic = target ? callMic : mic;
       const thisAnswerRun = ++answerRun;
+      if(activeChatAbort){
+        try { activeChatAbort.abort(); } catch(e) {}
+      }
+      const chatAbort = new AbortController();
+      activeChatAbort = chatAbort;
       disableMic.disabled=true; if(!target){ input.disabled=true; send.disabled=true; send.textContent='...'; }
       let composerReleased = false;
       const releaseComposer = () => {
@@ -903,7 +971,7 @@
       }, 90000); };
       armSafetyTimeout();
       try {
-        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-12)})});
+        const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,text,lang:reqLang,history:chatHistory.slice(-12)}),signal:chatAbort.signal});
         if(!r.ok) throw new Error('Không thể kết nối');
         const reader=r.body.getReader(), decoder=new TextDecoder(); let buffer='';
         while(true){ const part=await reader.read(); if(part.done) break; buffer+=decoder.decode(part.value,{stream:true});
@@ -979,7 +1047,9 @@
             }
             else if(data.type==='error') throw new Error(data.detail || 'Server error');
           } }
-      } catch(err) { clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
+      } catch(err) {
+        if(chatAbort.signal.aborted || thisAnswerRun !== answerRun) return;
+        clearTimeout(safetyTimeout); if(!gotAnswer && box.parentNode) box.remove(); const msg='Mình đang gặp lỗi kết nối. Bạn thử lại sau ít giây nhé.';
         if (liveRow) liveRow.remove();
         if (!gotAnswer && thisAnswerRun === answerRun) {
           const render = target ? addCall : add;
@@ -990,7 +1060,11 @@
         }
         setStatus('có lỗi');
         if (target && callState) callState.textContent = '🌿 Bác nói tiếp đi ạ...';
-      } finally { clearTimeout(safetyTimeout); if(target){ if (thisAnswerRun === answerRun) callMic.disabled=false; } else { releaseComposer(); if (thisAnswerRun === answerRun) mic.disabled=false; } }
+      } finally {
+        clearTimeout(safetyTimeout);
+        if(activeChatAbort === chatAbort) activeChatAbort = null;
+        if(target){ if (thisAnswerRun === answerRun) callMic.disabled=false; } else { releaseComposer(); if (thisAnswerRun === answerRun) mic.disabled=false; }
+      }
     }
 
     async function sendText(text){
@@ -1197,6 +1271,8 @@
     try { const saved = localStorage.getItem('rightly.lang'); if (saved && ['auto','vi','en'].includes(saved)) { currentLang = saved; document.querySelectorAll('#langSwitch .lang-btn').forEach(x => x.classList.toggle('active', x.dataset.lang === saved)); } } catch(e){}
     hydrateLocalHistory();
     initAuth();
+    refreshLocalHealth();
+    window.setInterval(refreshLocalHealth, 15000);
 
     // Font size switcher for elderly
     const fontNormal = document.querySelector('#fontNormal'), fontLarge = document.querySelector('#fontLarge');

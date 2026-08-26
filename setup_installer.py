@@ -11,6 +11,7 @@ test are ready.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import platform
 import queue
@@ -30,9 +31,10 @@ APP_EXE_NAME = "Rightly.exe"
 # Bump whenever bundled runtime scripts change. Existing installs then receive
 # the fixed installer/bootstrap code on the next run without rebuilding venv or
 # redownloading already-installed models.
-INSTALLER_MARKER = "rightly-installer-v17"
+INSTALLER_MARKER = "rightly-installer-v18"
 INSTALL_RETRIES = 6
 INSTALL_RETRY_DELAY_S = 8
+ASSET_MANIFEST_NAME = "asset_manifest.json"
 
 _UI = None
 _INSTANCE_LOCK_HANDLE = None
@@ -455,7 +457,37 @@ def find_python() -> str | None:
     return None
 
 
-def _download_resumable(url: str, destination: Path) -> Path:
+def _manifest_sha256(name: str, url: str | None = None) -> str | None:
+    """Load only hashes explicitly recorded by the release manifest."""
+    candidates = [Path(__file__).resolve().parent / "scripts" / ASSET_MANIFEST_NAME]
+    for manifest_path in candidates:
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            entry = data.get("assets", {}).get(name)
+            if not entry and url:
+                entry = data.get("assets", {}).get(url)
+            digest = str(entry.get("sha256", "")).strip().lower() if isinstance(entry, dict) else ""
+            if re.fullmatch(r"[0-9a-f]{64}", digest):
+                return digest
+        except (OSError, ValueError, TypeError):
+            continue
+    return None
+
+
+def _verify_sha256(path: Path, expected: str) -> None:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    actual = digest.hexdigest().lower()
+    if actual != expected.lower():
+        raise RuntimeError(
+            f"Kiểm tra toàn vẹn thất bại cho {path.name}: nhận {actual}, "
+            f"mong đợi {expected.lower()}. File bị loại bỏ; hãy chạy lại bộ cài."
+        )
+
+
+def _download_resumable(url: str, destination: Path, *, expected_sha256: str | None = None) -> Path:
     """Download a small bootstrap installer while preserving a partial file."""
     partial = destination.with_name(destination.name + ".part")
     for attempt in range(1, INSTALL_RETRIES + 1):
@@ -475,6 +507,12 @@ def _download_resumable(url: str, destination: Path) -> Path:
                             break
                         handle.write(chunk)
             partial.replace(destination)
+            if expected_sha256:
+                try:
+                    _verify_sha256(destination, expected_sha256)
+                except RuntimeError:
+                    destination.unlink(missing_ok=True)
+                    raise
             return destination
         except (OSError, urllib.error.URLError, TimeoutError) as exc:
             if attempt >= INSTALL_RETRIES:
@@ -519,6 +557,7 @@ def ensure_python() -> str:
                 "https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe",
             ),
             cache,
+            expected_sha256=_manifest_sha256(cache.name, os.environ.get("RIGHTLY_PYTHON_URL")),
         )
         installer = run([str(cache), "/quiet", "InstallAllUsers=0", "PrependPath=1",
                           "Include_launcher=1", "Include_test=0"])

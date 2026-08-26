@@ -103,6 +103,105 @@ def test_vercel_handler_passes_recent_history_to_the_llm(monkeypatch):
     assert captured["messages"][-1] == {"role": "user", "content": "BHYT"}
 
 
+def _assert_cloud_payload_is_scrubbed(payload: dict) -> None:
+    serialized = json.dumps(payload, ensure_ascii=False)
+    for secret in (
+        "pilot.user@example.test",
+        "0900 123 456",
+        "012345678901",
+        "số 12 đường Hoa Mai",
+    ):
+        assert secret not in serialized
+    assert "[EMAIL]" in serialized
+    assert "[SĐT]" in serialized
+    assert "[CCCD]" in serialized
+    assert "[ĐỊA CHỈ]" in serialized
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_groq(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
+    monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "assistant", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_gemini(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "AQ.test-express-key")
+    monkeypatch.setattr(index, "GROQ_KEY", "")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"candidates": [{"content": {"parts": [{"text": '{"answer_text":"ok"}'}]}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "user", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_vercel_handler_scrubs_pii_before_sending_to_pateway(monkeypatch):
+    monkeypatch.setattr(index, "GEMINI_KEY", "")
+    monkeypatch.setattr(index, "GROQ_KEY", "")
+    monkeypatch.setattr(index, "PATEWAY_KEY", "test-pateway-key")
+    captured = {}
+
+    def capture_request(request, **_kwargs):
+        captured.update(json.loads(request.data.decode("utf-8")))
+        return _Response({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(index, "urlopen", capture_request)
+    index.handler._ask_api(
+        "Email pilot.user@example.test, gọi 0900 123 456; CCCD 012345678901; ở số 12 đường Hoa Mai.",
+        "vi",
+        [{"role": "assistant", "content": "Hồ sơ trước: pilot.user@example.test"}],
+    )
+
+    _assert_cloud_payload_is_scrubbed(captured)
+
+
+def test_handler_keeps_raw_turn_for_local_retrieval_before_cloud_boundary(monkeypatch):
+    raw_question = "Tôi ở số 12 đường Hoa Mai, CCCD 012345678901 cần hỏi BHYT"
+    captured = {}
+    monkeypatch.setattr(index, "RATE_LIMIT_PER_IP", 99)
+    monkeypatch.setattr(index, "RATE_LIMIT_WARN_AT", 2)
+    monkeypatch.setattr(index, "_grounded_search", lambda text, **_kw: captured.setdefault("rag", text) and [])
+    monkeypatch.setattr(
+        index.handler,
+        "_ask_api",
+        lambda _self, text, _lang, history=None, **_kw: captured.update(text=text, history=history) or "ok",
+    )
+    request, sent = _post_handler(
+        "/api/chat",
+        {"text": raw_question, "history": [{"role": "user", "content": raw_question}]},
+    )
+
+    request.do_POST()
+
+    assert sent["status"] == 200
+    assert captured["rag"] == raw_question
+    assert captured["text"] == raw_question
+    assert captured["history"] == [{"role": "user", "content": raw_question}]
+
+
 def test_vercel_handler_transcribes_raw_browser_audio_without_json_parsing(monkeypatch):
     monkeypatch.setattr(index, "GROQ_KEY", "test-groq-key")
     captured = {}
@@ -223,3 +322,77 @@ def test_vercel_handler_has_no_embedded_provider_key():
     source = (index.ROOT / "api" / "index.py").read_text(encoding="utf-8")
     assert 'or "sk-' not in source
     assert "b64decode" not in source
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("1+4-3+7=?", "Kết quả là 9."),
+        ("(12 - 2) / 5", "Kết quả là 2."),
+    ],
+)
+def test_basic_arithmetic_is_deterministic_and_does_not_need_a_legal_llm(question, expected):
+    assert index._basic_math_reply(question, "vi") == expected
+    assert index._basic_math_reply("__import__('os')", "vi") is None
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "quy định khi vượt đèn đỏ",
+        "quy dinh khi vuot den do",
+        "quy dinh khi vuot dden do",
+    ],
+)
+def test_generic_red_light_question_is_recognised_and_requests_vehicle_type(question):
+    direct = index._direct_public_reply(question, "vi")
+
+    assert direct is not None
+    reply, sources = direct
+    assert "loại phương tiện" in reply
+    assert "không có dữ liệu" not in reply
+    assert sources == ["Nghị định 168/2024/NĐ-CP"]
+
+
+def test_red_light_retrieval_keeps_motorcycle_clause_scoped_to_motorcycles():
+    motorcycle = index._grounded_search("quy dinh khi vuot den do xe may")
+    car = index._grounded_search("quy dinh khi vuot den do o to")
+
+    assert [hit["cid"] for hit in motorcycle] == ["nd168_2024::c060"]
+    assert "nd168_2024::c060" not in [hit["cid"] for hit in car]
+
+
+def test_chat_direct_answers_skip_provider_and_never_return_raw_json(monkeypatch):
+    monkeypatch.setattr(index.handler, "_ask_api", lambda *_args, **_kwargs: pytest.fail("provider should not run"))
+    request, sent = _post_handler("/api/chat", {"text": "1+4-3+7=?", "lang": "vi"})
+
+    request.do_POST()
+
+    body = json.loads(sent["body"])
+    assert sent["status"] == 200
+    assert body == {"reply": "Kết quả là 9.", "sources": ["Tính toán cơ bản"], "lang": "vi"}
+
+
+def test_stream_direct_answer_delta_join_equals_final_answer(monkeypatch):
+    monkeypatch.setattr(index.handler, "_ask_api", lambda *_args, **_kwargs: pytest.fail("provider should not run"))
+    request, sent = _post_handler("/api/chat/stream", {"text": "quy dinh khi vuot den do", "lang": "vi"})
+
+    request.do_POST()
+
+    events = [
+        json.loads(line.removeprefix("data: "))
+        for line in sent["body"].splitlines()
+        if line.startswith("data: ")
+    ]
+    delta_text = "".join(event["text"] for event in events if event["type"] == "delta")
+    final = next(event for event in events if event["type"] == "answer")
+    assert sent["status"] == 200
+    assert delta_text == final["reply"]
+    assert "loại phương tiện" in final["reply"]
+
+
+def test_weather_is_explicitly_out_of_scope_not_random_legal_guidance():
+    reply, sources = index._direct_public_reply("thoi tiet hom nay", "vi")
+
+    assert "pháp luật" in reply
+    assert sources == ["Phạm vi hỗ trợ của Rightly"]

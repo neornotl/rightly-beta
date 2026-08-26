@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -30,6 +31,20 @@ if str(ROOT) not in sys.path:
 PREFLIGHT_CHAT_TIMEOUT_S = max(
     120, int(os.environ.get("RIGHTLY_PREFLIGHT_CHAT_TIMEOUT", "300"))
 )
+
+
+def _asset_verification_note() -> tuple[bool, str]:
+    """Keep readiness and cryptographic asset verification distinct."""
+    try:
+        manifest = json.loads((ROOT / "scripts" / "asset_manifest.json").read_text(encoding="utf-8"))
+        assets = manifest.get("assets", {})
+        hashes = [entry.get("sha256", "") for entry in assets.values() if isinstance(entry, dict)]
+        verified = any(isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{64}", value) for value in hashes)
+        if verified:
+            return True, f"Asset checksum verification configured for {len(hashes)} manifest entry/entries."
+    except (OSError, ValueError, TypeError):
+        pass
+    return False, "WARNING: no publisher-verified asset hashes are configured; downloaded assets are NOT verified and runtime readiness does not prove file integrity."
 
 
 def _local_json(url: str) -> dict:
@@ -105,6 +120,8 @@ def run() -> int:
 
     settings = load_settings()
     failures: list[str] = []
+    assets_verified, asset_note = _asset_verification_note()
+    print(asset_note)
     _check_machine(failures)
     if settings.llm_backend != "local" or not settings.offline_mode:
         failures.append(".env must set LLM_BACKEND=local and OFFLINE_MODE=true")
@@ -197,7 +214,8 @@ def run() -> int:
         ready = False
         for _ in range(45):
             try:
-                if _local_json("http://127.0.0.1:8011/health").get("status") == "ok":
+                health = _local_json("http://127.0.0.1:8011/health")
+                if health.get("status") == "ok" and health.get("llm_ready") is True:
                     ready = True
                     break
             except Exception:
@@ -233,7 +251,8 @@ def run() -> int:
         for failure in failures:
             print(f"- {failure}")
         return 1
-    print("OFFLINE PREFLIGHT OK: LLM + ASR assets + Piper voice are ready")
+    suffix = "; asset checksums were configured" if assets_verified else "; asset checksums were NOT verified"
+    print("OFFLINE PREFLIGHT OK: LLM + ASR assets + Piper voice are ready" + suffix)
     return 0
 
 

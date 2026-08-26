@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "algorithm": "sha256",
+  "verification_status": "pending_publisher_hashes",
+  "note": "No asset in this manifest is checksum-verified until the release publisher records an official SHA-256 value.",
+  "assets": {}
+}

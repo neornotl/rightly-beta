@@ -39,7 +39,7 @@ if not exist "logs" mkdir "logs"
 echo Dang khoi dong server, vui long doi den khi san sang...
 start "Rightly server" /b cmd /c ""%~dp0.venv\Scripts\python.exe" "%~dp0webhook_server.py" > "%~dp0logs\rightly-server.log" 2>&1"
 start "Rightly health" /min powershell -NoProfile -Command ^
- "$ok=$false; for($i=0;$i -lt 90;$i++){try{$r=Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8010/health -TimeoutSec 2;if($r.StatusCode -eq 200){$ok=$true;Start-Process 'http://localhost:8010';break}}catch{};Start-Sleep 1}; if(-not $ok){Write-Host 'Rightly chua san sang. Xem logs\rightly-server.log';Read-Host 'Nhan Enter de dong'}"
+ "$ok=$false; for($i=0;$i -lt 90;$i++){try{$state=Invoke-RestMethod http://127.0.0.1:8010/health -TimeoutSec 2;if($state.status -eq 'ok' -and $state.llm_ready -eq $true){$ok=$true;Start-Process 'http://localhost:8010';break}}catch{};Start-Sleep 1}; if(-not $ok){Write-Host 'Rightly chua san sang (LLM local chua ready). Xem logs\rightly-server.log';Read-Host 'Nhan Enter de dong'}"
 
 echo Trinh duyet se mo sau khi server qua health check.
 echo Dong cua so nay de dung server.
