@@ -19,6 +19,10 @@ huggingface_hub>=0.23
 
 # Retrieval
 numpy>=1.26
+openvino>=2025.0
+torch>=2.2
+transformers>=4.41
+sentence-transformers>=3.0
 
 # TTS fallbacks (browser speech is used by default; these are backups)
 requests>=2.31

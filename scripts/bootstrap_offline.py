@@ -508,10 +508,27 @@ def download_asr_weights(args: argparse.Namespace) -> None:
 
 def build_embeddings(args: argparse.Namespace) -> None:
     _step(f"Downloading embedding model ({HF_E5})")
-    _hf_download(HF_E5, ignore=("*.onnx*",))
-    _step("Building embedding caches into data/chunks/*.npz (GPU on 3060 Ti)")
+    from huggingface_hub import snapshot_download
+    model_dir = ROOT / "data" / "models" / "multilingual-e5-small"
+    _retry_call(
+        f"tải model {HF_E5}",
+        lambda: snapshot_download(repo_id=HF_E5, local_dir=str(model_dir), ignore_patterns=["*.onnx*"]),
+        probe_url=HF_PROBE_URL,
+    )
+    _step("Exporting E5 to OpenVINO IR (one-time, local CPU)")
+    ir_path = ROOT / "data" / "models" / "openvino" / "e5-small.xml"
     code = (
-        "import sys;"
+        "from app.retrieval.openvino_e5 import export_openvino_ir;"
+        f"export_openvino_ir(r'{model_dir}', r'{ir_path}');"
+        "print('built OpenVINO IR')"
+    )
+    _run([_venv_python(), "-c", code])
+    _step("Building embedding caches with OpenVINO CPU")
+    code = (
+        "import os;"
+        "os.environ['RIGHTLY_EMBEDDING_BACKEND']='openvino';"
+        f"os.environ['RIGHTLY_E5_MODEL_PATH']=r'{model_dir}';"
+        f"os.environ['RIGHTLY_E5_OPENVINO_PATH']=r'{ir_path}';"
         "from pathlib import Path;"
         "from app.retrieval.document_loader import DocumentLoader;"
         "from app.retrieval.hybrid_retriever import DenseIndex;"
@@ -551,7 +568,11 @@ def _env_offline_lines(model: str) -> list[str]:
         "ASR_BACKEND=whisper",
         "WHISPER_MODEL=small",
         "WHISPER_MODEL_PATH=data/models/faster-whisper-small",
-        "RETRIEVAL_BACKEND=bm25",
+        "RETRIEVAL_BACKEND=hybrid",
+        "RIGHTLY_EMBEDDING_BACKEND=openvino",
+        "RIGHTLY_E5_MODEL_PATH=data/models/multilingual-e5-small",
+        "RIGHTLY_E5_OPENVINO_PATH=data/models/openvino/e5-small.xml",
+        "RIGHTLY_OPENVINO_THREADS=4",
         "LLM_BACKEND=local",
         "OLLAMA_BASE_URL=http://localhost:11434/v1",
         f"OLLAMA_MODEL={model}",

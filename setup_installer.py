@@ -613,7 +613,11 @@ def write_env(root: Path) -> None:
         f"# Rightly .env - sinh boi Setup ngay {time.strftime('%Y-%m-%d')}",
         "APP_MODE=local",
         "ASR_BACKEND=whisper",
-        "RETRIEVAL_BACKEND=bm25",
+        "RETRIEVAL_BACKEND=hybrid",
+        "RIGHTLY_EMBEDDING_BACKEND=openvino",
+        "RIGHTLY_E5_MODEL_PATH=data/models/multilingual-e5-small",
+        "RIGHTLY_E5_OPENVINO_PATH=data/models/openvino/e5-small.xml",
+        "RIGHTLY_OPENVINO_THREADS=4",
         "TTS_BACKEND=piper",
         "WHISPER_MODEL_PATH=data/models/faster-whisper-small",
         "PIPER_MODEL_PATH=data/voices/vi_VN-vais1000-medium.onnx",
@@ -724,8 +728,8 @@ def main() -> int:
     step(5, 6, "TAI VA KIEM TRA STACK OFFLINE (LLM + ASR + PIPER)")
     bootstrap = root / "scripts" / "bootstrap_offline.py"
     bootstrap_cmd = [
-        venv_py, str(bootstrap), "--deps", "--ollama", "--asr", "--piper",
-        "--skip-torch", "--env", "offline", "--force-env", "--model", chosen,
+        venv_py, str(bootstrap), "--deps", "--ollama", "--asr", "--embeddings", "--piper",
+        "--env", "offline", "--force-env", "--model", chosen,
     ]
     if run(bootstrap_cmd, cwd=root).returncode != 0:
         print("!!! Offline bootstrap thất bại. Bộ cài chưa hoàn tất.")

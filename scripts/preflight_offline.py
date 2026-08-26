@@ -15,6 +15,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+import numpy as np
+
 try:  # Windows installer consoles may default to cp1252.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -189,6 +191,22 @@ def run() -> int:
             failures.append(f"Ollama model not pulled: {settings.ollama_model}")
     except Exception as exc:
         failures.append(f"Ollama is not ready on localhost: {exc}")
+
+    if settings.retrieval_backend == "hybrid":
+        try:
+            print("Checking local OpenVINO dense retrieval…", flush=True)
+            from app.retrieval.openvino_e5 import OpenVINOE5Encoder
+
+            encoder = OpenVINOE5Encoder(
+                os.environ.get("RIGHTLY_E5_MODEL_PATH", "data/models/multilingual-e5-small"),
+                os.environ.get("RIGHTLY_E5_OPENVINO_PATH", "data/models/openvino/e5-small.xml"),
+                int(os.environ.get("RIGHTLY_OPENVINO_THREADS", "4")),
+            )
+            probe = encoder.encode(["query: quy định khi vượt đèn đỏ"])
+            if probe.shape != (1, 384) or not np.isfinite(probe).all():
+                failures.append(f"OpenVINO E5 returned invalid shape/data: {probe.shape}")
+        except Exception as exc:
+            failures.append(f"OpenVINO E5 preflight failed: {exc}")
 
     # Load the selected local LLM before declaring setup complete.
     print("Checking local Ollama response (CPU-only machines may take a while)...", flush=True)
