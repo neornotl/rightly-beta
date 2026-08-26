@@ -1,13 +1,13 @@
-# Rightly — dev
+# Rightly — release v0.18.0-pilot
 
 Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Người dùng có thể nhập câu hỏi bằng chữ hoặc giọng nói; hệ thống tìm nguồn trong kho dữ liệu đã cấu hình rồi tạo câu trả lời dễ đọc, kèm nguồn khi có bằng chứng phù hợp.
 
-> **Trạng thái:** nhánh `dev` dùng cho phát triển và kiểm thử liên tục. Đây vẫn là MVP/bản thử nghiệm, không phải dịch vụ pháp lý chính thức.
+> **Trạng thái:** bản pilot phát hành để đánh giá. Đây vẫn là MVP/bản thử nghiệm, không phải dịch vụ pháp lý chính thức.
 
 ## Sản phẩm đang chạy
 
 - **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.17.0](https://github.com/neornotl/rightly-beta/releases/tag/v0.17.0-pilot)
+- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.18.0](https://github.com/neornotl/rightly/releases/tag/v0.18.0-pilot)
 - **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
 - **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
 - **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
