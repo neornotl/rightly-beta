@@ -73,6 +73,15 @@ Kết quả, giới hạn mẫu và cách bảo vệ dữ liệu: [`docs/pilot-r
 
 Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
 
+### Post-submission evidence
+
+The [isolated OpenVINO E5-small benchmark](benchmarks/openvino-e5-results-2026-08.md)
+measured approximately **1.62–1.76×** lower query-encoding latency across three
+series on one Intel Core i7-10510U test machine, with equivalent embeddings and
+100% top-10 overlap on five probes. This is experimental post-submission CPU
+evidence, not a claim of production integration, legal-accuracy improvement, or
+GPU/NPU acceleration.
+
 ## Credit
 
 | Thành viên | Vai trò | Email |

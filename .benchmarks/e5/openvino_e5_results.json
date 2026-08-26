@@ -1,0 +1,142 @@
+{
+  "record_type": "post_submission_openvino_benchmark",
+  "created_at_utc": "2026-08-26T08:57:45Z",
+  "post_submission": true,
+  "offline_only": true,
+  "python": "3.14.5",
+  "openvino": "2026.3.0-22451-8a17657b995-releases/2026/3",
+  "available_devices": [
+    "CPU",
+    "GPU.0",
+    "GPU.1"
+  ],
+  "device_benchmarked": "CPU",
+  "compile_config": {
+    "INFERENCE_NUM_THREADS": 4,
+    "PERFORMANCE_HINT": "LATENCY"
+  },
+  "torch_settings": {
+    "intra_op_threads": 4,
+    "interop_threads": 2
+  },
+  "model": "intfloat/multilingual-e5-small",
+  "model_dir": "<HF_CACHE>/models--intfloat--multilingual-e5-small/snapshots/<snapshot>",
+  "model_safetensors_sha256": "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477",
+  "embedding_dim": 384,
+  "corpus_rows": 34372,
+  "export_method": "ov.convert_model_from_cached_pytorch",
+  "exported_ir": ".benchmarks\\e5\\e5_small_query_encoder.xml",
+  "queries": [
+    "query: quy dinh khi vuot den do",
+    "query: thu tuc cap lai can cuoc cong dan",
+    "query: quyen loi bao hiem y te",
+    "query: dieu kien dang ky khai sinh qua han",
+    "query: xu phat vi pham giao thong"
+  ],
+  "compile_ms": 791.387,
+  "series": [
+    {
+      "series": 1,
+      "sentence_transformers": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 20.802,
+        "median_ms": 20.979,
+        "p95_ms": 23.321,
+        "min_ms": 18.053,
+        "max_ms": 23.328
+      },
+      "openvino_end_to_end": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 11.835,
+        "median_ms": 12.215,
+        "p95_ms": 13.698,
+        "min_ms": 9.511,
+        "max_ms": 13.735
+      },
+      "speedup_end_to_end": 1.758
+    },
+    {
+      "series": 2,
+      "sentence_transformers": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 18.723,
+        "median_ms": 18.624,
+        "p95_ms": 20.877,
+        "min_ms": 16.971,
+        "max_ms": 20.942
+      },
+      "openvino_end_to_end": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 11.465,
+        "median_ms": 11.392,
+        "p95_ms": 13.333,
+        "min_ms": 9.371,
+        "max_ms": 13.59
+      },
+      "speedup_end_to_end": 1.633
+    },
+    {
+      "series": 3,
+      "sentence_transformers": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 18.179,
+        "median_ms": 18.526,
+        "p95_ms": 19.327,
+        "min_ms": 15.739,
+        "max_ms": 19.37
+      },
+      "openvino_end_to_end": {
+        "runs": 15,
+        "warmup_excluded": 1,
+        "mean_ms": 11.242,
+        "median_ms": 11.161,
+        "p95_ms": 13.304,
+        "min_ms": 9.298,
+        "max_ms": 13.753
+      },
+      "speedup_end_to_end": 1.617
+    }
+  ],
+  "openvino_measured_ms_all_series": {
+    "runs": 42,
+    "warmups_excluded": 3,
+    "mean_ms": 11.514,
+    "median_ms": 11.704,
+    "p95_ms": 13.674
+  },
+  "sentence_transformers_measured_ms_all_series": {
+    "runs": 42,
+    "warmups_excluded": 3,
+    "mean_ms": 19.235,
+    "median_ms": 19.012,
+    "p95_ms": 23.083
+  },
+  "speedup_end_to_end_series_mean": 1.669,
+  "speedup_end_to_end_series_median": 1.633,
+  "speedup_end_to_end_series_min": 1.617,
+  "speedup_end_to_end_series_max": 1.758,
+  "embedding_cosine_min": 1.0,
+  "embedding_cosine_mean": 1.0,
+  "embedding_cosine_max": 1.00000012,
+  "top10_overlap_min": 1.0,
+  "top10_overlap_mean": 1.0,
+  "top10_overlap_per_query": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "top1_reference": "nd45_2022::c071",
+  "top1_openvino": "nd45_2022::c071",
+  "limitations": [
+    "CPU-only benchmark; no GPU/NPU claim.",
+    "Export reads the existing local model snapshot and does not prove production integration.",
+    "No accuracy ground-truth benchmark; cosine/top-k checks only validate export equivalence."
+  ]
+}
