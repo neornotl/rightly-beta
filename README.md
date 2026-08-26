@@ -1,4 +1,4 @@
-# Rightly — release v0.18.0-pilot
+# Rightly — release v0.19.0-openvino
 
 Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Người dùng có thể nhập câu hỏi bằng chữ hoặc giọng nói; hệ thống tìm nguồn trong kho dữ liệu đã cấu hình rồi tạo câu trả lời dễ đọc, kèm nguồn khi có bằng chứng phù hợp.
 
@@ -7,7 +7,7 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 ## Sản phẩm đang chạy
 
 - **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.18.0](https://github.com/neornotl/rightly/releases/tag/v0.18.0-pilot)
+- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.19.0 OpenVINO](https://github.com/neornotl/rightly/releases/tag/v0.19.0-openvino)
 - **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
 - **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
 - **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
@@ -17,7 +17,7 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 1. Mở [bản web](https://intel-demo-topaz.vercel.app/) và chọn **Chat**.
 2. Thử: `quy dinh khi vuot den do` (câu không dấu + nguồn), `1+4-3+7=?` (tính tất định), `Tôi cần làm gì khi chưa rõ thủ tục?` (hướng dẫn dễ đọc), và `alo` (hội thoại thông thường).
 3. Mở phần **Nguồn** để kiểm tra evidence; xem [báo cáo pilot](docs/pilot-results-2026-08.md) để đối chiếu phản hồi và thay đổi.
-4. Nếu muốn kiểm tra local, tải [Rightly Setup v0.18.0](https://github.com/neornotl/rightly/releases/tag/v0.18.0-pilot). Bản cài cần Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet ở lần cài đầu.
+4. Nếu muốn kiểm tra local, tải [Rightly Setup v0.19.0 OpenVINO](https://github.com/neornotl/rightly/releases/tag/v0.19.0-openvino). Bản cài cần Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet ở lần cài đầu.
 
 Đây là đường kiểm tra nhanh, không phải cam kết mọi câu hỏi pháp lý đều được trả lời đúng. Khi nguồn không đủ, người dùng cần kiểm tra lại với cơ quan có thẩm quyền.
 
@@ -37,7 +37,7 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 | Trạng thái | Phạm vi |
 | --- | --- |
 | **Available** | Chat web, truy xuất nguồn, semantic routing giới hạn, xử lý câu không dấu, stream SSE, bộ tính toán an toàn, local installer/preflight theo cấu hình máy |
-| **Post-submission source integration** | Local hybrid retrieval ưu tiên OpenVINO CPU cho E5-small, có preflight bắt buộc và fallback PyTorch ở chế độ `auto`; chưa nằm trong bộ cài v0.18 đã phát hành |
+| **Post-submission pilot integration** | Local hybrid retrieval ưu tiên OpenVINO CPU cho E5-small, có preflight bắt buộc và fallback PyTorch ở chế độ `auto`; phát hành riêng trong bộ cài v0.19.0 |
 | **Pilot / cần xác minh thiết bị** | Microphone và TTS trên từng Chrome/Edge; offline đầy đủ sau khi cài đủ model; hiệu năng trên nhiều cấu hình Windows |
 | **Future** | Đánh giá độ đúng pháp lý độc lập quy mô lớn, mở rộng dữ liệu địa phương, hotline/telecom và đồng bộ cloud tự nguyện |
 
@@ -83,7 +83,7 @@ series on one Intel Core i7-10510U test machine, with equivalent embeddings and
 post-submission OpenVINO CPU integration: the one-click setup downloads E5,
 exports a local IR, builds the dense cache with that IR, and fails preflight if
 the explicit OpenVINO backend cannot answer a probe. This source change is not
-retroactively part of the submitted clip or the already-published v0.18 binary,
+retroactively part of the submitted clip or the earlier v0.18 binary,
 and it is not a legal-accuracy, GPU, NPU, ASR, TTS, or LLM acceleration claim.
 
 ## Credit
