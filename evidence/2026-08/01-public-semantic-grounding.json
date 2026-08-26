@@ -1,6 +1,6 @@
 {
   "webm": {
-    "path": "C:\\Users\\laptopppp\\RightlyWorktrees\\record-public-evidence-20260826\\evidence\\2026-08\\01-public-semantic-grounding.webm",
+    "path": "local-capture/01-public-semantic-grounding.webm",
     "sha256": "002e191d1185185848b229754b12d17d857ce553cf69ada25754071ecf4072c8",
     "size_bytes": 2090693,
     "duration_seconds": 23.0,
@@ -10,7 +10,7 @@
     "frame_rate": "25/1"
   },
   "mp4": {
-    "path": "C:\\Users\\laptopppp\\RightlyWorktrees\\record-public-evidence-20260826\\evidence\\2026-08\\01-public-semantic-grounding.mp4",
+    "path": "evidence/2026-08/01-public-semantic-grounding.mp4",
     "sha256": "19694e343dad7b0c7f96d80de17a76d831d563b857b4190489915e013325e59f",
     "size_bytes": 655363,
     "duration_seconds": 23.0,

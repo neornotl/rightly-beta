@@ -36,8 +36,12 @@ def _probe(path: Path) -> dict[str, object]:
     )
     info = json.loads(raw)
     stream = next((s for s in info.get("streams", []) if s.get("codec_type") == "video"), {})
+    try:
+        display_path = path.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        display_path = path.name
     return {
-        "path": str(path),
+        "path": display_path,
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "size_bytes": path.stat().st_size,
         "duration_seconds": float(info.get("format", {}).get("duration", 0)),
