@@ -12,6 +12,36 @@ Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và ph�
 - **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
 - **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
 
+## Judge path — 3 phút
+
+1. Mở [bản web](https://intel-demo-topaz.vercel.app/) và chọn **Chat**.
+2. Thử: `quy dinh khi vuot den do` (câu không dấu + nguồn), `1+4-3+7=?` (tính tất định), `Tôi cần làm gì khi chưa rõ thủ tục?` (hướng dẫn dễ đọc), và `alo` (hội thoại thông thường).
+3. Mở phần **Nguồn** để kiểm tra evidence; xem [báo cáo pilot](docs/pilot-results-2026-08.md) để đối chiếu phản hồi và thay đổi.
+4. Nếu muốn kiểm tra local, tải [Rightly Setup v0.18.0](https://github.com/neornotl/rightly/releases/tag/v0.18.0-pilot). Bản cài cần Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet ở lần cài đầu.
+
+Đây là đường kiểm tra nhanh, không phải cam kết mọi câu hỏi pháp lý đều được trả lời đúng. Khi nguồn không đủ, người dùng cần kiểm tra lại với cơ quan có thẩm quyền.
+
+### Feedback pilot → fix → evidence
+
+| Feedback public pilot | Thay đổi sản phẩm | Evidence có thể kiểm tra |
+| --- | --- | --- |
+| Câu trả lời hiển thị chậm | Hiển thị delta qua SSE khi model đang sinh | `api/index.py`, `web/index.html` |
+| Voice bị ngắt hoặc chồng tiếng | Hàng đợi tuần tự và hủy audio/request cũ | `web/index.html` |
+| Nguồn hiển thị `null` | Chuẩn hóa envelope và lọc nguồn rỗng | `api/index.py`, `web/index.html` |
+| Câu hỏi không dấu khó tìm | Mở rộng truy vấn có giới hạn | `app/retrieval/query_expansion.py` |
+| Phép tính ngắn có thể sai | Bộ tính toán tất định cho biểu thức an toàn | `app/arithmetic.py` |
+| Khó theo dõi quá trình cài local | Log tiến trình, retry/resume, hardware check và preflight | `setup_installer.py`, `scripts/preflight_offline.py` |
+
+### Feature status
+
+| Trạng thái | Phạm vi |
+| --- | --- |
+| **Available** | Chat web, truy xuất nguồn, semantic routing giới hạn, xử lý câu không dấu, stream SSE, bộ tính toán an toàn, local installer/preflight theo cấu hình máy |
+| **Pilot / cần xác minh thiết bị** | Microphone và TTS trên từng Chrome/Edge; offline đầy đủ sau khi cài đủ model; hiệu năng trên nhiều cấu hình Windows |
+| **Future** | Đánh giá độ đúng pháp lý độc lập quy mô lớn, mở rộng dữ liệu địa phương, hotline/telecom và đồng bộ cloud tự nguyện |
+
+Các cải tiến sau ngày nộp hồ sơ được ghi nhận minh bạch là **post-submission improvements**; không dùng chúng để thay đổi nội dung clip hoặc số liệu pilot đã nộp.
+
 ## Tính năng và giới hạn thực tế
 
 - Chat tiếng Việt trên web và giao diện local tùy cấu hình máy.
