@@ -36,6 +36,33 @@ def test_negative_content_length_is_rejected_before_reading_body():
     assert sent["status"] == 400
 
 
+def test_oversized_chat_json_is_rejected_before_reading_body():
+    request = object.__new__(index.handler)
+    request.path = "/api/chat/stream"
+    request.headers = {"Content-Length": str(index.MAX_JSON_BYTES + 1)}
+    request.rfile = _NeverRead()
+    sent = {}
+    request._send = lambda status, content_type, body: sent.update(status=status, body=body)
+    request.do_POST()
+    assert sent["status"] == 413
+    assert "512 KiB" in json.loads(sent["body"])["detail"]
+
+
+def test_normal_chat_history_remains_accepted(monkeypatch):
+    request = object.__new__(index.handler)
+    request.path = "/api/chat"
+    payload = {"text": "BHYT", "history": [{"role": "user", "content": "Tôi 70 tuổi"}]}
+    raw = json.dumps(payload, ensure_ascii=False).encode()
+    request.headers = {"Content-Length": str(len(raw))}
+    request.rfile = BytesIO(raw)
+    sent = {}
+    request._send = lambda status, content_type, body: sent.update(status=status, body=body)
+    monkeypatch.setattr(index.handler, "_ask_api", lambda _self, text, lang, history: "Đã nhận lịch sử.")
+    request.do_POST()
+    assert sent["status"] == 200
+    assert json.loads(sent["body"])["reply"] == "Đã nhận lịch sử."
+
+
 def test_request_log_contains_metrics_but_no_user_content(capsys):
     request = object.__new__(index.handler)
     request.path = "/api/chat"

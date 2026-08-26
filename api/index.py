@@ -110,6 +110,7 @@ RATE_LIMIT_PER_IP = int(os.getenv("RATE_LIMIT_PER_IP", "20"))
 RATE_LIMIT_WARN_AT = float(os.getenv("RATE_LIMIT_WARN_AT", "0.8"))
 _RL_HITS: dict[str, list[float]] = {}
 MAX_AUDIO_BYTES = 20 * 1024 * 1024
+MAX_JSON_BYTES = 512 * 1024
 
 # ---------------------------------------------------------------------------
 # Compact BM25 retrieval pack (built by scripts/build_vercel_rag.py).
@@ -902,6 +903,9 @@ class handler(BaseHTTPRequestHandler):
             return
         if path == "/api/voice/transcribe" and length > MAX_AUDIO_BYTES:
             self._send(413, "application/json", '{"detail":"Audio quá lớn; giới hạn là 20 MB."}')
+            return
+        if path in {"/api/chat", "/api/chat/stream"} and length > MAX_JSON_BYTES:
+            self._send(413, "application/json", '{"detail":"Dữ liệu chat quá lớn; giới hạn là 512 KiB."}')
             return
         raw = self.rfile.read(length) if length else b"{}"
         if path == "/api/voice/transcribe":
