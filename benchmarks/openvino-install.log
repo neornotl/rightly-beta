@@ -1,0 +1,6 @@
+command: C:\Python314\python.exe -m venv .venv
+command: .venv\Scripts\python.exe -m pip install --no-cache-dir --disable-pip-version-check openvino==2026.3.0
+download: openvino-2026.3.0-22451-cp314-cp314-win_amd64.whl (75.8 MB)
+download: numpy-2.5.2-cp314-cp314-win_amd64.whl (12.6 MB)
+download: openvino_telemetry-2025.2.0-py3-none-any.whl (25 KB)
+result: Successfully installed numpy-2.5.2 openvino-2026.3.0 openvino-telemetry-2025.2.0
