@@ -63,7 +63,8 @@ Các cải tiến sau ngày nộp hồ sơ được ghi nhận minh bạch là *
 
 ## Pilot
 
-- **Public pilot:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform), 56 phản hồi tại snapshot ngày 26/08/2026.
+- **Public pilot đang diễn ra:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform) được mở trực tiếp từ giao diện Rightly; số phản hồi có thể tiếp tục tăng.
+- **Snapshot đã kiểm tra:** 56 phản hồi tại ngày 26/08/2026. Đây không phải tổng cuối cùng; không dùng các mốc cũ (ví dụ 51) để suy ra số hiện tại.
 - Điểm trung bình: thân thiện/phù hợp 4,41/5; ý tưởng cốt lõi 4,36/5; dễ dùng 4,23/5; rõ ràng 4,18/5; chính xác/tin cậy 4,18/5.
 - **Private pilot:** 5 hồ sơ người tham gia và 3 bản ghi phiên thử nghiệm ngày 22/08/2026 được lưu riêng. Không đưa dữ liệu định danh, chữ ký hoặc video gốc lên GitHub.
 - Feedback về giọng đọc, câu trả lời bị ngắt, tốc độ hiển thị, mobile và nguồn `null` đã được chuyển thành các thay đổi có thể kiểm tra trong pipeline/web.

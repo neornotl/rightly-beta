@@ -1,14 +1,14 @@
 # Rightly - bằng chứng pilot tháng 08/2026
 
-**Ngày chốt snapshot:** 26/08/2026
+**Ngày chốt snapshot:** 26/08/2026 (không phải ngày kết thúc pilot)
 
-**Phạm vi:** public pilot bằng Google Forms và private pilot có quan sát trực tiếp
+**Phạm vi:** public pilot đang diễn ra bằng Google Forms, có liên kết từ giao diện app, và private pilot có quan sát trực tiếp
 
 **Mục đích:** ghi nhận bằng chứng sử dụng thật, phản hồi và thay đổi sản phẩm; không thay thế đánh giá độc lập về độ đúng pháp lý.
 
-## 1. Public pilot
+## 1. Public pilot đang diễn ra
 
-Snapshot do chủ biểu mẫu kiểm tra có **56 phản hồi**.
+Biểu mẫu public vẫn mở để tiếp tục thu thập phản hồi qua [Rightly - khảo sát trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform). Snapshot do chủ biểu mẫu kiểm tra tại ngày **26/08/2026** có **56 phản hồi**. Đây là số liệu tại một thời điểm, không phải tổng cuối cùng; các mốc cũ như 51 không được dùng để suy ra số hiện tại.
 
 ### Cơ cấu mẫu
 
