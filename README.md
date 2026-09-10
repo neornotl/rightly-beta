@@ -1,95 +1,70 @@
-# Rightly — release v0.19.0-openvino
+# Rightly — development repository
 
-Rightly là trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Người dùng có thể nhập câu hỏi bằng chữ hoặc giọng nói; hệ thống tìm nguồn trong kho dữ liệu đã cấu hình rồi tạo câu trả lời dễ đọc, kèm nguồn khi có bằng chứng phù hợp.
+Repo phát triển của Rightly, trợ lý hỏi–đáp tiếng Việt về thông tin công và pháp luật. Nhánh `dev` chứa thay đổi đang được kiểm thử; bản nguồn ổn định để người dùng tham khảo nằm tại [`neornotl/rightly`](https://github.com/neornotl/rightly).
 
-> **Trạng thái:** bản pilot phát hành để đánh giá. Đây vẫn là MVP/bản thử nghiệm, không phải dịch vụ pháp lý chính thức.
+> **Phạm vi:** Rightly là MVP/bản thử nghiệm, không phải cơ quan nhà nước và không thay thế tư vấn pháp lý. Nguồn có thể thiếu hoặc chậm cập nhật.
 
-## Sản phẩm đang chạy
+## Liên kết chính
 
-- **Bản web giữ nguyên địa chỉ:** [intel-demo-topaz.vercel.app](https://intel-demo-topaz.vercel.app/)
-- **Bộ cài Windows một file (pilot):** [Rightly Setup v0.19.0 OpenVINO](https://github.com/neornotl/rightly/releases/tag/v0.19.0-openvino)
-- **Nhánh dev:** [rightly-beta/dev](https://github.com/neornotl/rightly-beta/tree/dev)
-- **Nhánh release nguồn:** [rightly-beta/release](https://github.com/neornotl/rightly-beta/tree/release)
-- **Repo đã nộp cho AI Global Impact Festival:** [neornotl/rightly](https://github.com/neornotl/rightly)
+- [Bản web](https://intel-demo-topaz.vercel.app/)
+- [Repo release công khai](https://github.com/neornotl/rightly)
+- [Các bản phát hành](https://github.com/neornotl/rightly/releases)
+- Hướng dẫn người dùng Windows: [`README-NGUOI-DUNG.txt`](README-NGUOI-DUNG.txt)
 
-## Judge path — 3 phút
+## Pilot công khai
 
-1. Mở [bản web](https://intel-demo-topaz.vercel.app/) và chọn **Chat**.
-2. Thử: `quy dinh khi vuot den do` (câu không dấu + nguồn), `1+4-3+7=?` (tính tất định), `Tôi cần làm gì khi chưa rõ thủ tục?` (hướng dẫn dễ đọc), và `alo` (hội thoại thông thường).
-3. Mở phần **Nguồn** để kiểm tra evidence; xem [báo cáo pilot](docs/pilot-results-2026-08.md) để đối chiếu phản hồi và thay đổi.
-4. Nếu muốn kiểm tra local, tải [Rightly Setup v0.19.0 OpenVINO](https://github.com/neornotl/rightly/releases/tag/v0.19.0-openvino). Bản cài cần Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet ở lần cài đầu.
+- [Góp ý trải nghiệm qua biểu mẫu](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform)
+- Snapshot đã ghi nhận: 56 phản hồi tại ngày 26/08/2026. Đây không phải tổng cuối cùng; không dùng snapshot này để suy ra số hiện tại.
+- Phạm vi và giới hạn: [`docs/product-and-pilot.md`](docs/product-and-pilot.md) và [`docs/pilot-results-2026-08.md`](docs/pilot-results-2026-08.md).
 
-Đây là đường kiểm tra nhanh, không phải cam kết mọi câu hỏi pháp lý đều được trả lời đúng. Khi nguồn không đủ, người dùng cần kiểm tra lại với cơ quan có thẩm quyền.
+## Phạm vi mã nguồn
 
-### Feedback pilot → fix → evidence
-
-| Feedback public pilot | Thay đổi sản phẩm | Evidence có thể kiểm tra |
-| --- | --- | --- |
-| Câu trả lời hiển thị chậm | Hiển thị delta qua SSE khi model đang sinh | `api/index.py`, `web/index.html` |
-| Voice bị ngắt hoặc chồng tiếng | Hàng đợi tuần tự và hủy audio/request cũ | `web/index.html` |
-| Nguồn hiển thị `null` | Chuẩn hóa envelope và lọc nguồn rỗng | `api/index.py`, `web/index.html` |
-| Câu hỏi không dấu khó tìm | Mở rộng truy vấn có giới hạn | `app/retrieval/query_expansion.py` |
-| Phép tính ngắn có thể sai | Bộ tính toán tất định cho biểu thức an toàn | `app/arithmetic.py` |
-| Khó theo dõi quá trình cài local | Log tiến trình, retry/resume, hardware check và preflight | `setup_installer.py`, `scripts/preflight_offline.py` |
-
-### Feature status
-
-| Trạng thái | Phạm vi |
+| Đường dẫn | Vai trò |
 | --- | --- |
-| **Available** | Chat web, truy xuất nguồn, semantic routing giới hạn, xử lý câu không dấu, stream SSE, bộ tính toán an toàn, local installer/preflight theo cấu hình máy |
-| **Post-submission pilot integration** | Local hybrid retrieval ưu tiên OpenVINO CPU cho E5-small, có preflight bắt buộc và fallback PyTorch ở chế độ `auto`; phát hành riêng trong bộ cài v0.19.0 |
-| **Pilot / cần xác minh thiết bị** | Microphone và TTS trên từng Chrome/Edge; offline đầy đủ sau khi cài đủ model; hiệu năng trên nhiều cấu hình Windows |
-| **Future** | Đánh giá độ đúng pháp lý độc lập quy mô lớn, mở rộng dữ liệu địa phương, hotline/telecom và đồng bộ cloud tự nguyện |
+| `web/` | Giao diện web |
+| `api/` | API/serverless entry point |
+| `app/` | Pipeline, retrieval, safety, provider và validation |
+| `legal-sources/` | Kho nguồn pháp luật được giữ lại làm nguồn chuẩn |
+| `data/` | Dữ liệu và chỉ mục runtime |
+| `tests/` | Kiểm thử tự động và gate |
+| `scripts/` | Build, preflight, audit, smoke test và đóng gói |
+| `docs/evidence/` | Tài liệu nguồn công khai có thể kiểm tra |
 
-Các cải tiến sau ngày nộp hồ sơ được ghi nhận minh bạch là **post-submission improvements**; không dùng chúng để thay đổi nội dung clip hoặc số liệu pilot đã nộp.
+Các output đánh giá sinh ra, script debug/patch một lần, tài liệu demo cũ và cây nguồn pháp luật trùng lặp không được giữ trong nhánh chính.
 
-## Tính năng và giới hạn thực tế
+## Thiết lập phát triển
 
-- Chat tiếng Việt trên web và giao diện local tùy cấu hình máy.
-- Nhận câu hỏi bằng chữ; giọng nói phụ thuộc quyền Microphone của trình duyệt và backend ASR đã cài.
-- Truy xuất văn bản nguồn, safety routing và câu trả lời có trích nguồn khi tìm được evidence.
-- TTS dùng backend cloud hoặc local theo cấu hình. Chế độ local/offline cần cài đủ model và thư viện; không mặc định có nghĩa là offline hoàn toàn.
-- Bản cài pilot tự nhận diện RAM/CPU/GPU, chọn model 3B hoặc 7B theo ngưỡng phần cứng, tải tiếp sau lỗi mạng và chỉ mở ứng dụng sau preflight LLM/ASR/TTS/health. Yêu cầu hiện tại: Windows 10/11 x64, tối thiểu 8 GB RAM, 25 GB trống và internet trong lần cài đầu.
-- Bộ cài chỉ nói “đã kiểm tra SHA-256” khi release publisher đã ghi hash chính thức trong [`scripts/asset_manifest.json`](scripts/asset_manifest.json). Hiện manifest chưa có hash, nên preflight hiện cảnh báo rõ: runtime có thể sẵn sàng nhưng asset tải xuống chưa được chứng thực mật mã. Xem TODO phát hành tại [`docs/installer-integrity.md`](docs/installer-integrity.md).
-- Câu hỏi tiếng Việt không dấu được mở rộng sang thuật ngữ pháp lý chuẩn trước khi truy xuất; phép tính ngắn được xử lý tất định thay vì giao cho LLM.
-- Đăng nhập web **không** tự đọc hoặc ghi lịch sử cloud. Người dùng phải bấm “Đồng bộ: Tắt” và xác nhận rõ ràng trước khi đồng bộ; có nút “Xóa cloud” để xóa toàn bộ lịch sử của tài khoản. Mẫu RLS và retention 90 ngày nằm tại [`docs/supabase_context.sql`](docs/supabase_context.sql).
-- Trước khi một câu hỏi hoặc lịch sử đi tới Gemini, Groq hoặc Pateway, Rightly thay các định danh có độ tin cậy cao (email, số điện thoại, CCCD/CMND, hộ chiếu, địa chỉ có mốc đường/phố) bằng nhãn ẩn danh. Bản hiển thị và truy xuất cục bộ không bị sửa.
-- Nguồn có thể thiếu hoặc chậm cập nhật. Không dùng kết quả như tư vấn pháp lý cuối cùng; hãy kiểm tra với cơ quan có thẩm quyền.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements.txt
+python -m pytest -m "not slow"
+```
 
-## Chạy và phát triển
+Kiểm tra trước khi đưa thay đổi sang release:
 
-Đọc các file `requirements*.txt`, hướng dẫn trong [`docs/`](docs/) và các script setup trước khi chạy. Không commit API key, service-account JSON hoặc dữ liệu người dùng.
+```powershell
+python scripts/verify_database.py --skip-embeddings
+python scripts/predeploy_check.py
+python scripts/smoke_public_release.py
+```
 
-Để kiểm tra nhanh bản public và metadata bộ cài mà không cần API key, model hay tải asset, chạy [`scripts/smoke_public_release.py`](scripts/smoke_public_release.py). Hướng dẫn và các hợp đồng được kiểm tra: [`docs/public-smoke-test.md`](docs/public-smoke-test.md).
+Các kiểm tra cần model, API key, thiết bị hoặc mạng phải được báo riêng; không suy diễn PASS cấu trúc thành xác nhận chất lượng pháp lý hay hiệu năng trên thiết bị thật.
 
-## Pilot
+## Quy ước đóng góp
 
-- **Public pilot đang diễn ra:** [biểu mẫu trải nghiệm](https://docs.google.com/forms/d/11cJjCN9qlkSYzMzSYPoCE0EzQwBddtvS4uRwzwTsTFE/viewform) được mở trực tiếp từ giao diện Rightly; số phản hồi có thể tiếp tục tăng.
-- **Snapshot đã kiểm tra:** 56 phản hồi tại ngày 26/08/2026. Đây không phải tổng cuối cùng; không dùng các mốc cũ (ví dụ 51) để suy ra số hiện tại.
-- Điểm trung bình: thân thiện/phù hợp 4,41/5; ý tưởng cốt lõi 4,36/5; dễ dùng 4,23/5; rõ ràng 4,18/5; chính xác/tin cậy 4,18/5.
-- **Private pilot:** 5 hồ sơ người tham gia và 3 bản ghi phiên thử nghiệm ngày 22/08/2026 được lưu riêng. Không đưa dữ liệu định danh, chữ ký hoặc video gốc lên GitHub.
-- Feedback về giọng đọc, câu trả lời bị ngắt, tốc độ hiển thị, mobile và nguồn `null` đã được chuyển thành các thay đổi có thể kiểm tra trong pipeline/web.
+- Tạo branch ngắn gọn từ `dev`; không đưa thẳng thử nghiệm chưa xác minh vào `release`.
+- Không commit secret, dữ liệu nhận dạng người dùng, bản ghi pilot riêng tư hoặc file môi trường.
+- Gắn claim về pilot, benchmark hoặc phần cứng với artifact có thể kiểm tra và ghi rõ phạm vi.
+- Ưu tiên thay đổi nhỏ, có test; giữ cloud/ASR/TTS tùy chọn và có fallback rõ ràng.
 
-Kết quả, giới hạn mẫu và cách bảo vệ dữ liệu: [`docs/pilot-results-2026-08.md`](docs/pilot-results-2026-08.md). Chi tiết sản phẩm: [`docs/product-and-pilot.md`](docs/product-and-pilot.md).
+## Nhóm thực hiện
 
-Sơ đồ quan hệ hai repo: [`docs/repository-layout.md`](docs/repository-layout.md).
+- Trần Hoàng Sơn — phát triển sản phẩm
+- Lê Xuân Bách — nội dung pháp lý
+- Trương Quang Minh — truyền thông và điều phối pilot
 
-### Post-submission evidence
+## Giấy phép
 
-The [isolated OpenVINO E5-small benchmark](benchmarks/openvino-e5-results-2026-08.md)
-measured approximately **1.62–1.76×** lower query-encoding latency across three
-series on one Intel Core i7-10510U test machine, with equivalent embeddings and
-100% top-10 overlap on five probes. The local source pipeline now has a
-post-submission OpenVINO CPU integration: the one-click setup downloads E5,
-exports a local IR, builds the dense cache with that IR, and fails preflight if
-the explicit OpenVINO backend cannot answer a probe. This source change is not
-retroactively part of the submitted clip or the earlier v0.18 binary,
-and it is not a legal-accuracy, GPU, NPU, ASR, TTS, or LLM acceleration claim.
-
-## Credit
-
-| Thành viên | Vai trò | Email |
-| --- | --- | --- |
-| Trần Hoàng Sơn | Phát triển sản phẩm | [hoangson24092009vn@gmail.com](mailto:hoangson24092009vn@gmail.com) |
-| Lê Xuân Bách | Pháp lý | [bachlxbach@gmail.com](mailto:bachlxbach@gmail.com) |
-| Trương Quang Minh | Quảng bá và điều phối pilot | [truongquangminh7@gmail.com](mailto:truongquangminh7@gmail.com) |
+[MIT](LICENSE)
